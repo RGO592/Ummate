@@ -11,6 +11,7 @@ public sealed class PlayerMovement : MonoBehaviour
 
     private Rigidbody body;
     private Vector2 moveInput;
+    private Transform movementCamera;
 
     private void Awake()
     {
@@ -32,18 +33,35 @@ public sealed class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         // Keep gravity and ground collision response on the vertical axis.
+        if (movementCamera == null && Camera.main != null)
+            movementCamera = Camera.main.transform;
+        Vector3 moveDirection = CalculateMoveDirection(moveInput, movementCamera);
         Vector3 velocity = body.linearVelocity;
-        velocity.x = moveInput.x * moveSpeed;
-        velocity.z = moveInput.y * moveSpeed;
+        velocity.x = moveDirection.x * moveSpeed;
+        velocity.z = moveDirection.z * moveSpeed;
         body.linearVelocity = velocity;
 
-        if (moveInput.sqrMagnitude > 0.0001f)
+        if (moveDirection.sqrMagnitude > 0.0001f)
         {
-            Vector3 moveDirection = new Vector3(moveInput.x, 0f, moveInput.y);
+
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
             Quaternion nextRotation = Quaternion.RotateTowards(
                 body.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
             body.MoveRotation(nextRotation);
         }
+    }
+
+    private static Vector3 CalculateMoveDirection(Vector2 input, Transform view)
+    {
+        if (view == null)
+            return new Vector3(input.x, 0f, input.y);
+
+        Vector3 forward = Vector3.ProjectOnPlane(view.forward, Vector3.up);
+        // Also support a camera looking straight down without losing forward input.
+        if (forward.sqrMagnitude < 0.0001f)
+            forward = Vector3.ProjectOnPlane(view.up, Vector3.up);
+        forward.Normalize();
+        Vector3 right = Vector3.ProjectOnPlane(view.right, Vector3.up).normalized;
+        return Vector3.ClampMagnitude(right * input.x + forward * input.y, 1f);
     }
 }
