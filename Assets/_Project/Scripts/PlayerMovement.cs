@@ -6,6 +6,8 @@ using UnityEngine.InputSystem;
 public sealed class PlayerMovement : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float moveSpeed = 5f;
+    [SerializeField, Min(0f), Tooltip("Turning speed in degrees per second.")]
+    private float rotationSpeed = 540f;
 
     private Rigidbody body;
     private Vector2 moveInput;
@@ -34,5 +36,14 @@ public sealed class PlayerMovement : MonoBehaviour
         velocity.x = moveInput.x * moveSpeed;
         velocity.z = moveInput.y * moveSpeed;
         body.linearVelocity = velocity;
+
+        if (moveInput.sqrMagnitude > 0.0001f)
+        {
+            Vector3 moveDirection = new Vector3(moveInput.x, 0f, moveInput.y);
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
+            Quaternion nextRotation = Quaternion.RotateTowards(
+                body.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
+            body.MoveRotation(nextRotation);
+        }
     }
 }
