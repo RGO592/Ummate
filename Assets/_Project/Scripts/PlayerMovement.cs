@@ -12,10 +12,13 @@ public sealed class PlayerMovement : MonoBehaviour
     private Rigidbody body;
     private Vector2 moveInput;
     private Transform movementCamera;
+    private Transform visual;
+    private Vector3 facingDirection;
 
     private void Awake()
     {
         body = GetComponent<Rigidbody>();
+        visual = transform.Find("Visual");
     }
 
     private void Update()
@@ -41,14 +44,27 @@ public sealed class PlayerMovement : MonoBehaviour
         velocity.z = moveDirection.z * moveSpeed;
         body.linearVelocity = velocity;
 
-        if (moveDirection.sqrMagnitude > 0.0001f)
-        {
+        facingDirection = moveDirection;
 
+        // Preserve the old behaviour for players without a separate visual child.
+        if (visual == null && moveDirection.sqrMagnitude > 0.0001f)
+        {
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
-            Quaternion nextRotation = Quaternion.RotateTowards(
-                body.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
-            body.MoveRotation(nextRotation);
+            body.MoveRotation(Quaternion.RotateTowards(
+                body.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime));
         }
+    }
+
+    private void LateUpdate()
+    {
+        // Turn the visible body independently of physics rotation constraints/interpolation.
+        // No input means no rotation update, preserving the last visible heading.
+        if (visual == null || moveInput.sqrMagnitude < 0.0001f || facingDirection.sqrMagnitude < 0.0001f)
+            return;
+
+        Quaternion targetRotation = Quaternion.LookRotation(facingDirection, Vector3.up);
+        visual.rotation = Quaternion.RotateTowards(
+            visual.rotation, targetRotation, rotationSpeed * Time.deltaTime);
     }
 
     private static Vector3 CalculateMoveDirection(Vector2 input, Transform view)
