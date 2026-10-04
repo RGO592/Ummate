@@ -65,6 +65,8 @@ public sealed class FarmPlot : Interactable
                 wateredDay = -1;
                 inventory.AddItem(wheat, 3);
                 inventory.AddItem(wheatSeeds, 1);
+                MissionProgress mission = interactor.GetComponent<MissionProgress>();
+                if (mission != null) mission.RecordWheatHarvest(3);
                 RefreshAppearance();
                 Log("수확 완료: 밀 3개 + 밀 씨앗 1개. 빈 밭으로 돌아갑니다.");
                 return;
