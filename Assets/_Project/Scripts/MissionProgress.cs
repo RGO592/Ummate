@@ -7,6 +7,7 @@ public sealed class MissionProgress : MonoBehaviour
 {
     [SerializeField] private ItemDefinition basket;
     [SerializeField] private ItemDefinition cornSeeds;
+    [SerializeField] private ItemDefinition bucket;
     [SerializeField] private GameObject chickenArea;
     [SerializeField] private GameObject cowArea;
     [SerializeField] private TMP_Text missionLabel;
@@ -14,11 +15,15 @@ public sealed class MissionProgress : MonoBehaviour
     private PlayerInventory inventory;
     private bool processingHarvest;
     private bool processingEggCollection;
+    private bool processingCornHarvest;
     public int WheatHarvested { get; private set; }
     public bool M01Completed { get; private set; }
     public int EggsCollected { get; private set; }
     public bool M02Completed { get; private set; }
-    public string CurrentMissionText => M02Completed ? "현재 미션: 옥수수 수확 0 / 9" : M01Completed
+    public int CornHarvested { get; private set; }
+    public bool M03Completed { get; private set; }
+    public string CurrentMissionText => M03Completed ? "현재 미션: 소 돌보기" :
+        M02Completed ? $"현재 미션: 옥수수 수확 {CornHarvested} / 9" : M01Completed
         ? $"현재 미션: 달걀 수집 {EggsCollected} / 4"
         : $"현재 미션: 밀 수확 {WheatHarvested} / 9";
 
@@ -79,6 +84,30 @@ public sealed class MissionProgress : MonoBehaviour
             Refresh();
         }
         finally { processingEggCollection = false; }
+    }
+
+    public void RecordCornHarvest(int amount)
+    {
+        if (!M02Completed || M03Completed || amount <= 0 || processingCornHarvest) return;
+        processingCornHarvest = true;
+        try
+        {
+            CornHarvested = (int)System.Math.Min(9L, (long)CornHarvested + amount);
+            if (CornHarvested == 9)
+            {
+                if (inventory == null || bucket == null || cowArea == null || !inventory.AddItem(bucket, 1))
+                {
+                    Debug.LogWarning("M03 보상 지급 불가: 양동이/소 목장 연결 또는 수량 한도를 확인해 주세요.", this);
+                    Refresh();
+                    return;
+                }
+                M03Completed = true;
+                cowArea.SetActive(true);
+                Debug.Log("M03 완료: 소 목장과 소 2마리 해금, 양동이 1개 지급. 옥수수는 소비하지 않습니다.", this);
+            }
+            Refresh();
+        }
+        finally { processingCornHarvest = false; }
     }
 
     private void Refresh()

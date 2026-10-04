@@ -48,10 +48,11 @@ public sealed class InventoryTestUI : MonoBehaviour
             if (slotLabels == null || i >= slotLabels.Length || slotLabels[i] == null) continue;
             ItemDefinition item = quickbar.GetSlotItem(i);
             bool selected = i == quickbar.SelectedSlotIndex;
-            slotLabels[i].text = $"{(selected ? "> " : "")}[{i + 1}] {(item != null ? item.DisplayName : "빈 슬롯")}\n수량: {inventory.GetQuantity(item)}";
+            int keyNumber = (i + 1) % 10;
+            slotLabels[i].text = $"{(selected ? "> " : "")}[{keyNumber}]\n{(item != null ? item.DisplayName : "빈 슬롯")}\n수량: {inventory.GetQuantity(item)}";
             slotLabels[i].color = selected ? Color.yellow : Color.white;
         }
         if (statusLabel != null)
-            statusLabel.text = $"선택됨: {quickbar.SelectedSlotNumber} | {lastAction}\n1~5: 선택    T: 1개 차감    Y: 1개 추가    (테스트용 조작)";
+            statusLabel.text = $"선택됨: {quickbar.SelectedSlotNumber} | {lastAction}\n1~9, 0: 선택    T: 1개 차감    Y: 1개 추가    (테스트용 조작)";
     }
 }

@@ -6,13 +6,13 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(PlayerInventory))]
 public sealed class PlayerQuickbar : MonoBehaviour
 {
-    public const int SlotCount = 5;
+    public const int SlotCount = 10;
     [SerializeField] private ItemDefinition[] slots = new ItemDefinition[SlotCount];
     [SerializeField, Range(0, SlotCount - 1)] private int selectedSlotIndex;
     private PlayerInventory inventory;
     public event Action Changed;
 
-    // Code uses zero-based indices; the displayed slot number is 1 through 5.
+    // Code uses zero-based indices; key 0 selects the tenth slot.
     public int SelectedSlotIndex => selectedSlotIndex;
     public int SelectedSlotNumber => selectedSlotIndex + 1;
     public ItemDefinition SelectedItem => GetSlotItem(selectedSlotIndex);
@@ -34,6 +34,11 @@ public sealed class PlayerQuickbar : MonoBehaviour
         else if (keyboard.digit3Key.wasPressedThisFrame) SelectSlot(2);
         else if (keyboard.digit4Key.wasPressedThisFrame) SelectSlot(3);
         else if (keyboard.digit5Key.wasPressedThisFrame) SelectSlot(4);
+        else if (keyboard.digit6Key.wasPressedThisFrame) SelectSlot(5);
+        else if (keyboard.digit7Key.wasPressedThisFrame) SelectSlot(6);
+        else if (keyboard.digit8Key.wasPressedThisFrame) SelectSlot(7);
+        else if (keyboard.digit9Key.wasPressedThisFrame) SelectSlot(8);
+        else if (keyboard.digit0Key.wasPressedThisFrame) SelectSlot(9);
     }
 
     public ItemDefinition GetSlotItem(int index)
