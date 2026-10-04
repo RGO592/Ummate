@@ -27,7 +27,7 @@ public sealed class FarmPlot : Interactable
     public CropState State => state;
     public CropKind CurrentCrop { get; private set; }
     public int GrowthDays { get; private set; }
-    public int RequiredGrowthDays => CurrentCrop == CropKind.Corn ? 3 : CurrentCrop == CropKind.Wheat ? 1 : 0;
+    public int RequiredGrowthDays => CurrentCrop == CropKind.Corn ? 1 : CurrentCrop == CropKind.Wheat ? 1 : 0;
     private string CropName => CurrentCrop == CropKind.Corn ? "옥수수" : "밀";
     public bool WateredToday => gameDay != null && wateredDay == gameDay.CurrentDay;
 
