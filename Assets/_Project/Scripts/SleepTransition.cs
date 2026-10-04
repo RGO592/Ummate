@@ -16,6 +16,7 @@ public sealed class SleepTransition : MonoBehaviour
 
     private bool[] previouslyEnabled;
     public bool IsSleeping { get; private set; }
+    public event System.Action SleepCompleted;
 
     private void Awake() => ClearOverlay();
 
@@ -43,6 +44,8 @@ public sealed class SleepTransition : MonoBehaviour
             yield return FadeTo(0f, fadeInDuration);
         }
         finally { Finish(); }
+        // Only a normally completed sequence saves; cancellation/OnDisable must not save.
+        SleepCompleted?.Invoke();
     }
 
     private IEnumerator FadeTo(float target, float duration)

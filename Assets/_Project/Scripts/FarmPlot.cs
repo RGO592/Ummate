@@ -30,6 +30,21 @@ public sealed class FarmPlot : Interactable
     public int RequiredGrowthDays => CurrentCrop == CropKind.Corn ? 1 : CurrentCrop == CropKind.Wheat ? 1 : 0;
     private string CropName => CurrentCrop == CropKind.Corn ? "옥수수" : "밀";
     public bool WateredToday => gameDay != null && wateredDay == gameDay.CurrentDay;
+    public bool SaveReferencesValid => gameDay != null;
+
+    public GameSaveData.PlotState CaptureState(string id) => new GameSaveData.PlotState
+    {
+        id = id, crop = CurrentCrop, state = state, growthDays = GrowthDays, wateredToday = WateredToday
+    };
+
+    public void RestoreState(GameSaveData.PlotState saved)
+    {
+        CurrentCrop = saved.crop;
+        state = saved.state;
+        GrowthDays = saved.growthDays;
+        wateredDay = saved.wateredToday ? gameDay.CurrentDay : -1;
+        RefreshAppearance();
+    }
 
     private void Awake()
     {

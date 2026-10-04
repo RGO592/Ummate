@@ -9,12 +9,14 @@ public sealed class DayTestUI : MonoBehaviour
     private void OnEnable()
     {
         if (gameDay != null) gameDay.DayChanged += OnDayChanged;
+        if (gameDay != null) gameDay.StateRestored += Refresh;
         Refresh();
     }
 
     private void OnDisable()
     {
         if (gameDay != null) gameDay.DayChanged -= OnDayChanged;
+        if (gameDay != null) gameDay.StateRestored -= Refresh;
     }
 
     private void OnDayChanged(int previousDay, int newDay) => Refresh();

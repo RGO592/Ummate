@@ -1768,6 +1768,7 @@ GameObject:
   - component: {fileID: 511175216}
   - component: {fileID: 511175215}
   - component: {fileID: 511175217}
+  - component: {fileID: 511175218}
   m_Layer: 0
   m_Name: GameDay
   m_TagString: Untagged
@@ -1826,6 +1827,59 @@ MonoBehaviour:
   fadeOutDuration: 0.3
   morningDuration: 0.45
   fadeInDuration: 0.35
+--- !u!114 &511175218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 511175214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e7a5668e58c8a64089497c706c7ae7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameSaveSystem
+  gameDay: {fileID: 511175215}
+  sleepTransition: {fileID: 511175217}
+  inventory: {fileID: 1739143746}
+  quickbar: {fileID: 1739143745}
+  mission: {fileID: 1739143747}
+  items:
+  - id: 3208e0eca67ee604c9647d55200a0494
+    item: {fileID: 11400000, guid: 3208e0eca67ee604c9647d55200a0494, type: 2}
+  - id: 38a0a5a364aa32440b722f92566d4c39
+    item: {fileID: 11400000, guid: 38a0a5a364aa32440b722f92566d4c39, type: 2}
+  - id: d48ee8a945ecf1740a8a626dd4419e73
+    item: {fileID: 11400000, guid: d48ee8a945ecf1740a8a626dd4419e73, type: 2}
+  - id: db6ade421cff36a4bba064297d3d7b0c
+    item: {fileID: 11400000, guid: db6ade421cff36a4bba064297d3d7b0c, type: 2}
+  - id: 1e2c5eab0a402694c9dc3c0d4c221243
+    item: {fileID: 11400000, guid: 1e2c5eab0a402694c9dc3c0d4c221243, type: 2}
+  - id: 3eb5070756636484aae8cb58c609a9ba
+    item: {fileID: 11400000, guid: 3eb5070756636484aae8cb58c609a9ba, type: 2}
+  - id: 6828dd67bdaffe248808311157da149b
+    item: {fileID: 11400000, guid: 6828dd67bdaffe248808311157da149b, type: 2}
+  - id: 53d28924864b3ff4aaea70d34c4c8007
+    item: {fileID: 11400000, guid: 53d28924864b3ff4aaea70d34c4c8007, type: 2}
+  - id: 04b7e52770bc94740a80ac6c0d3b37f7
+    item: {fileID: 11400000, guid: 04b7e52770bc94740a80ac6c0d3b37f7, type: 2}
+  plots:
+  - id: plot-01
+    plot: {fileID: 651528383}
+  - id: plot-02
+    plot: {fileID: 1791851955}
+  - id: plot-03
+    plot: {fileID: 1455621786}
+  chickens:
+  - id: chicken-01
+    chicken: {fileID: 1693841196}
+  - id: chicken-02
+    chicken: {fileID: 1363292575}
+  cows:
+  - id: cow-01
+    cow: {fileID: 1535695335}
+  - id: cow-02
+    cow: {fileID: 1065923120}
 --- !u!1 &512307968
 GameObject:
   m_ObjectHideFlags: 0

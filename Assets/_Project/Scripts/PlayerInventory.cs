@@ -19,6 +19,21 @@ public sealed class PlayerInventory : MonoBehaviour
 
     private void Awake() => Initialize();
 
+    public Dictionary<ItemDefinition, int> CaptureQuantities()
+    {
+        Initialize();
+        return new Dictionary<ItemDefinition, int>(quantities);
+    }
+
+    public void RestoreQuantities(System.Collections.Generic.IDictionary<ItemDefinition, int> saved)
+    {
+        initialized = true;
+        quantities.Clear();
+        foreach (var entry in saved)
+            if (entry.Value > 0) quantities.Add(entry.Key, entry.Value);
+        Changed?.Invoke();
+    }
+
     private void Initialize()
     {
         if (initialized) return;

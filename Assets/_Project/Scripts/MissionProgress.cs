@@ -25,6 +25,29 @@ public sealed class MissionProgress : MonoBehaviour
     public bool M03Completed { get; private set; }
     public int MilkCollected { get; private set; }
     public bool PrologueCompleted { get; private set; }
+    public bool SaveReferencesValid => chickenArea != null && cowArea != null;
+
+    public GameSaveData.MissionState CaptureState() => new GameSaveData.MissionState
+    {
+        stage = PrologueCompleted ? 5 : M03Completed ? 4 : M02Completed ? 3 : M01Completed ? 2 : 1,
+        wheatHarvested = WheatHarvested, eggsCollected = EggsCollected,
+        cornHarvested = CornHarvested, milkCollected = MilkCollected,
+        m01CompletedAndRewarded = M01Completed, m02CompletedAndRewarded = M02Completed,
+        m03CompletedAndRewarded = M03Completed, prologueCompleted = PrologueCompleted,
+        chickenUnlocked = chickenArea.activeSelf, cowUnlocked = cowArea.activeSelf
+    };
+
+    // Restore flags and visibility directly: completion/reward methods must not run here.
+    public void RestoreState(GameSaveData.MissionState saved)
+    {
+        WheatHarvested = saved.wheatHarvested; EggsCollected = saved.eggsCollected;
+        CornHarvested = saved.cornHarvested; MilkCollected = saved.milkCollected;
+        M01Completed = saved.m01CompletedAndRewarded; M02Completed = saved.m02CompletedAndRewarded;
+        M03Completed = saved.m03CompletedAndRewarded; PrologueCompleted = saved.prologueCompleted;
+        chickenArea.SetActive(saved.chickenUnlocked);
+        cowArea.SetActive(saved.cowUnlocked);
+        Refresh();
+    }
     public string CurrentMissionText => PrologueCompleted ? "프롤로그 완료" :
         M03Completed ? $"현재 미션: 우유 수집 {MilkCollected} / 4" :
         M02Completed ? $"현재 미션: 옥수수 수확 {CornHarvested} / 9" : M01Completed

@@ -11,6 +11,18 @@ public sealed class ChickenFeeding : Interactable
     private bool feeding;
     public bool FedToday => gameDay != null && fedDay == gameDay.CurrentDay;
 
+    public bool SaveReferencesValid => gameDay != null && egg != null;
+    public GameSaveData.ChickenState CaptureState(string id) => new GameSaveData.ChickenState
+    {
+        id = id, fedToday = FedToday, eggAvailable = egg != null && egg.IsAvailable
+    };
+
+    public void RestoreState(GameSaveData.ChickenState saved)
+    {
+        fedDay = saved.fedToday ? gameDay.CurrentDay : -1;
+        egg.RestoreAvailability(saved.eggAvailable);
+    }
+
     private void OnEnable()
     {
         if (gameDay != null) gameDay.DayChanged += OnDayChanged;

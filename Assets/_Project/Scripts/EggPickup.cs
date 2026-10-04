@@ -9,6 +9,12 @@ public sealed class EggPickup : Interactable
     private bool collecting;
     public bool IsAvailable => available;
 
+    public void RestoreAvailability(bool saved)
+    {
+        available = saved;
+        gameObject.SetActive(saved);
+    }
+
     // Temporary production rule: retain at most one uncollected egg per chicken.
     public bool Produce()
     {

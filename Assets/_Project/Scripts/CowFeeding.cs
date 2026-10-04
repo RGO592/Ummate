@@ -13,6 +13,18 @@ public sealed class CowFeeding : Interactable
     public bool FedToday => gameDay != null && fedDay == gameDay.CurrentDay;
     public bool MilkReady { get; private set; }
 
+    public bool SaveReferencesValid => gameDay != null;
+    public GameSaveData.CowState CaptureState(string id) => new GameSaveData.CowState
+    {
+        id = id, fedToday = FedToday, milkReady = MilkReady
+    };
+
+    public void RestoreState(GameSaveData.CowState saved)
+    {
+        fedDay = saved.fedToday ? gameDay.CurrentDay : -1;
+        MilkReady = saved.milkReady;
+    }
+
     private void OnEnable()
     {
         if (gameDay != null) gameDay.DayChanged += OnDayChanged;
