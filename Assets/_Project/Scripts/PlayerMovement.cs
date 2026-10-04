@@ -8,6 +8,8 @@ public sealed class PlayerMovement : MonoBehaviour
     [SerializeField, Min(0f)] private float moveSpeed = 5f;
     [SerializeField, Min(0f), Tooltip("Turning speed in degrees per second.")]
     private float rotationSpeed = 540f;
+    [SerializeField, Tooltip("Visual yaw correction in degrees. Use 90 when the model faces Visual -X.")]
+    private float modelFacingOffset = 90f;
 
     private Rigidbody body;
     private Vector2 moveInput;
@@ -62,7 +64,9 @@ public sealed class PlayerMovement : MonoBehaviour
         if (visual == null || moveInput.sqrMagnitude < 0.0001f || facingDirection.sqrMagnitude < 0.0001f)
             return;
 
-        Quaternion targetRotation = Quaternion.LookRotation(facingDirection, Vector3.up);
+        // Align the model's actual front with movement while preserving its local rotation.
+        Quaternion targetRotation = Quaternion.LookRotation(facingDirection, Vector3.up)
+            * Quaternion.Euler(0f, modelFacingOffset, 0f);
         visual.rotation = Quaternion.RotateTowards(
             visual.rotation, targetRotation, rotationSpeed * Time.deltaTime);
     }
