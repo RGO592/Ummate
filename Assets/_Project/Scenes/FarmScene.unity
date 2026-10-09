@@ -3315,6 +3315,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c220258fe69d1ed4e9d70c2eb0e2851b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1693841196}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c220258fe69d1ed4e9d70c2eb0e2851b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1693841198}
   m_SourcePrefab: {fileID: 100100000, guid: c220258fe69d1ed4e9d70c2eb0e2851b, type: 3}
 --- !u!1 &327894224
 GameObject:
@@ -8677,6 +8680,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 75a854ccd149edd479c596e1c5615900, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1535695335}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 75a854ccd149edd479c596e1c5615900, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1535695337}
   m_SourcePrefab: {fileID: 100100000, guid: 75a854ccd149edd479c596e1c5615900, type: 3}
 --- !u!1 &977161900
 GameObject:
@@ -9261,6 +9267,7 @@ GameObject:
   - component: {fileID: 1065923119}
   - component: {fileID: 1065923121}
   - component: {fileID: 1065923120}
+  - component: {fileID: 1065923122}
   m_Layer: 0
   m_Name: Cow_02
   m_TagString: Untagged
@@ -9323,6 +9330,28 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 4.788498, y: 3.0091062, z: 2.042696}
   m_Center: {x: -0.28533363, y: -0.26690936, z: 0.00000011920929}
+--- !u!114 &1065923122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1065923118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9962275b58a9d8049b29993a3a8265e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimalWander
+  movementArea: {fileID: 10507223}
+  moveSpeed: 0.4
+  minWaitTime: 2
+  maxWaitTime: 4
+  stoppingDistance: 0.15
+  facingOffset: 90
+  turnSpeed: 90
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1079099204
 GameObject:
   m_ObjectHideFlags: 0
@@ -11217,6 +11246,7 @@ GameObject:
   - component: {fileID: 1363292573}
   - component: {fileID: 1363292576}
   - component: {fileID: 1363292575}
+  - component: {fileID: 1363292577}
   m_Layer: 0
   m_Name: Chicken_02
   m_TagString: Untagged
@@ -11335,6 +11365,28 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.04878867, y: 0.022793388, z: 0.046123743}
   m_Center: {x: -0.0020716432, y: 0, z: 0.009529173}
+--- !u!114 &1363292577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1363292571}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9962275b58a9d8049b29993a3a8265e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimalWander
+  movementArea: {fileID: 625061240}
+  moveSpeed: 0.7
+  minWaitTime: 1
+  maxWaitTime: 3
+  stoppingDistance: 0.15
+  facingOffset: 90
+  turnSpeed: 150
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1364915808
 GameObject:
   m_ObjectHideFlags: 0
@@ -12382,6 +12434,28 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 4.788498, y: 3.0091062, z: 2.042696}
   m_Center: {x: -0.28533363, y: -0.26690936, z: 0.00000011920929}
+--- !u!114 &1535695337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535695334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9962275b58a9d8049b29993a3a8265e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimalWander
+  movementArea: {fileID: 10507223}
+  moveSpeed: 0.4
+  minWaitTime: 2
+  maxWaitTime: 4
+  stoppingDistance: 0.15
+  facingOffset: 90
+  turnSpeed: 90
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1546690407
 GameObject:
   m_ObjectHideFlags: 0
@@ -12920,6 +12994,28 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.04878867, y: 0.022793388, z: 0.046123743}
   m_Center: {x: -0.0020716432, y: 0, z: 0.009529173}
+--- !u!114 &1693841198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1693841192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9962275b58a9d8049b29993a3a8265e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimalWander
+  movementArea: {fileID: 625061240}
+  moveSpeed: 0.7
+  minWaitTime: 1
+  maxWaitTime: 3
+  stoppingDistance: 0.15
+  facingOffset: 90
+  turnSpeed: 150
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &1733276501
 GameObject:
   m_ObjectHideFlags: 0
