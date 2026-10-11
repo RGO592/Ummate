@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Disable this component in the Inspector to remove the cube from G interaction targets.
+// Disable this component in the Inspector to remove the cube from F interaction targets.
 [DisallowMultipleComponent]
 public sealed class MissionDebugInteractable : Interactable
 {
@@ -25,3 +25,4 @@ public sealed class MissionDebugInteractable : Interactable
 #endif
     }
 }
+

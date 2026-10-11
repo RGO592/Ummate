@@ -24,6 +24,7 @@ public sealed class DayTestUI : MonoBehaviour
     private void Refresh()
     {
         if (gameDay != null && label != null)
-            label.text = $"현재 {gameDay.CurrentDay}일차\n집 문 근처에서 G: 취침";
+            label.text = $"현재 {gameDay.CurrentDay}일차\n집 문 근처에서 F: 취침";
     }
 }
+

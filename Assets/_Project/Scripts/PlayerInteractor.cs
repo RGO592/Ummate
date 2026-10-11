@@ -9,7 +9,7 @@ public sealed class PlayerInteractor : MonoBehaviour
     private void Update()
     {
         Keyboard keyboard = Keyboard.current;
-        if (Application.isFocused && keyboard != null && keyboard.gKey.wasPressedThisFrame)
+        if (Application.isFocused && keyboard != null && keyboard.fKey.wasPressedThisFrame)
             TryInteract();
     }
 
@@ -28,6 +28,9 @@ public sealed class PlayerInteractor : MonoBehaviour
                 continue;
 
             Interactable interactable = candidate.GetComponentInParent<Interactable>();
+            // The larger safety volume is not an interaction target.
+            if (interactable is FenceGateInteractable gate && candidate == gate.PassageTrigger)
+                continue;
             if (interactable == null || !interactable.isActiveAndEnabled ||
                 interactable.transform.IsChildOf(transform))
                 continue;
