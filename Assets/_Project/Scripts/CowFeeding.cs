@@ -1,12 +1,14 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class CowFeeding : Interactable
+public sealed class CowFeeding : Interactable, IAnimalFeedStatus
 {
     [SerializeField] private GameDay gameDay;
     [SerializeField] private ItemDefinition corn;
     [SerializeField] private ItemDefinition bucket;
     [SerializeField] private ItemDefinition milk;
+
+    public event System.Action<FeedReaction> FeedReacted;
 
     private int fedDay = -1;
     private bool interacting;
@@ -80,6 +82,7 @@ public sealed class CowFeeding : Interactable
             }
             if (FedToday)
             {
+                FeedReacted?.Invoke(FeedReaction.AlreadyFull);
                 Log("오늘은 이미 옥수수를 먹었습니다. 추가로 소비하지 않습니다.");
                 return;
             }
@@ -89,6 +92,7 @@ public sealed class CowFeeding : Interactable
                 return;
             }
             fedDay = gameDay.CurrentDay;
+            FeedReacted?.Invoke(FeedReaction.Fed);
             Log($"{fedDay}일차 급여 완료: 옥수수 2개 소비. 다음 날 아침 우유를 생산합니다.");
         }
         finally { interacting = false; }

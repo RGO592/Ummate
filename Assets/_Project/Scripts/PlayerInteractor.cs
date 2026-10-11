@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public sealed class PlayerInteractor : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float interactionDistance = 2f;
+    public float InteractionDistance => Mathf.Max(0f, interactionDistance);
 
     private void Update()
     {

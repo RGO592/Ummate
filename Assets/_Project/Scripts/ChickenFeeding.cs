@@ -1,11 +1,13 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class ChickenFeeding : Interactable
+public sealed class ChickenFeeding : Interactable, IAnimalFeedStatus
 {
     [SerializeField] private GameDay gameDay;
     [SerializeField] private ItemDefinition wheat;
     [SerializeField] private EggPickup egg;
+
+    public event System.Action<FeedReaction> FeedReacted;
 
     private int fedDay = -1;
     private bool feeding;
@@ -43,6 +45,8 @@ public sealed class ChickenFeeding : Interactable
         }
         if (FedToday)
         {
+            if (interactor.GetComponent<PlayerQuickbar>()?.SelectedItem == wheat)
+                FeedReacted?.Invoke(FeedReaction.AlreadyFull);
             Log("오늘은 이미 밀을 먹었습니다. 추가로 소비하지 않습니다.");
             return;
         }
@@ -63,6 +67,7 @@ public sealed class ChickenFeeding : Interactable
                 return;
             }
             fedDay = gameDay.CurrentDay;
+            FeedReacted?.Invoke(FeedReaction.Fed);
             Log($"{fedDay}일차 급여 완료: 밀 1개 소비. 다음 날 아침 달걀을 생산합니다.");
         }
         finally { feeding = false; }
