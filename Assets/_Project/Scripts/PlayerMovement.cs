@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public sealed class PlayerMovement : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float moveSpeed = 5f;
+    [SerializeField, Min(0f)] private float runSpeed = 8f;
     [SerializeField, Min(0f), Tooltip("Turning speed in degrees per second.")]
     private float rotationSpeed = 540f;
     [SerializeField, Tooltip("Visual yaw correction in degrees. Use 90 when the model faces Visual -X.")]
@@ -13,6 +14,7 @@ public sealed class PlayerMovement : MonoBehaviour
 
     private Rigidbody body;
     private Vector2 moveInput;
+    private bool runHeld;
     private Transform movementCamera;
     private Transform visual;
     private Vector3 facingDirection;
@@ -27,12 +29,14 @@ public sealed class PlayerMovement : MonoBehaviour
     {
         Keyboard keyboard = Keyboard.current;
         moveInput = Vector2.zero;
+        runHeld = false;
         if (keyboard == null || !Application.isFocused)
             return;
 
         float x = (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f);
         float z = (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f);
         moveInput = Vector2.ClampMagnitude(new Vector2(x, z), 1f);
+        runHeld = keyboard.leftShiftKey.isPressed;
     }
 
     private void FixedUpdate()
@@ -42,8 +46,9 @@ public sealed class PlayerMovement : MonoBehaviour
             movementCamera = Camera.main.transform;
         Vector3 moveDirection = CalculateMoveDirection(moveInput, movementCamera);
         Vector3 velocity = body.linearVelocity;
-        velocity.x = moveDirection.x * moveSpeed;
-        velocity.z = moveDirection.z * moveSpeed;
+        float speed = runHeld ? runSpeed : moveSpeed;
+        velocity.x = moveDirection.x * speed;
+        velocity.z = moveDirection.z * speed;
         body.linearVelocity = velocity;
 
         facingDirection = moveDirection;

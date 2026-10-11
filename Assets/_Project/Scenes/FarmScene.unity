@@ -7461,7 +7461,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.9799995, y: 4, z: 4.18}
+  m_Size: {x: 3.9799995, y: 4, z: 3.063308}
   m_Center: {x: 0, y: 1.5, z: 0}
 --- !u!1 &613879499
 GameObject:
@@ -13403,9 +13403,10 @@ MonoBehaviour:
   rightDoor: {fileID: 89830266}
   openAngle: 90
   openSpeed: 240
+  closeSpeed: 480
   openDirection: -1
   passageTrigger: {fileID: 609516203}
-  autoCloseDelay: 0.5
+  autoCloseDelay: 0.15
 --- !u!1 &1171493794
 GameObject:
   m_ObjectHideFlags: 0
@@ -18507,6 +18508,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   moveSpeed: 5
+  runSpeed: 8
   rotationSpeed: 270
   modelFacingOffset: 90
 --- !u!54 &1739143743
@@ -20635,9 +20637,10 @@ MonoBehaviour:
   rightDoor: {fileID: 1359870775}
   openAngle: 90
   openSpeed: 240
+  closeSpeed: 480
   openDirection: -1
   passageTrigger: {fileID: 1934699866}
-  autoCloseDelay: 0.5
+  autoCloseDelay: 0.15
 --- !u!1 &1931631283
 GameObject:
   m_ObjectHideFlags: 0
@@ -20801,7 +20804,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.38, y: 4, z: 4.5800004}
+  m_Size: {x: 4.38, y: 4, z: 3.4629154}
   m_Center: {x: 0, y: 1.5, z: 0}
 --- !u!1 &1951523304
 GameObject:

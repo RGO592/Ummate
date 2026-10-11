@@ -7,10 +7,13 @@ public sealed class FenceGateInteractable : Interactable
     [SerializeField] private Transform rightDoor;
     [SerializeField, Range(0f, 180f)] private float openAngle = 90f;
     [SerializeField, Min(1f)] private float openSpeed = 240f;
-    [SerializeField] private int openDirection = -1;
+    [SerializeField, Min(1f)] private float closeSpeed = 480f;
+    [SerializeField, Tooltip("Fallback direction only when the player is on the gate plane or unavailable.")]
+    private int openDirection = -1;
+    private float activeOpenDirection;
     [Header("Safe Auto Close")]
     [SerializeField] private BoxCollider passageTrigger;
-    [SerializeField, Min(0f)] private float autoCloseDelay = 0.5f;
+    [SerializeField, Min(0f)] private float autoCloseDelay = 0.15f;
 
     private Quaternion leftClosed, rightClosed;
     private bool isOpen, enteredPassage, crossedPassage, manualCloseRequested;
@@ -23,6 +26,7 @@ public sealed class FenceGateInteractable : Interactable
 
     private void Awake()
     {
+        activeOpenDirection = openDirection >= 0 ? 1f : -1f;
         if (leftDoor != null) leftClosed = leftDoor.localRotation;
         if (rightDoor != null) rightClosed = rightDoor.localRotation;
     }
@@ -48,6 +52,13 @@ public sealed class FenceGateInteractable : Interactable
         var player = interactor != null ? interactor.GetComponentInParent<PlayerInteractor>() : null;
         trackedPlayer = player != null ? player.transform : null;
         entrySide = PlayerSide();
+        // Positive left-leaf yaw swings its +X tip toward -Z. Thus a player
+        // on +Z requires positive yaw, and a player on -Z requires negative yaw.
+        Vector3 center = leftDoor != null && rightDoor != null
+            ? (leftDoor.position + rightDoor.position) * 0.5f : transform.position;
+        float side = trackedPlayer != null
+            ? Vector3.Dot(trackedPlayer.position - center, transform.forward) : 0f;
+        activeOpenDirection = Mathf.Abs(side) > 0.05f ? Mathf.Sign(side) : (openDirection >= 0 ? 1f : -1f);
     }
 
     private int PlayerSide()
@@ -117,7 +128,8 @@ public sealed class FenceGateInteractable : Interactable
         }
         // Pause a closing leaf if an actor enters the safety area mid-swing.
         if (!isOpen && blocked) return;
-        float angle = openAngle * Mathf.Sign(openDirection);
+        // Keep the direction chosen at opening until this open/close cycle ends.
+        float angle = openAngle * activeOpenDirection;
         Swing(leftDoor, leftClosed, angle);
         Swing(rightDoor, rightClosed, -angle);
     }
@@ -126,6 +138,6 @@ public sealed class FenceGateInteractable : Interactable
     {
         if (door == null) return;
         Quaternion target = isOpen ? closed * Quaternion.Euler(0f, angle, 0f) : closed;
-        door.localRotation = Quaternion.RotateTowards(door.localRotation, target, openSpeed * Time.deltaTime);
+        door.localRotation = Quaternion.RotateTowards(door.localRotation, target, (isOpen ? openSpeed : closeSpeed) * Time.deltaTime);
     }
 }
