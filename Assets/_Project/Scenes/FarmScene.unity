@@ -974,7 +974,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &76548838
 RectTransform:
   m_ObjectHideFlags: 0
@@ -992,7 +992,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 40, y: 40}
+  m_SizeDelta: {x: 90, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &76548839
 MonoBehaviour:
@@ -1014,7 +1014,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: a4c06a68fd025034caa8a0603bb7690d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1548,7 +1548,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f97a384a27e83474c8059348d6934a7a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4784bbea47cd67e4aaa8853871521539, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1557,7 +1557,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 3
+  m_PixelsPerUnitMultiplier: 4
 --- !u!222 &113965513
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2622,7 +2622,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &190344681
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4057,7 +4057,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &276316485
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4075,7 +4075,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 40, y: 40}
+  m_SizeDelta: {x: 90, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &276316486
 MonoBehaviour:
@@ -4097,7 +4097,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: fbcca5fc18dbd644f9141233d8cd807d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -7422,7 +7422,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &523512850
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9325,7 +9325,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &626832480
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10021,9 +10021,9 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 0
+  m_TextWrappingMode: 1
   m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
+  m_overflowMode: 3
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
@@ -10043,7 +10043,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 4, y: 2, z: 4, w: 2}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -10166,22 +10166,24 @@ MonoBehaviour:
   bubbleCanvas: {fileID: 678711726}
   statusText: {fileID: 190344682}
   statusIcon: {fileID: 900897773}
+  statusBackground: {fileID: 678711724}
+  iconsIncludeBackground: 1
   heightOffset: 0.08
   displayDistance: 9
   reactionDuration: 1.5
   moods:
   - mood: 0
     text: "\uBC30\uACE0\uD514"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: a4c06a68fd025034caa8a0603bb7690d, type: 3}
   - mood: 1
     text: "\uD589\uBCF5\uD568"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1c2717de5ad9bc04dafc648c06b5d207, type: 3}
   - mood: 2
     text: "\uBC30\uBD80\uB984"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1c2717de5ad9bc04dafc648c06b5d207, type: 3}
   - mood: 3
     text: "\uC2EB\uC5B4\uD568"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 66d1b555054c63843a5cc15b09ad55b2, type: 3}
 --- !u!114 &678711724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10189,7 +10191,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 678711721}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -10648,7 +10650,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f97a384a27e83474c8059348d6934a7a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4784bbea47cd67e4aaa8853871521539, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -10657,7 +10659,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 3
+  m_PixelsPerUnitMultiplier: 4
 --- !u!222 &742334818
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -12358,7 +12360,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &900897772
 RectTransform:
   m_ObjectHideFlags: 0
@@ -12376,7 +12378,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 40, y: 40}
+  m_SizeDelta: {x: 90, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &900897773
 MonoBehaviour:
@@ -12398,7 +12400,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: a4c06a68fd025034caa8a0603bb7690d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -12490,7 +12492,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f97a384a27e83474c8059348d6934a7a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4784bbea47cd67e4aaa8853871521539, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -12499,7 +12501,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 3
+  m_PixelsPerUnitMultiplier: 4
 --- !u!222 &908321959
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16632,7 +16634,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1293170327
 RectTransform:
   m_ObjectHideFlags: 0
@@ -16650,7 +16652,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 40, y: 40}
+  m_SizeDelta: {x: 90, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1293170328
 MonoBehaviour:
@@ -16672,7 +16674,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: fbcca5fc18dbd644f9141233d8cd807d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -18917,22 +18919,24 @@ MonoBehaviour:
   bubbleCanvas: {fileID: 1478451725}
   statusText: {fileID: 523512851}
   statusIcon: {fileID: 1293170328}
+  statusBackground: {fileID: 1478451723}
+  iconsIncludeBackground: 1
   heightOffset: 0.1
   displayDistance: 9
   reactionDuration: 1.5
   moods:
   - mood: 0
     text: "\uBC30\uACE0\uD514"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: fbcca5fc18dbd644f9141233d8cd807d, type: 3}
   - mood: 1
     text: "\uD589\uBCF5\uD568"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1c2717de5ad9bc04dafc648c06b5d207, type: 3}
   - mood: 2
     text: "\uBC30\uBD80\uB984"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1c2717de5ad9bc04dafc648c06b5d207, type: 3}
   - mood: 3
     text: "\uC2EB\uC5B4\uD568"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 66d1b555054c63843a5cc15b09ad55b2, type: 3}
 --- !u!114 &1478451723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18940,7 +18944,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1478451720}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -22826,22 +22830,24 @@ MonoBehaviour:
   bubbleCanvas: {fileID: 1831053878}
   statusText: {fileID: 626832481}
   statusIcon: {fileID: 76548839}
+  statusBackground: {fileID: 1831053876}
+  iconsIncludeBackground: 1
   heightOffset: 0.08
   displayDistance: 9
   reactionDuration: 1.5
   moods:
   - mood: 0
     text: "\uBC30\uACE0\uD514"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: a4c06a68fd025034caa8a0603bb7690d, type: 3}
   - mood: 1
     text: "\uD589\uBCF5\uD568"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1c2717de5ad9bc04dafc648c06b5d207, type: 3}
   - mood: 2
     text: "\uBC30\uBD80\uB984"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1c2717de5ad9bc04dafc648c06b5d207, type: 3}
   - mood: 3
     text: "\uC2EB\uC5B4\uD568"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 66d1b555054c63843a5cc15b09ad55b2, type: 3}
 --- !u!114 &1831053876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22849,7 +22855,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1831053873}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -24451,7 +24457,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1969639775
 RectTransform:
   m_ObjectHideFlags: 0
@@ -26284,22 +26290,24 @@ MonoBehaviour:
   bubbleCanvas: {fileID: 2082455541}
   statusText: {fileID: 1969639776}
   statusIcon: {fileID: 276316486}
+  statusBackground: {fileID: 2082455539}
+  iconsIncludeBackground: 1
   heightOffset: 0.1
   displayDistance: 9
   reactionDuration: 1.5
   moods:
   - mood: 0
     text: "\uBC30\uACE0\uD514"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: fbcca5fc18dbd644f9141233d8cd807d, type: 3}
   - mood: 1
     text: "\uD589\uBCF5\uD568"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1c2717de5ad9bc04dafc648c06b5d207, type: 3}
   - mood: 2
     text: "\uBC30\uBD80\uB984"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 1c2717de5ad9bc04dafc648c06b5d207, type: 3}
   - mood: 3
     text: "\uC2EB\uC5B4\uD568"
-    sprite: {fileID: 0}
+    sprite: {fileID: 21300000, guid: 66d1b555054c63843a5cc15b09ad55b2, type: 3}
 --- !u!114 &2082455539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26307,7 +26315,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2082455536}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 

@@ -23,6 +23,9 @@ public sealed class AnimalStatusBubble : MonoBehaviour
     [SerializeField] private Canvas bubbleCanvas;
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private UnityEngine.UI.Image statusIcon;
+    [SerializeField] private UnityEngine.UI.Image statusBackground;
+    [SerializeField, Tooltip("Hide the separate background when the assigned icon already includes its own frame.")]
+    private bool iconsIncludeBackground;
     [SerializeField, Min(0)] private float heightOffset = 0.35f;
     [SerializeField, Min(0)] private float displayDistance = 9f;
     [SerializeField, Min(0)] private float reactionDuration = 1.5f;
@@ -73,6 +76,7 @@ public sealed class AnimalStatusBubble : MonoBehaviour
             MoodView entry = Array.Find(moods, m => m != null && m.mood == CurrentMood);
             bool useIcon = entry != null && entry.sprite != null;
             if (statusIcon != null) { statusIcon.sprite = entry?.sprite; statusIcon.gameObject.SetActive(useIcon); }
+            if (statusBackground != null) statusBackground.enabled = !useIcon || !iconsIncludeBackground;
             if (statusText != null) { statusText.text = entry?.text ?? CurrentMood.ToString(); statusText.gameObject.SetActive(!useIcon); }
         }
         if (viewCamera == null) viewCamera = Camera.main;
