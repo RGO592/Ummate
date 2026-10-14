@@ -23,6 +23,8 @@ public sealed class GuideTooltip : MonoBehaviour
     [SerializeField] private TMP_Text developerLabel;
     [SerializeField, Min(1)] private float charactersPerSecond = 35f;
     [SerializeField, Min(0.05f)] private float refreshInterval = 0.18f;
+    [SerializeField] private float mainTextOffset = 0f;
+    [SerializeField] private float developerMainTextOffset = 18f;
     private float nextRefresh, visibleCharacters;
     private string displayedMessage;
     public GuideStep CurrentStep { get; private set; }
@@ -139,7 +141,7 @@ public sealed class GuideTooltip : MonoBehaviour
     private void UpdateDeveloperView()
     {
         if (mainTextArea != null)
-            mainTextArea.anchoredPosition = new Vector2(0f, DeveloperMode ? 18f : 0f);
+            mainTextArea.anchoredPosition = new Vector2(0f, DeveloperMode ? developerMainTextOffset : mainTextOffset);
         if (subTextArea != null) subTextArea.gameObject.SetActive(DeveloperMode);
         if (subText != null)
         {

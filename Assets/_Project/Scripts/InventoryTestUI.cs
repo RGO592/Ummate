@@ -24,6 +24,7 @@ public sealed class InventoryTestUI : MonoBehaviour
     [SerializeField] private bool showDebugUI = false;
     [Header("Quickbar Appearance")]
     [SerializeField] private SlotView[] slotViews;
+    [SerializeField] private QuickbarIconSet iconSet;
     [SerializeField] private Sprite normalSlotSprite;
     [SerializeField] private Sprite selectedSlotSprite;
     [SerializeField] private Image barBackground;
@@ -113,13 +114,16 @@ public sealed class InventoryTestUI : MonoBehaviour
                 slotLabels[i].text = view != null ? (item != null ? item.DisplayName : "빈 슬롯")
                     : $"[{(i + 1) % 10}]\n{(item != null ? item.DisplayName : "빈 슬롯")}\n{inventory.GetQuantity(item)}";
             if (view == null) continue;
+            Sprite itemSprite = iconSet != null ? iconSet.GetIcon(item) : view.itemIcon;
+            if (slotLabels != null && i < slotLabels.Length && slotLabels[i] != null)
+                slotLabels[i].enabled = item == null || itemSprite == null;
             if (view.background != null) view.background.sprite = selected ? selectedSlotSprite : normalSlotSprite;
             if (view.keyText != null) view.keyText.text = ((i + 1) % 10).ToString();
             if (view.quantityText != null) view.quantityText.text = inventory.GetQuantity(item).ToString();
             if (view.icon != null)
             {
-                view.icon.sprite = view.itemIcon;
-                view.icon.enabled = item != null && view.itemIcon != null;
+                view.icon.sprite = itemSprite;
+                view.icon.enabled = item != null && itemSprite != null;
             }
             if (!selectionChanged || view.visual == null) continue;
             // Capture the current pose so rapid key changes do not snap or restart from neutral.
