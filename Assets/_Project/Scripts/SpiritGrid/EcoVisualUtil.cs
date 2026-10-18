@@ -23,11 +23,31 @@ public static class EcoVisualUtil
     {
         GameObject go = GameObject.CreatePrimitive(type);
         go.name = name;
-        if (!keepCollider) Object.Destroy(go.GetComponent<Collider>());
+        if (!keepCollider)
+        {
+            Collider collider = go.GetComponent<Collider>();
+            collider.enabled = false;
+            Object.Destroy(collider);
+        }
         go.transform.SetParent(parent, false);
         go.transform.localPosition = localPosition;
         go.transform.localScale = localScale;
         Paint(go.GetComponent<Renderer>(), color);
+        return go;
+    }
+
+    // A zero-thickness plane; never a physical platform. Uses a shared material plus per-view tint.
+    public static GameObject Surface(Transform parent, string name, float x0, float z0, float x1, float z1,
+        float y, Color color, Material material)
+    {
+        GameObject go = Primitive(PrimitiveType.Quad, parent, name,
+            new Vector3((x0 + x1) * 0.5f, y, (z0 + z1) * 0.5f),
+            new Vector3(x1 - x0, z1 - z0, 1f), color);
+        go.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        Renderer renderer = go.GetComponent<Renderer>();
+        if (material != null) renderer.sharedMaterial = material;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
         return go;
     }
 

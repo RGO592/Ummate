@@ -1,43 +1,53 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-// Build-mode input for the eco grid: 1~5 or the build bar select a tile kind, left click places / picks up / drops,
-// right click or Esc cancels, Delete (or Backspace) removes the picked-up tile.
-// Enabled only while build mode is on; disabling hides highlights and cancels the pick.
+// Slots drag new tiles; placed cells drag existing tiles. Only a valid release mutates the grid.
+// X / the remove button keep the existing click-and-sweep removal mode.
 [DisallowMultipleComponent]
 public sealed class EcoPlacementController : MonoBehaviour
 {
     [SerializeField] private EcoGridManager grid;
-    [SerializeField, Tooltip("Empty uses Camera.main.")] private Camera viewCamera;
+    [SerializeField] private EcoBuildAreaView buildArea;
+    [SerializeField] private Camera viewCamera;
     [SerializeField] private EnvironmentTileType selectedType = EnvironmentTileType.Wheat;
 
     [Header("Highlight")]
     [SerializeField] private Color canPlaceColor = new Color(0.3f, 0.95f, 0.35f);
     [SerializeField] private Color blockedColor = new Color(0.95f, 0.25f, 0.2f);
     [SerializeField] private Color pickedColor = new Color(1f, 0.85f, 0.15f);
-    [SerializeField, Range(0.01f, 0.2f), Tooltip("Frame bar width as a fraction of the cell size.")]
-    private float frameThicknessRatio = 0.04f;
-    [SerializeField, Tooltip("Height of the outline frame above the ground.")]
-    private float frameHeight = 0.35f;
+    [SerializeField] private Color removeColor = new Color(1f, 0.35f, 0.1f);
+    [SerializeField, Range(0.002f, 0.04f)] private float frameThicknessRatio = 0.012f;
+    [SerializeField] private float frameHeight = 0.08f;
 
-    private Transform hoverFrame;
-    private Transform pickedFrame;
+    private readonly EcoDragSession drag = new EcoDragSession();
+    private readonly List<RaycastResult> uiHits = new List<RaycastResult>();
+    private EcoBuildSlotDrag slotDragSource;
+    private Transform hoverFrame, pickedFrame;
+    private EcoDragPreview ghost;
+    private readonly List<Renderer> hiddenSourceRenderers = new List<Renderer>();
+    private readonly List<bool> sourceRenderingStates = new List<bool>();
+    private Vector2 pointerScreen;
+    private Vector3 pointerWorld;
+    private bool pointerOverUI;
     private Renderer[] hoverRenderers;
-    private bool hasHover;
+    private bool hasHover, hasPlanePoint, lockedHover;
     private Vector2Int hoverCoord;
-    private bool hasPicked;
-    private Vector2Int pickedCoord;
+    private int consumedFrame = -1;
 
     public EnvironmentTileType SelectedType => selectedType;
+    public bool IsDragging => drag.IsActive;
     public bool HasHover => hasHover;
     public Vector2Int HoverCoord => hoverCoord;
-    public bool HasPicked => hasPicked;
-    public Vector2Int PickedCoord => pickedCoord;
-    public EnvironmentTileType PickedType => hasPicked && grid != null ? grid.GetCell(pickedCoord).TileType : EnvironmentTileType.None;
+    public bool HasPicked => drag.IsActive && drag.IsMoving;
+    public Vector2Int PickedCoord => drag.Source;
+    public EnvironmentTileType PickedType => HasPicked ? drag.Type : EnvironmentTileType.None;
     public bool HoverPlaceable { get; private set; }
+    public bool RemoveMode { get; private set; }
     public string HoverStatus { get; private set; } = "";
     public string LastMessage { get; private set; } = "";
+    private bool InputBlocked => buildArea != null && buildArea.InputBlocked;
 
     private void Awake()
     {
@@ -45,162 +55,314 @@ public sealed class EcoPlacementController : MonoBehaviour
         hoverFrame = CreateFrame("HoverFrame", canPlaceColor);
         pickedFrame = CreateFrame("PickedFrame", pickedColor);
         hoverRenderers = hoverFrame.GetComponentsInChildren<Renderer>(true);
+        HideHighlights();
     }
 
     private void OnDisable()
     {
-        hasPicked = false;
-        hasHover = false;
+        EndIntent();
+        RemoveMode = false;
+        hasHover = hasPlanePoint = lockedHover = false;
         HoverStatus = "";
-        if (hoverFrame != null) hoverFrame.gameObject.SetActive(false);
-        if (pickedFrame != null) pickedFrame.gameObject.SetActive(false);
+        HideHighlights();
     }
+
+    private void OnApplicationFocus(bool focused) { if (!focused) CancelPick(); }
 
     private void Update()
     {
         if (grid == null || viewCamera == null) return;
-        Keyboard keyboard = Keyboard.current;
-        Mouse mouse = Mouse.current;
-        if (keyboard != null) HandleKeyboard(keyboard);
-        UpdateHover(mouse);
-        if (mouse != null && !PointerOverUI())
+        if (InputBlocked)
         {
-            if (mouse.leftButton.wasPressedThisFrame) HandleLeftClick();
-            else if (mouse.rightButton.wasPressedThisFrame) CancelPick();
+            if (drag.IsActive) CancelPick();
+            buildArea.HandleModalKeyboard();
+            hasHover = hasPlanePoint = lockedHover = false;
+            HideHighlights();
+            return;
+        }
+        Mouse mouse = Mouse.current;
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null)
+        {
+            if (keyboard.escapeKey.wasPressedThisFrame) { CancelPick(); SetRemoveMode(false); return; }
+            if (keyboard.xKey.wasPressedThisFrame) { ToggleRemoveMode(); return; }
+            if (keyboard.deleteKey.wasPressedThisFrame || keyboard.backspaceKey.wasPressedThisFrame)
+            { RemovePicked(); return; }
+        }
+        if (mouse == null) { if (drag.IsActive) CancelPick(); HideHighlights(); return; }
+        Vector2 screen = mouse.position.ReadValue();
+        if (mouse.rightButton.wasPressedThisFrame) { CancelPick(); SetRemoveMode(false); return; }
+        if (consumedFrame == Time.frameCount) return;
+
+        UpdatePointer(screen);
+        if (drag.IsActive)
+        {
+            // UI drags end in OnEndDrag. World drags end here, even if released over UI/outside the grid.
+            if (slotDragSource == null && mouse.leftButton.wasReleasedThisFrame) { CompleteDrop(screen); return; }
+            if (slotDragSource == null && !mouse.leftButton.isPressed) { CancelPick(); return; }
+            UpdateHighlights();
+            return;
+        }
+
+        if (!PointerOverUI(screen))
+        {
+            if (lockedHover && mouse.leftButton.wasPressedThisFrame)
+            {
+                buildArea.ShowExpansionPrompt();
+                HideHighlights();
+                return;
+            }
+            if (RemoveMode && mouse.leftButton.isPressed) RemoveHovered();
+            else if (!RemoveMode && hasHover && mouse.leftButton.wasPressedThisFrame)
+            {
+                EcoGridCell cell = grid.GetCell(hoverCoord);
+                if (cell != null && !cell.IsEmpty)
+                {
+                    drag.BeginMove(cell.TileType, hoverCoord);
+                    BeginPreview();
+                    LastMessage = $"{EnvironmentTileTypes.DisplayName(cell.TileType)} 이동: 빈 칸에 놓으세요";
+                    UpdatePointer(screen);
+                }
+                // Empty clicks never place a tile. Placement starts exclusively from a slot drag.
+            }
         }
         UpdateHighlights();
     }
 
-    // UI buttons can call this with 1~5.
+    public bool BeginSlotDrag(EcoBuildSlotDrag source, EnvironmentTileType type, Vector2 screen)
+    {
+        if (!isActiveAndEnabled || InputBlocked || source == null || type == EnvironmentTileType.None) return false;
+        EndIntent();
+        selectedType = type;
+        RemoveMode = false;
+        slotDragSource = source;
+        drag.BeginPlacement(type);
+        BeginPreview();
+        LastMessage = $"{EnvironmentTileTypes.DisplayName(type)} 드래그 중";
+        UpdatePointer(screen);
+        UpdateHighlights();
+        return true;
+    }
+
+    public void UpdateSlotDrag(EcoBuildSlotDrag source, Vector2 screen)
+    {
+        if (source != slotDragSource || !drag.IsActive || !isActiveAndEnabled) return;
+        if (InputBlocked) { CancelPick(); return; }
+        UpdatePointer(screen);
+        UpdateHighlights();
+    }
+
+    public void EndSlotDrag(EcoBuildSlotDrag source, Vector2 screen)
+    {
+        if (source != slotDragSource || !drag.IsActive) return;
+        if (!isActiveAndEnabled || InputBlocked) { CancelPick(); return; }
+        CompleteDrop(screen);
+    }
+
+    public void CancelSlotDrag(EcoBuildSlotDrag source) { if (source == slotDragSource) CancelPick(); }
+
+    private void CompleteDrop(Vector2 screen)
+    {
+        // Always raycast the release position; a cached hover can refer to another cell or the UI.
+        UpdatePointer(screen);
+        bool moving = drag.IsMoving;
+        string name = EnvironmentTileTypes.DisplayName(drag.Type);
+        bool committed;
+        string reason;
+        try { committed = drag.Drop(grid, hasHover && !InputBlocked, hoverCoord, out reason); }
+        finally
+        {
+            ReleasePreview();
+            if (slotDragSource != null) slotDragSource.ReleaseCapture();
+            slotDragSource = null;
+            consumedFrame = Time.frameCount;
+        }
+        LastMessage = committed ? $"{name} {(moving ? "이동" : "배치")}" : $"{(moving ? "이동" : "배치")} 취소: {reason}";
+        HideHighlights();
+    }
+
     public void SelectTypeByIndex(int number)
     {
-        if (number < 1 || number > EnvironmentTileTypes.All.Length) return;
-        SelectType(EnvironmentTileTypes.All[number - 1]);
+        if (number >= 1 && number <= EnvironmentTileTypes.All.Length) SelectType(EnvironmentTileTypes.All[number - 1]);
     }
 
     public void SelectType(EnvironmentTileType type)
     {
-        if (type == EnvironmentTileType.None) return;
+        if (type == EnvironmentTileType.None || drag.IsActive) return;
         selectedType = type;
-        hasPicked = false;   // choosing a new kind returns to placing
-        LastMessage = $"{EnvironmentTileTypes.DisplayName(type)} 선택";
+        RemoveMode = false;
+        LastMessage = $"{EnvironmentTileTypes.DisplayName(type)} 슬롯을 원하는 칸으로 드래그하세요";
     }
 
-    // Build bar button / Delete key: removes the picked-up tile.
     public void RemovePicked()
     {
-        if (!hasPicked) { LastMessage = "제거할 환경물을 먼저 클릭해 선택하세요."; return; }
-        EnvironmentTileType type = grid.GetCell(pickedCoord).TileType;
-        if (grid.TryRemove(pickedCoord, out string reason))
-        {
-            LastMessage = $"{EnvironmentTileTypes.DisplayName(type)} 제거";
-            hasPicked = false;
-        }
-        else LastMessage = reason;
+        if (!HasPicked) return;
+        Vector2Int source = drag.Source;
+        EndIntent();
+        LastMessage = grid.TryRemove(source, out string reason) ? "환경물 제거" : reason;
+        HideHighlights();
     }
 
     public void CancelPick()
     {
-        if (!hasPicked) return;
-        hasPicked = false;
-        LastMessage = "선택을 취소했습니다.";
+        if (drag.IsActive) LastMessage = drag.IsMoving ? "이동 취소: 원래 위치 유지" : "배치를 취소했습니다.";
+        EndIntent();
+        HideHighlights();
     }
 
-    private void HandleKeyboard(Keyboard keyboard)
+    private void EndIntent()
     {
-        if (keyboard.digit1Key.wasPressedThisFrame || keyboard.numpad1Key.wasPressedThisFrame) SelectTypeByIndex(1);
-        else if (keyboard.digit2Key.wasPressedThisFrame || keyboard.numpad2Key.wasPressedThisFrame) SelectTypeByIndex(2);
-        else if (keyboard.digit3Key.wasPressedThisFrame || keyboard.numpad3Key.wasPressedThisFrame) SelectTypeByIndex(3);
-        else if (keyboard.digit4Key.wasPressedThisFrame || keyboard.numpad4Key.wasPressedThisFrame) SelectTypeByIndex(4);
-        else if (keyboard.digit5Key.wasPressedThisFrame || keyboard.numpad5Key.wasPressedThisFrame) SelectTypeByIndex(5);
-        if (keyboard.deleteKey.wasPressedThisFrame || keyboard.backspaceKey.wasPressedThisFrame) RemovePicked();
-        if (keyboard.escapeKey.wasPressedThisFrame) CancelPick();
+        ReleasePreview();
+        drag.Cancel();
+        if (slotDragSource != null) slotDragSource.ReleaseCapture();
+        slotDragSource = null;
+        consumedFrame = Time.frameCount;
     }
 
-    private void HandleLeftClick()
+    public void ToggleRemoveMode() => SetRemoveMode(!RemoveMode);
+
+    public void SetRemoveMode(bool on)
+    {
+        if (RemoveMode == on) return;
+        CancelPick();
+        RemoveMode = on;
+        LastMessage = on ? "철거 모드: 클릭하거나 드래그해서 제거" : "철거 모드 종료";
+    }
+
+    private void RemoveHovered()
     {
         if (!hasHover) return;
         EcoGridCell cell = grid.GetCell(hoverCoord);
-        if (hasPicked)
-        {
-            if (hoverCoord == pickedCoord) { CancelPick(); return; }
-            if (!cell.IsEmpty) { Pick(hoverCoord); return; }   // switch the picked tile
-            EnvironmentTileType moving = grid.GetCell(pickedCoord).TileType;
-            if (grid.TryMove(pickedCoord, hoverCoord, out string moveReason))
-            {
-                hasPicked = false;
-                LastMessage = $"{EnvironmentTileTypes.DisplayName(moving)} 이동";
-            }
-            else LastMessage = moveReason;
-            return;
-        }
-        if (!cell.IsEmpty) { Pick(hoverCoord); return; }
-        if (grid.TryPlace(selectedType, hoverCoord, out string reason))
-            LastMessage = $"{EnvironmentTileTypes.DisplayName(selectedType)} 배치";
-        else LastMessage = reason;
+        if (cell == null || cell.IsEmpty) return;
+        LastMessage = grid.TryRemove(hoverCoord, out string reason) ? "환경물 제거" : reason;
     }
 
-    private void Pick(Vector2Int coord)
+    // Refresh after Update camera panning/zoom too, even if the pointer did not move.
+    private void LateUpdate()
     {
-        hasPicked = true;
-        pickedCoord = coord;
-        LastMessage = $"{EnvironmentTileTypes.DisplayName(grid.GetCell(coord).TileType)} 선택됨";
+        if (!drag.IsActive || viewCamera == null || Mouse.current == null) return;
+        if (InputBlocked) { CancelPick(); return; }
+        UpdatePointer(Mouse.current.position.ReadValue());
+        UpdateHighlights();
     }
 
-    private void UpdateHover(Mouse mouse)
+    private void UpdatePointer(Vector2 screen)
     {
-        hasHover = false;
+        pointerScreen = screen;
+        pointerOverUI = PointerOverUI(screen);
+        hasHover = hasPlanePoint = lockedHover = false;
         HoverPlaceable = false;
-        HoverStatus = "";
-        if (mouse == null || PointerOverUI()) return;
-        Ray ray = viewCamera.ScreenPointToRay(mouse.position.ReadValue());
-        if (!grid.RaycastGrid(ray, out hoverCoord)) return;
-        hasHover = true;
-        string reason = null;
-        if (hasPicked)
+        HoverStatus = drag.IsActive ? "배치 영역 밖 · 놓으면 취소" : "";
+        Ray ray = viewCamera.ScreenPointToRay(screen);
+        var plane = new Plane(grid.GridRoot.up, grid.GridRoot.position);
+        if (plane.Raycast(ray, out float distance))
         {
-            HoverPlaceable = hoverCoord == pickedCoord || grid.CanMove(pickedCoord, hoverCoord, out reason);
-            HoverStatus = hoverCoord == pickedCoord ? "선택된 환경물" : HoverPlaceable ? "여기로 이동" : $"이동 불가: {reason}";
+            hasPlanePoint = true;
+            pointerWorld = ray.GetPoint(distance);
+            // UI blocks dropping, but never stops the carried ghost from following the pointer.
+            bool inside = grid.WorldToGrid(pointerWorld, out hoverCoord);
+            hasHover = !pointerOverUI && inside;
+            lockedHover = !pointerOverUI && !inside && buildArea != null && buildArea.IsLocked(ray);
         }
-        else if (!grid.GetCell(hoverCoord).IsEmpty)
-            HoverStatus = "클릭하면 이동 / 제거할 환경물로 선택";
-        else
+        if (pointerOverUI) { if (drag.IsActive) HoverStatus = "UI 위 · 놓으면 취소"; return; }
+        if (drag.IsActive)
         {
-            HoverPlaceable = grid.CanPlace(selectedType, hoverCoord, out reason);
-            HoverStatus = HoverPlaceable ? "설치 가능" : $"설치 불가: {reason}";
+            HoverPlaceable = drag.CanDrop(grid, hasHover, hoverCoord, out string reason);
+            HoverStatus = HoverPlaceable ? "놓으면 설치 / 이동" : $"불가: {reason} · 놓으면 취소";
         }
+        else if (hasHover)
+        {
+            bool occupied = !grid.GetCell(hoverCoord).IsEmpty;
+            HoverPlaceable = occupied;
+            HoverStatus = RemoveMode ? (occupied ? "클릭 또는 드래그: 제거" : "빈 칸")
+                : occupied ? "드래그해서 이동" : "하단 슬롯을 이 칸으로 드래그하세요";
+        }
+        else HoverStatus = lockedHover ? "잠긴 영역 · 클릭해서 개방 조건 확인" : "";
+    }
+
+    private void BeginPreview()
+    {
+        ReleasePreview();
+        ghost = new EcoDragPreview(grid.GridRoot, drag.Type, grid.CellSize,
+            buildArea != null ? buildArea.OverlayMaterial : null);
+        // Hide only rendering. Cell data, scripts and connection state stay intact until Drop.
+        GameObject source = drag.IsMoving ? grid.GetCell(drag.Source)?.Visual : null;
+        if (source == null) return;
+        foreach (Renderer renderer in source.GetComponentsInChildren<Renderer>(true))
+        {
+            hiddenSourceRenderers.Add(renderer);
+            sourceRenderingStates.Add(renderer.forceRenderingOff);
+            renderer.forceRenderingOff = true;
+        }
+    }
+
+    private void ReleasePreview()
+    {
+        ghost?.Dispose();
+        ghost = null;
+        for (int i = 0; i < hiddenSourceRenderers.Count; i++)
+            if (hiddenSourceRenderers[i] != null) hiddenSourceRenderers[i].forceRenderingOff = sourceRenderingStates[i];
+        hiddenSourceRenderers.Clear();
+        sourceRenderingStates.Clear();
     }
 
     private void UpdateHighlights()
     {
-        bool showHover = hasHover && !(hasPicked && hoverCoord == pickedCoord);
-        hoverFrame.gameObject.SetActive(showHover);
-        if (showHover)
+        bool snap = hasHover || lockedHover;
+        bool show = drag.IsActive ? snap : hasHover && HoverPlaceable;
+        hoverFrame.gameObject.SetActive(show);
+        if (show)
         {
             hoverFrame.position = grid.GridToWorld(hoverCoord);
-            Color color = HoverPlaceable ? canPlaceColor : blockedColor;
-            foreach (Renderer r in hoverRenderers) EcoVisualUtil.Paint(r, color);
+            Color color = drag.IsActive ? (HoverPlaceable ? canPlaceColor : blockedColor)
+                : RemoveMode ? removeColor : pickedColor;
+            foreach (Renderer renderer in hoverRenderers) EcoVisualUtil.Paint(renderer, color);
         }
-        pickedFrame.gameObject.SetActive(hasPicked);
-        if (hasPicked) pickedFrame.position = grid.GridToWorld(pickedCoord);
+        if (drag.IsActive && ghost != null)
+        {
+            bool worldVisible = hasPlanePoint && !pointerOverUI;
+            Vector3 position = snap ? grid.GridToWorld(hoverCoord) : pointerWorld;
+            ghost.Show(pointerScreen, worldVisible, position + grid.GridRoot.up * frameHeight,
+                grid.GridRoot.rotation, HoverPlaceable);
+        }
+        pickedFrame.gameObject.SetActive(HasPicked);
+        if (HasPicked) pickedFrame.position = grid.GridToWorld(drag.Source);
     }
 
-    // Outline frame (four bars) floating above the cell so it stays visible over tiles and water.
+    private void HideHighlights()
+    {
+        if (hoverFrame != null) hoverFrame.gameObject.SetActive(false);
+        if (pickedFrame != null) pickedFrame.gameObject.SetActive(false);
+    }
+
     private Transform CreateFrame(string name, Color color)
     {
-        var pivot = new GameObject(name);
-        pivot.transform.SetParent(grid != null ? grid.GridRoot : transform, false);
-        float half = (grid != null ? grid.CellSize : 1f) * 0.5f;
-        float t = half * 2f * frameThicknessRatio, y0 = frameHeight, y1 = frameHeight + 0.1f;
-        EcoVisualUtil.Box(pivot.transform, "N", new Vector3(-half, y0, half - t), new Vector3(half, y1, half), color);
-        EcoVisualUtil.Box(pivot.transform, "S", new Vector3(-half, y0, -half), new Vector3(half, y1, -half + t), color);
-        EcoVisualUtil.Box(pivot.transform, "E", new Vector3(half - t, y0, -half + t), new Vector3(half, y1, half - t), color);
-        EcoVisualUtil.Box(pivot.transform, "W", new Vector3(-half, y0, -half + t), new Vector3(-half + t, y1, half - t), color);
-        foreach (Renderer r in pivot.GetComponentsInChildren<Renderer>())
-            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        pivot.SetActive(false);
-        return pivot.transform;
+        var pivot = new GameObject(name).transform;
+        pivot.SetParent(grid.GridRoot, false);
+        float h = grid.CellSize * 0.5f, t = grid.CellSize * frameThicknessRatio;
+        Material material = buildArea != null ? buildArea.OverlayMaterial : null;
+        EcoVisualUtil.Surface(pivot, "N", -h, h-t, h, h, frameHeight + 0.01f, color, material);
+        EcoVisualUtil.Surface(pivot, "S", -h, -h, h, -h+t, frameHeight + 0.01f, color, material);
+        EcoVisualUtil.Surface(pivot, "E", h-t, -h+t, h, h-t, frameHeight + 0.01f, color, material);
+        EcoVisualUtil.Surface(pivot, "W", -h, -h+t, -h+t, h-t, frameHeight + 0.01f, color, material);
+        return pivot;
     }
 
-    private static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    private bool PointerOverUI(Vector2 screen)
+    {
+        EventSystem events = EventSystem.current;
+        if (events == null) return false;
+        uiHits.Clear();
+        events.RaycastAll(new PointerEventData(events) { position = screen }, uiHits);
+        foreach (RaycastResult hit in uiHits)
+            if (hit.module is UnityEngine.UI.GraphicRaycaster) return true;
+        return false;
+    }
+
+    private void OnDestroy()
+    {
+        ReleasePreview();
+        if (hoverFrame != null) Destroy(hoverFrame.gameObject);
+        if (pickedFrame != null) Destroy(pickedFrame.gameObject);
+    }
 }

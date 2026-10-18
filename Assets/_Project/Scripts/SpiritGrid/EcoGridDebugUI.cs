@@ -45,7 +45,7 @@ public sealed class EcoGridDebugUI : MonoBehaviour
                $"{action}\n" +
                $"{hover}\n" +
                $"{controller.LastMessage}\n" +
-               "1 밀  2 꽃  3 물  4 돌  5 나무 | 좌클릭 배치/선택/이동 | 우클릭·Esc 취소 | Delete 제거";
+               "슬롯 드래그: 배치 | 환경물 드래그: 이동 | 우클릭·Esc 취소 | X 철거 | Delete 이동 대상 제거";
     }
 
     private static string StateName(EcoGridCell cell) => cell.State switch

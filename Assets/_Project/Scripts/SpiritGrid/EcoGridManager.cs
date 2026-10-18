@@ -3,7 +3,7 @@ using UnityEngine;
 
 // Owns the eco grid: cell data, grid <-> world conversion, and place / move / remove.
 // Requests (Can*) are separated from execution (Try*) so cost, lock and pattern rules can hook in later.
-// Each cell has a ground column (top at the grid plane); sunken tiles such as water lower it.
+// Cell data is independent of the continuous natural ground supplied by the scene.
 [DisallowMultipleComponent]
 public sealed class EcoGridManager : MonoBehaviour
 {
@@ -26,14 +26,10 @@ public sealed class EcoGridManager : MonoBehaviour
     [SerializeField, Min(1)] private int height = 6;
     [SerializeField, Min(0.5f)] private float cellSize = 10f;
 
-    [Header("Ground Columns")]
-    [SerializeField, Range(0.85f, 1f), Tooltip("Column width per cell. The gap reads as grid lines.")]
-    private float columnFill = 0.98f;
-    [SerializeField, Min(0.2f)] private float columnDepth = 1.2f;
-    [SerializeField, Min(0.1f), Tooltip("How far a sunken tile (water) lowers its column.")]
-    private float sunkenDepth = 0.8f;
-    [SerializeField] private Color columnColor = new Color(0.74f, 0.68f, 0.52f);
-    [SerializeField] private Color groundFloorColor = new Color(0.32f, 0.24f, 0.16f);
+    [Header("Surface Presentation")]
+    [SerializeField, Min(0f), Tooltip("Inset on exposed edges only; same-type neighbours always meet at the cell boundary.")]
+    private float surfaceInset = 0.12f;
+    [SerializeField] private Material surfaceMaterial;
 
     [Header("Placement")]
     [SerializeField] private TileSettings[] tileSettings =
@@ -46,7 +42,6 @@ public sealed class EcoGridManager : MonoBehaviour
     };
 
     private EcoGridCell[,] cells;
-    private Transform[,] columns;
 
     // Raised for every cell whose content or build state changed (both cells on a move).
     // Future ecosystem pattern evaluation and UI can subscribe here.
@@ -68,26 +63,9 @@ public sealed class EcoGridManager : MonoBehaviour
     private void BuildGrid()
     {
         cells = new EcoGridCell[width, height];
-        columns = new Transform[width, height];
-        Transform root = GridRoot;
-        var groundRoot = new GameObject("GridGround").transform;
-        groundRoot.SetParent(root, false);
-        // Dark floor under the columns shows through the gaps as grid lines.
-        Vector2 half = HalfExtents;
-        EcoVisualUtil.Box(groundRoot, "GridFloor",
-            new Vector3(-half.x, -columnDepth - 0.05f, -half.y), new Vector3(half.x, -columnDepth + 0.02f, half.y), groundFloorColor, true);
         for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
-            {
-                var coord = new Vector2Int(x, y);
-                cells[x, y] = new EcoGridCell(coord);
-                Vector3 c = LocalCenter(coord);
-                float h = cellSize * columnFill * 0.5f;
-                GameObject column = EcoVisualUtil.Box(groundRoot, $"Column_{x}_{y}",
-                    new Vector3(c.x - h, -columnDepth, c.z - h), new Vector3(c.x + h, 0f, c.z + h), columnColor, true);
-                columns[x, y] = column.transform;
-                cells[x, y].BaseVisual = column;
-            }
+                cells[x, y] = new EcoGridCell(new Vector2Int(x, y));
     }
 
     // ---- Coordinates ----
@@ -135,7 +113,7 @@ public sealed class EcoGridManager : MonoBehaviour
         EcoGridCell cell = GetCell(coord);
         if (cell == null) { reason = "그리드 범위 밖입니다."; return false; }
         if (!cell.IsEmpty) { reason = "이미 환경물이 있습니다."; return false; }
-        // Future: locked grid areas are rejected here.
+        // All cells in this fixed 6 x 6 are unlocked; expansion remains presentation-only.
         return HasPlacementCost(type, out reason);
     }
 
@@ -258,29 +236,19 @@ public sealed class EcoGridManager : MonoBehaviour
         return other != null && !other.IsEmpty && other.TileType == type;
     }
 
-    // Recomputes every cell (36 cells, cheap): column depth, neighbour mask and build state of views.
+    // Refreshes view connections after placement, moving, removal or build-state changes.
     private void RefreshTerrain()
     {
         for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
             {
                 EcoGridCell cell = cells[x, y];
-                bool sunken = !cell.IsEmpty && EnvironmentTileTypes.IsSunken(cell.TileType);
-                SetColumnTop(columns[x, y], sunken ? -sunkenDepth : 0f);
                 if (cell.Visual == null) continue;
                 IEcoTileView view = cell.Visual.GetComponent<IEcoTileView>();
                 if (view == null) continue;
                 view.SetBuildState(cell.State);
                 view.SetNeighbors(GetNeighborMask(cell.Coord));
             }
-    }
-
-    private void SetColumnTop(Transform column, float top)
-    {
-        float bottom = -columnDepth;
-        Vector3 p = column.localPosition, s = column.localScale;
-        column.localPosition = new Vector3(p.x, (top + bottom) * 0.5f, p.z);
-        column.localScale = new Vector3(s.x, Mathf.Max(0.01f, top - bottom), s.z);
     }
 
     // ---- Visuals ----
@@ -304,8 +272,7 @@ public sealed class EcoGridManager : MonoBehaviour
         var pivot = new GameObject(VisualName(type, coord));
         pivot.transform.SetParent(GridRoot, false);
         pivot.transform.SetPositionAndRotation(GridToWorld(coord), GridRoot.rotation);
-        float columnInset = cellSize * (1f - columnFill) * 0.5f;
-        pivot.AddComponent<EcoPlaceholderTileView>().Build(type, coord, cellSize, columnInset, sunkenDepth);
+        pivot.AddComponent<EcoPlaceholderTileView>().Build(type, coord, cellSize, surfaceInset, surfaceMaterial);
         return pivot;
     }
 
@@ -317,7 +284,7 @@ public sealed class EcoGridManager : MonoBehaviour
         height = Mathf.Max(1, height);
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         Transform root = GridRoot;
         Gizmos.color = new Color(1f, 1f, 1f, 0.35f);

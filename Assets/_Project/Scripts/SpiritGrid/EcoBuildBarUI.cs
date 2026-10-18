@@ -1,9 +1,8 @@
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-// Bottom build bar: one slot per tile kind (select to place), remove / cancel for a picked tile,
+// Bottom build bar: drag a slot to place; remove / cancel affect the current drag,
 // and a single status line. Reads placement + grid state; only calls the placement controller's public API.
 [DisallowMultipleComponent]
 public sealed class EcoBuildBarUI : MonoBehaviour
@@ -12,10 +11,10 @@ public sealed class EcoBuildBarUI : MonoBehaviour
     public struct Slot
     {
         public EnvironmentTileType type;
-        public Button button;
-        public Image background;
+        public UnityEngine.UI.Button button;
+        public UnityEngine.UI.Image background;
         [Tooltip("Colour swatch now; assign an icon sprite later and it is shown instead.")]
-        public Image icon;
+        public UnityEngine.UI.Image icon;
         public Sprite iconSprite;
         public TMP_Text nameLabel;
         public TMP_Text costLabel;
@@ -27,9 +26,15 @@ public sealed class EcoBuildBarUI : MonoBehaviour
     [SerializeField] private Sprite normalSlotSprite;
     [SerializeField] private Sprite selectedSlotSprite;
     [SerializeField, Range(1f, 1.15f)] private float selectedScale = 1.08f;
-    [SerializeField] private Button removeButton;
-    [SerializeField] private Button cancelButton;
+    [SerializeField, Tooltip("철거: removes the picked tile, otherwise toggles remove mode.")]
+    private UnityEngine.UI.Button removeButton;
+    [SerializeField] private Color removeActiveColor = new Color(1f, 0.45f, 0.3f);
+    [SerializeField] private UnityEngine.UI.Button cancelButton;
     [SerializeField] private TMP_Text statusLabel;
+
+    private TMP_Text removeLabel;
+    private UnityEngine.UI.Image removeImage;
+    private Color removeIdleColor = Color.white;
 
     private void Awake()
     {
@@ -37,6 +42,9 @@ public sealed class EcoBuildBarUI : MonoBehaviour
         {
             if (slot.button == null) continue;
             EnvironmentTileType type = slot.type;
+            EcoBuildSlotDrag dragSource = slot.button.GetComponent<EcoBuildSlotDrag>();
+            if (dragSource == null) dragSource = slot.button.gameObject.AddComponent<EcoBuildSlotDrag>();
+            dragSource.Initialize(placement, type);
             slot.button.onClick.AddListener(() => { if (placement != null) placement.SelectType(type); });
             if (slot.nameLabel != null) slot.nameLabel.text = EnvironmentTileTypes.DisplayName(type);
             if (slot.icon != null)
@@ -47,17 +55,34 @@ public sealed class EcoBuildBarUI : MonoBehaviour
                 slot.icon.preserveAspect = hasSprite;
             }
         }
-        if (removeButton != null) removeButton.onClick.AddListener(() => { if (placement != null) placement.RemovePicked(); });
-        if (cancelButton != null) cancelButton.onClick.AddListener(() => { if (placement != null) placement.CancelPick(); });
+        if (removeButton != null)
+        {
+            removeLabel = removeButton.GetComponentInChildren<TMP_Text>(true);
+            removeImage = removeButton.targetGraphic as UnityEngine.UI.Image;
+            if (removeImage != null) removeIdleColor = removeImage.color;
+            removeButton.onClick.AddListener(() =>
+            {
+                if (placement == null) return;
+                if (placement.HasPicked) placement.RemovePicked();
+                else placement.ToggleRemoveMode();
+            });
+        }
+        if (cancelButton != null) cancelButton.onClick.AddListener(() =>
+        {
+            if (placement == null) return;
+            placement.CancelPick();
+            placement.SetRemoveMode(false);
+        });
     }
 
     private void Update()
     {
         if (placement == null || grid == null) return;
         bool picking = placement.HasPicked;
+        bool removing = placement.RemoveMode;
         foreach (Slot slot in slots)
         {
-            bool selected = !picking && slot.type == placement.SelectedType;
+            bool selected = !picking && !removing && slot.type == placement.SelectedType;
             if (slot.background != null)
             {
                 Sprite sprite = selected && selectedSlotSprite != null ? selectedSlotSprite : normalSlotSprite;
@@ -70,8 +95,13 @@ public sealed class EcoBuildBarUI : MonoBehaviour
                 if (slot.costLabel.text != cost) slot.costLabel.text = cost;
             }
         }
-        if (removeButton != null) removeButton.interactable = picking;
-        if (cancelButton != null) cancelButton.interactable = picking;
+        if (removeLabel != null)
+        {
+            string text = picking ? "선택 제거" : removing ? "철거 중 (X)" : "철거 (X)";
+            if (removeLabel.text != text) removeLabel.text = text;
+        }
+        if (removeImage != null) removeImage.color = removing ? removeActiveColor : removeIdleColor;
+        if (cancelButton != null) cancelButton.interactable = placement.IsDragging || removing;
         if (statusLabel != null)
         {
             string status = BuildStatus(picking);
@@ -81,15 +111,16 @@ public sealed class EcoBuildBarUI : MonoBehaviour
 
     private string BuildStatus(bool picking)
     {
-        if (picking)
+        if (placement.RemoveMode)
+            return placement.HasHover ? $"철거 모드 · {placement.HoverStatus}" : "철거 모드 — 클릭하거나 드래그해서 제거 · 우클릭/Esc/X로 종료";
+        if (placement.IsDragging)
         {
-            string name = EnvironmentTileTypes.DisplayName(placement.PickedType);
-            string hover = placement.HasHover && placement.HoverCoord != placement.PickedCoord ? $" · {placement.HoverStatus}" : "";
-            return $"{name} 이동 중 — 빈 칸을 클릭해 옮기거나 [제거]{hover}";
+            string name = EnvironmentTileTypes.DisplayName(picking ? placement.PickedType : placement.SelectedType);
+            return $"{name} {(picking ? "이동" : "배치")} · {placement.HoverStatus} · 우클릭/Esc 취소";
         }
-        if (placement.HasHover) return $"{EnvironmentTileTypes.DisplayName(placement.SelectedType)} · {placement.HoverStatus}";
+        if (placement.HasHover) return placement.HoverStatus;
         return string.IsNullOrEmpty(placement.LastMessage)
-            ? $"{EnvironmentTileTypes.DisplayName(placement.SelectedType)} 배치 중 — 빈 칸을 클릭하세요"
+            ? "하단 환경 슬롯을 원하는 칸으로 드래그하세요 · 배치된 환경물도 드래그해서 이동"
             : placement.LastMessage;
     }
 }

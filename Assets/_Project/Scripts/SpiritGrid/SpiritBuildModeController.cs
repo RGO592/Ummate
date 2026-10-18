@@ -11,6 +11,7 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     [SerializeField, Tooltip("Quarter-view follow used while exploring. Disabled in build mode.")]
     private CameraFollow exploreFollow;
     [SerializeField] private EcoGridManager grid;
+    [SerializeField] private EcoBuildAreaView buildArea;
     [SerializeField] private EcoPlacementController placement;
     [SerializeField, Tooltip("Player root. Its movement / interaction / rigidbody are paused in build mode.")]
     private GameObject player;
@@ -20,22 +21,34 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     private GameObject[] exploreModeObjects = new GameObject[0];
 
     [Header("Build Camera")]
-    [SerializeField, Range(60f, 90f), Tooltip("90 = straight down.")]
+    [SerializeField, Range(60f, 85f), Tooltip("Below 90 degrees gives the orbit a visible horizontal radius.")]
     private float buildPitch = 80f;
     [SerializeField, Min(0f), Tooltip("Extra space around the grid when framing.")]
     private float framingMargin = 4f;
     [SerializeField, Min(1f)] private float panSpeed = 35f;
-    [SerializeField, Min(0f), Tooltip("How far the view may pan beyond the grid edge.")]
-    private float panLimit = 15f;
     [SerializeField, Min(0.1f)] private float zoomStep = 5f;
     [SerializeField, Min(1f)] private float minZoomDistance = 15f;
     [SerializeField, Min(1f)] private float maxZoomDistance = 120f;
+
+    [Header("Build Camera Orbit")]
+    [SerializeField, Tooltip("Reference centre. WASD adds a view offset without moving this Transform or the grid.")]
+    private Transform rotationPivot;
+    [SerializeField, Min(0.01f)] private float rotationDuration = 0.35f;
+    [SerializeField] private AnimationCurve rotationCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
     private PlayerMovement playerMovement;
     private PlayerInteractor playerInteractor;
     private Rigidbody playerBody;
     private Vector3 focus;
     private float distance;
+    private int quarterTurns;
+    private float currentYaw;
+    private Vector3 panOffset;
+    private bool orbiting;
+    private float orbitElapsed, orbitDuration, orbitStartYaw, orbitDistance, orbitPitch;
+    private Vector3 orbitFocus;
+
+    private Vector3 PivotPosition => rotationPivot != null ? rotationPivot.position : grid.GridRoot.position;
 
     public bool IsBuildMode { get; private set; }
 
@@ -59,7 +72,7 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     {
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null && keyboard.bKey.wasPressedThisFrame) ToggleBuildMode();
-        if (IsBuildMode) UpdateBuildCamera(keyboard, Mouse.current);
+        if (IsBuildMode && (buildArea == null || !buildArea.InputBlocked)) UpdateBuildCamera(keyboard, Mouse.current);
     }
 
     // UI buttons
@@ -69,7 +82,9 @@ public sealed class SpiritBuildModeController : MonoBehaviour
 
     private void Apply(bool build)
     {
+        orbiting = false;
         IsBuildMode = build;
+        if (buildArea != null) buildArea.SetVisible(build);
         if (playerMovement != null) playerMovement.enabled = !build;
         if (playerInteractor != null) playerInteractor.enabled = !build;
         if (build && playerBody != null) playerBody.linearVelocity = new Vector3(0f, playerBody.linearVelocity.y, 0f);
@@ -85,7 +100,9 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     private void FrameGrid()
     {
         if (viewCamera == null || grid == null) return;
-        focus = grid.GridRoot.position;
+        focus = PivotPosition;
+        panOffset = Vector3.zero;
+        currentYaw = quarterTurns * 90f;
         Vector2 half = grid.HalfExtents;
         float extent = Mathf.Max(half.x, half.y) + framingMargin;
         float vertical = viewCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
@@ -97,15 +114,23 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     private void UpdateBuildCamera(Keyboard keyboard, Mouse mouse)
     {
         if (viewCamera == null || grid == null) return;
+        // Freeze pan, zoom and repeated rotation requests until the fixed-radius arc finishes.
+        if (orbiting) { AdvanceOrbit(); return; }
+        focus = PivotPosition + panOffset;
         if (keyboard != null)
         {
+            if (keyboard.rKey.wasPressedThisFrame && (keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed))
+            {
+                BeginOrbit();
+                AdvanceOrbit();
+                return;
+            }
             float x = (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f);
             float z = (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f);
-            focus += new Vector3(x, 0f, z) * (panSpeed * Time.unscaledDeltaTime);
-            Vector3 center = grid.GridRoot.position;
-            Vector2 half = grid.HalfExtents;
-            focus.x = Mathf.Clamp(focus.x, center.x - half.x - panLimit, center.x + half.x + panLimit);
-            focus.z = Mathf.Clamp(focus.z, center.z - half.y - panLimit, center.z + half.y + panLimit);
+            // Screen right/up projected onto the ground, including the straight-down view.
+            // Using camera.forward here would degenerate at a 90-degree pitch.
+            Quaternion heading = Quaternion.Euler(0f, currentYaw, 0f);
+            focus += heading * new Vector3(x, 0f, z) * (panSpeed * Time.unscaledDeltaTime);
         }
         if (mouse != null)
         {
@@ -116,9 +141,45 @@ public sealed class SpiritBuildModeController : MonoBehaviour
         PlaceCamera();
     }
 
+    private void BeginOrbit()
+    {
+        if (buildArea != null) focus = buildArea.ClampCameraFocus(focus);
+        orbitFocus = focus;
+        orbitDistance = distance;
+        orbitPitch = buildPitch;
+        orbitStartYaw = currentYaw;
+        orbitElapsed = 0;
+        orbitDuration = Mathf.Max(0.01f, rotationDuration);
+        orbiting = true;
+    }
+
+    private void AdvanceOrbit()
+    {
+        orbitElapsed += Time.unscaledDeltaTime;
+        float t = Mathf.Clamp01(orbitElapsed / orbitDuration);
+        float eased = rotationCurve != null ? Mathf.Clamp01(rotationCurve.Evaluate(t)) : Mathf.SmoothStep(0, 1, t);
+        if (t >= 1f) eased = 1f;
+        // Interpolate the angle, not camera XYZ: this follows a circular arc with constant
+        // height and radius instead of cutting across the centre on a straight-line chord.
+        currentYaw = orbitStartYaw + 90f * eased;
+        focus = orbitFocus;
+        distance = orbitDistance;
+        PlaceCamera();
+        if (t >= 1f)
+        {
+            quarterTurns = (quarterTurns + 1) % 4;
+            currentYaw = quarterTurns * 90f;
+            orbiting = false;
+        }
+    }
+
     private void PlaceCamera()
     {
-        Quaternion rotation = Quaternion.Euler(buildPitch, 0f, 0f);
+        if (!orbiting && buildArea != null) focus = buildArea.ClampCameraFocus(focus);
+        panOffset = focus - PivotPosition;
+        Quaternion rotation = Quaternion.Euler(orbiting ? orbitPitch : buildPitch, currentYaw, 0f);
         viewCamera.transform.SetPositionAndRotation(focus - rotation * Vector3.forward * distance, rotation);
     }
+
+    private void OnDisable() { orbiting = false; }
 }
