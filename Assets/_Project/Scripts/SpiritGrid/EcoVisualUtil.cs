@@ -6,6 +6,20 @@ public static class EcoVisualUtil
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
     private static readonly int ColorId = Shader.PropertyToID("_Color");
     private static MaterialPropertyBlock block;
+    private static Material primitiveMaterial;
+
+    private static Material PrimitiveMaterial
+    {
+        get
+        {
+            if (primitiveMaterial == null)
+                primitiveMaterial = Resources.Load<Material>("SG_RuntimePrimitiveLit");
+            if (primitiveMaterial == null)
+                throw new System.InvalidOperationException(
+                    "SpiritGrid requires Resources/SG_RuntimePrimitiveLit.mat and its .meta file.");
+            return primitiveMaterial;
+        }
+    }
 
     public static void Paint(Renderer target, Color color)
     {
@@ -32,7 +46,11 @@ public static class EcoVisualUtil
         go.transform.SetParent(parent, false);
         go.transform.localPosition = localPosition;
         go.transform.localScale = localScale;
-        Paint(go.GetComponent<Renderer>(), color);
+        Renderer renderer = go.GetComponent<Renderer>();
+        // CreatePrimitive's editor/default material is not a portable URP dependency.
+        // Explicitly load the included asset; never use Shader.Find or allocate a material.
+        renderer.sharedMaterial = PrimitiveMaterial;
+        Paint(renderer, color);
         return go;
     }
 

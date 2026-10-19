@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Scene-local presentation only. Runs after the follow camera; no physics casts, colliders,
-// cell data, or per-frame material instances are needed for these simple static trees.
+// One manager supplies a player-centred circular shader mask to nearby trees.
+// Only pixels inside the circle fade; physics and the rest of each tree stay unchanged.
 [DefaultExecutionOrder(1000)]
 [DisallowMultipleComponent]
 public sealed class SpiritTreeVisibility : MonoBehaviour
@@ -16,24 +16,25 @@ public sealed class SpiritTreeVisibility : MonoBehaviour
     }
 
     [SerializeField] private Transform player;
-    [SerializeField] private Camera viewCamera;
-    [SerializeField] private Transform groundPlane;
     [SerializeField, Tooltip("Direct children of these groups are trees. Do not include rocks or bushes.")]
     private Transform[] treeGroups = new Transform[0];
     [SerializeField] private FadeMaterialPair[] fadeMaterials = new FadeMaterialPair[0];
-    [SerializeField, Range(0.05f, 1f)] private float fadedAlpha = 0.35f;
-    [SerializeField, Min(0f)] private float playerNearDistance = 4f;
-    [SerializeField, Min(0f)] private float cameraNearDistance = 3f;
-    [SerializeField, Min(0f), Tooltip("Width added around the camera sight lines, in world units.")]
-    private float sightPadding = 1.5f;
-    [SerializeField] private Vector3 playerViewOffset = new Vector3(0, 1, 0);
+    [SerializeField, Min(0f), Tooltip("Radius in the camera-facing plane through the player. Only pixels inside the circle fade.")]
+    private float fadeRadius = 10f;
+    [SerializeField, Range(0f, 0.9f), Tooltip("Fraction of the radius kept at Fade Alpha before the outer gradient starts.")]
+    private float fadeInnerRatio = 0.6f;
+    [SerializeField] private Vector3 fadeCenterOffset = new Vector3(0f, 1f, 0f);
+    [SerializeField, Range(0.05f, 1f)] private float fadeAlpha = 0.2f;
+    [SerializeField, Min(0.1f)] private float fadeSpeed = 5f;
     [SerializeField, Min(0.01f)] private float checkInterval = 0.08f;
-    [SerializeField, Min(0.1f)] private float fadeSpeed = 4f;
 
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+    private static readonly int FadeCenterId = Shader.PropertyToID("_TreeFadeCenter");
+    private static readonly int FadeRadiusId = Shader.PropertyToID("_TreeFadeRadius");
+    private static readonly int FadeInnerRatioId = Shader.PropertyToID("_TreeFadeInnerRatio");
+    private static readonly int FadeAlphaId = Shader.PropertyToID("_TreeFadeAlpha");
     private static readonly int ColorId = Shader.PropertyToID("_Color");
     private readonly List<TreeState> trees = new List<TreeState>();
-    private readonly Plane[] frustumPlanes = new Plane[6];
     private float nextCheck;
 
     private sealed class RendererState
@@ -49,12 +50,11 @@ public sealed class SpiritTreeVisibility : MonoBehaviour
         public Transform root;
         public RendererState[] renderers;
         public float alpha = 1f;
-        public bool obstructing;
+        public bool nearFadeZone;
     }
 
     private void Awake()
     {
-        if (viewCamera == null) viewCamera = Camera.main;
         var seen = new HashSet<Transform>();
         foreach (Transform group in treeGroups)
         {
@@ -95,93 +95,62 @@ public sealed class SpiritTreeVisibility : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (viewCamera == null || player == null) { RestoreAll(); return; }
+        if (player == null) { RestoreAll(); return; }
         if (Time.unscaledTime >= nextCheck)
         {
-            CheckObstructions();
+            CheckFadeZone();
             nextCheck = Time.unscaledTime + Mathf.Max(0.01f, checkInterval);
         }
         foreach (TreeState tree in trees)
         {
-            float target = tree.obstructing ? Mathf.Clamp01(fadedAlpha) : 1f;
+            float target = tree.nearFadeZone ? Mathf.Clamp01(fadeAlpha) : 1f;
             float alpha = Mathf.MoveTowards(tree.alpha, target, Mathf.Max(0.1f, fadeSpeed) * Time.unscaledDeltaTime);
-            if (Mathf.Approximately(alpha, tree.alpha)) continue;
+            if (alpha >= 0.9999f)
+            {
+                if (tree.alpha < 1f) Restore(tree);
+            }
+            else ApplyMask(tree, alpha); // Centre must follow every frame, even at stable alpha.
             tree.alpha = alpha;
-            if (alpha >= 0.9999f) Restore(tree);
-            else ApplyAlpha(tree, alpha);
         }
     }
 
-    private void CheckObstructions()
+    private void CheckFadeZone()
     {
-        GeometryUtility.CalculateFrustumPlanes(viewCamera, frustumPlanes);
-        Vector3 cameraPosition = viewCamera.transform.position;
-        Vector3 playerTarget = player.position + playerViewOffset;
-        Vector3 playerViewport = viewCamera.WorldToViewportPoint(playerTarget);
-        bool playerInView = playerViewport.z > 0 && playerViewport.x >= 0 && playerViewport.x <= 1
-            && playerViewport.y >= 0 && playerViewport.y <= 1;
-        Vector3 planePoint = groundPlane != null ? groundPlane.position : Vector3.zero;
-        Vector3 planeNormal = groundPlane != null ? groundPlane.up : Vector3.up;
-        var plane = new Plane(planeNormal, planePoint);
-        Ray centreRay = viewCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-        bool hasCentre = plane.Raycast(centreRay, out float centreDistance);
-        Vector3 centreTarget = hasCentre ? centreRay.GetPoint(centreDistance) : playerTarget;
-
+        Vector3 centre = player.position + fadeCenterOffset;
+        // Broad phase only: include intersecting canopies even when their trunk is outside.
+        // The shader, not a tree-level distance test, defines the visible circular edge.
+        float nearbyDistance = Mathf.Max(0f, fadeRadius) * 2f;
         foreach (TreeState tree in trees)
         {
-            tree.obstructing = false;
-            if (tree.root == null || !tree.root.gameObject.activeInHierarchy || !TryBounds(tree, out Bounds bounds)) continue;
-            if (!GeometryUtility.TestPlanesAABB(frustumPlanes, bounds)) continue;
-            tree.obstructing = IsNearPlayer(bounds, player.position, playerNearDistance)
-                || bounds.SqrDistance(cameraPosition) <= cameraNearDistance * cameraNearDistance
-                || (playerInView && BlocksSegment(bounds, cameraPosition, playerTarget, sightPadding))
-                || (hasCentre && BlocksSegment(bounds, centreRay.origin, centreTarget, sightPadding));
+            tree.nearFadeZone = false;
+            if (tree.root == null || !tree.root.gameObject.activeInHierarchy) continue;
+            foreach (RendererState state in tree.renderers)
+            {
+                if (state.renderer != null && state.renderer.enabled
+                    && state.renderer.bounds.SqrDistance(centre) <= nearbyDistance * nearbyDistance)
+                {
+                    tree.nearFadeZone = true;
+                    break;
+                }
+            }
         }
     }
 
-    private static bool TryBounds(TreeState tree, out Bounds bounds)
+    private void ApplyMask(TreeState tree, float alpha)
     {
-        bounds = default;
-        bool found = false;
-        foreach (RendererState state in tree.renderers)
-        {
-            Renderer renderer = state.renderer;
-            if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
-            if (found) bounds.Encapsulate(renderer.bounds);
-            else { bounds = renderer.bounds; found = true; }
-        }
-        return found;
-    }
-
-    // AABB padding approximates a short sight corridor without requiring tree colliders.
-    internal static bool BlocksSegment(Bounds bounds, Vector3 from, Vector3 to, float padding)
-    {
-        Vector3 delta = to - from;
-        float length = delta.magnitude;
-        if (length < 0.001f) return false;
-        bounds.Expand(Mathf.Max(0, padding) * 2f);
-        if (bounds.Contains(from)) return true;
-        return bounds.IntersectRay(new Ray(from, delta / length), out float distance) && distance <= length;
-    }
-
-    internal static bool IsNearPlayer(Bounds bounds, Vector3 playerPosition, float distance)
-    {
-        Vector3 nearest = bounds.ClosestPoint(playerPosition);
-        Vector2 offset = new Vector2(nearest.x - playerPosition.x, nearest.z - playerPosition.z);
-        return offset.sqrMagnitude <= Mathf.Max(0, distance) * Mathf.Max(0, distance);
-    }
-
-    private static void ApplyAlpha(TreeState tree, float alpha)
-    {
+        Vector3 centre = player.position + fadeCenterOffset;
         foreach (RendererState state in tree.renderers)
         {
             if (state.renderer == null) continue;
             if (state.renderer.sharedMaterial != state.fadeMaterial) state.renderer.sharedMaterial = state.fadeMaterial;
             state.renderer.GetPropertyBlock(state.workingBlock);
-            Color color = state.originalColor;
-            color.a *= alpha;
-            state.workingBlock.SetColor(BaseColorId, color);
-            state.workingBlock.SetColor(ColorId, color);
+            // Never reduce the whole renderer's base alpha.
+            state.workingBlock.SetColor(BaseColorId, state.originalColor);
+            state.workingBlock.SetColor(ColorId, state.originalColor);
+            state.workingBlock.SetVector(FadeCenterId, new Vector4(centre.x, centre.y, centre.z, 1f));
+            state.workingBlock.SetFloat(FadeRadiusId, Mathf.Max(0.001f, fadeRadius));
+            state.workingBlock.SetFloat(FadeAlphaId, alpha);
+            state.workingBlock.SetFloat(FadeInnerRatioId, Mathf.Clamp(fadeInnerRatio, 0f, 0.9f));
             state.renderer.SetPropertyBlock(state.workingBlock);
         }
     }
@@ -202,7 +171,7 @@ public sealed class SpiritTreeVisibility : MonoBehaviour
         {
             if (tree.alpha < 1f) Restore(tree);
             tree.alpha = 1f;
-            tree.obstructing = false;
+            tree.nearFadeZone = false;
         }
     }
 
