@@ -56,7 +56,7 @@ public static class HexMeshUtil
         mesh.RecalculateBounds();
         return mesh;
     }
-    public static GameObject Create(Transform parent, string name, Mesh mesh, float y, Color color, Material material)
+    public static GameObject Create(Transform parent, string name, Mesh mesh, float y, Color color, Material material, bool tintMaterial = true)
     {
         var go = new GameObject(name, typeof(MeshFilter), typeof(MeshRenderer), typeof(HexGeneratedMesh));
         go.transform.SetParent(parent, false);
@@ -67,7 +67,7 @@ public static class HexMeshUtil
         renderer.sharedMaterial = material != null ? material : Resources.Load<Material>("SG_RuntimePrimitiveLit");
         renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         renderer.receiveShadows = false;
-        EcoVisualUtil.Paint(renderer, color);
+        if (tintMaterial) EcoVisualUtil.Paint(renderer, color);
         return go;
     }
 }

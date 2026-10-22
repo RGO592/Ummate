@@ -36,7 +36,10 @@ public sealed class EcoGridManager : MonoBehaviour
     [Header("Surface Presentation")]
     [SerializeField, Min(0f), Tooltip("Inset on exposed edges only; same-type neighbours always meet at the cell boundary.")]
     private float surfaceInset = 0.12f;
-    [SerializeField] private Material surfaceMaterial;
+    [SerializeField, Tooltip("Solid type-coloured surface for Wheat, Flower, Rock and Tree. Render after ground tint (queue 2002).") ]
+    private Material surfaceMaterial;
+    [SerializeField, Tooltip("Water surface only. Defaults to Resources/SG_WaterSurface.")]
+    private Material waterSurfaceMaterial;
 
     [Header("Placement")]
     [SerializeField] private TileSettings[] tileSettings =
@@ -328,7 +331,7 @@ public sealed class EcoGridManager : MonoBehaviour
         var pivot = new GameObject(VisualName(type, coord));
         pivot.transform.SetParent(GridRoot, false);
         pivot.transform.localPosition = HexMetrics.LocalCenter(coord, hexWidth);
-        pivot.AddComponent<EcoPlaceholderTileView>().Build(type, coord, hexWidth, surfaceInset, surfaceMaterial);
+        pivot.AddComponent<EcoPlaceholderTileView>().Build(type, coord, hexWidth, surfaceInset, waterSurfaceMaterial, surfaceMaterial);
         return pivot;
     }
 

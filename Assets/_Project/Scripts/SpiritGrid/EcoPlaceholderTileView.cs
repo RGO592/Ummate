@@ -1,8 +1,8 @@
 using UnityEngine;
 
-// Temporary tile look built from primitives. Same-type hex neighbours merge into one area:
-// connected sides extend to the cell edge (no inner border), open sides keep an inset rim.
-// Thin surfaces sit above the continuous ground. Tree adds object visuals above its hex surface.
+// Used when TileSettings has no model prefab. Type-coloured surfaces keep object
+// tiles readable; water retains its separately authored surface material.
+// A supplied model prefab is instantiated directly by EcoGridManager instead of this view.
 [DisallowMultipleComponent]
 public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
 {
@@ -13,6 +13,7 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
     private EnvironmentTileType type;
     private float cellSize;
     private float groundInset;
+    private Material waterMaterial;
     private Material surfaceMaterial;
     private HexCoord coord;
     private Transform layers;
@@ -20,13 +21,20 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
     private HexDirectionMask mask = (HexDirectionMask)(-1);
     private BuildState state = BuildState.Complete;
 
-    public void Build(EnvironmentTileType tileType, HexCoord cellCoord, float size, float edgeInset, Material material)
+    public void Build(EnvironmentTileType tileType, HexCoord cellCoord, float size, float edgeInset, Material material, Material tileSurfaceMaterial = null)
     {
         type = tileType;
         coord = cellCoord;
         cellSize = size;
         groundInset = Mathf.Clamp(edgeInset, 0f, size * 0.1f);
-        surfaceMaterial = material;
+        // An explicit asset reference plus a bundled fallback keeps player builds portable.
+        if (type == EnvironmentTileType.Water)
+        {
+            waterMaterial = material != null ? material : Resources.Load<Material>("SG_WaterSurface");
+            if (waterMaterial == null)
+                throw new System.InvalidOperationException("SpiritGrid requires Resources/SG_WaterSurface.mat and its .meta file.");
+        }
+        surfaceMaterial = tileSurfaceMaterial;
         detail = Mathf.Max(1f, Mathf.Sqrt(size / 2.5f));
         layers = new GameObject("Layers").transform;
         layers.SetParent(transform, false);
@@ -58,7 +66,8 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         Destroy(layers.gameObject);
         layers = new GameObject("Layers").transform;
         layers.SetParent(transform, false);
-        BuildSurface(DisplayColor());
+        if (type == EnvironmentTileType.Water) BuildWaterSurface();
+        else BuildTypeSurface();
     }
 
     public void SetBuildState(BuildState newState)
@@ -67,21 +76,32 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         state = newState;
         if (props != null) props.gameObject.SetActive(state == BuildState.Complete);
         HexDirectionMask current = mask;
-        mask = (HexDirectionMask)(-1);   // force a rebuild with the new tint
+        mask = (HexDirectionMask)(-1);   // refresh the construction appearance
         SetNeighbors(current);
     }
 
-    private Color DisplayColor()
+    private void BuildTypeSurface()
     {
-        Color baseColor = EnvironmentTileTypes.DefaultColor(type);
-        return state == BuildState.Constructing ? Color.Lerp(baseColor, new Color(0.6f, 0.6f, 0.6f), 0.6f) : baseColor;
+        Color color = EnvironmentTileTypes.DefaultColor(type);
+        if (state == BuildState.Constructing) color = Color.Lerp(color, Color.gray, 0.6f);
+        // SG_TileSurface renders after HexGroundTint (2002), before grid lines (3010).
+        // The ground fill uses depth bias, so drawing it after this face caused a
+        // camera-dependent horizontal cutoff even with different surface heights.
+        HexMeshUtil.Create(layers, "ConnectedTypeSurface",
+            HexMeshUtil.InsetSurface(cellSize, groundInset, mask), SurfaceHeight,
+            color, surfaceMaterial);
     }
 
-    // Only exposed edges retain a small inset. Joined faces have no rim, sidewall or gap.
-    private void BuildSurface(Color color)
+    // Only exposed water edges retain an inset. Joined faces have no rim or gap.
+    private void BuildWaterSurface()
     {
-        HexMeshUtil.Create(layers, "ConnectedHexSurface",
-            HexMeshUtil.InsetSurface(cellSize, groundInset, mask), SurfaceHeight, color, surfaceMaterial);
+        GameObject surface = HexMeshUtil.Create(layers, "ConnectedWaterSurface",
+            HexMeshUtil.InsetSurface(cellSize, groundInset, mask), SurfaceHeight,
+            Color.white, waterMaterial, tintMaterial: false);
+        // Preserve the authored water colours instead of overriding them with DefaultColor(Water).
+        var block = new MaterialPropertyBlock();
+        block.SetFloat("_Construction", state == BuildState.Constructing ? 1f : 0f);
+        surface.GetComponent<Renderer>().SetPropertyBlock(block);
     }
 
     // Props keep a near-human scale (grows with sqrt of the cell) and get denser as cells get bigger.

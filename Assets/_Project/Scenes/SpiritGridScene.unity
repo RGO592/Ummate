@@ -10340,6 +10340,7 @@ MonoBehaviour:
   boundaryLayer: 0
   surfaceInset: 0.12
   surfaceMaterial: {fileID: 2100000, guid: f5a845da994c405fa854e28c9d670095, type: 2}
+  waterSurfaceMaterial: {fileID: 2100000, guid: 10aa5a7513a440e0b66cdc8e939880fe, type: 2}
   tileSettings:
   - type: 1
     prefab: {fileID: 0}
