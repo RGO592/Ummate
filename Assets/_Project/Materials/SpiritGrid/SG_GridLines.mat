@@ -25,14 +25,15 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _CellSize: 10
+    - _HexWidth: 10
     - _LineWidth: 0.14
     - _BorderWidth: 0.22
     - _MinPixelWidth: 1.25
     m_Colors:
     - _BaseColor: {r: 0.92, g: 1, b: 0.82, a: 0.95}
-    - _MapMin: {r: -30, g: -30, b: 0, a: 0}
-    - _MapSize: {r: 216, g: 216, b: 0, a: 0}
-    - _GridOrigin: {r: -30, g: -30, b: 0, a: 0}
-    - _ActiveRect: {r: -30, g: -30, b: 30, a: 30}
+    - _MapMin: {r: -5, g: -5.773503, b: 0, a: 0}
+    - _MapSize: {r: 215, g: 210.73285, b: 0, a: 0}
+    - _MapDimensions: {r: 21, g: 24, b: 0, a: 0}
+    - _ActiveColor: {r: 0.54, g: 0.733, b: 0.38, a: 1}
+    - _LockedColor: {r: 0.294, g: 0.388, b: 0.267, a: 1}
   m_BuildTextureStacks: []

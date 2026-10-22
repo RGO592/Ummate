@@ -73,9 +73,10 @@ public sealed class EcoDragPreview : IDisposable
 
     private void BuildWorldVisual(Transform parent, EnvironmentTileType type, float size)
     {
-        float half = size * 0.48f;
-        Add(parent, PrimitiveType.Quad, "Footprint", new Vector3(0, 0.12f, 0),
-            new Vector3(half * 2, half * 2, 1), typeColor, Quaternion.Euler(90, 0, 0));
+        GameObject footprint = HexMeshUtil.Create(parent, "HexFootprint",
+            HexMeshUtil.InsetSurface(size, size * 0.02f, HexDirectionMask.None), 0.12f, typeColor, material);
+        renderers.Add(footprint.GetComponent<Renderer>());
+        colors.Add(typeColor);
         float k = size / 10f;
         if (type == EnvironmentTileType.Water)
         {

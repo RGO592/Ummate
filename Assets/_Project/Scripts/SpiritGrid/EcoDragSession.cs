@@ -6,7 +6,7 @@ public sealed class EcoDragSession
     public bool IsActive { get; private set; }
     public bool IsMoving { get; private set; }
     public EnvironmentTileType Type { get; private set; }
-    public Vector2Int Source { get; private set; }
+    public HexCoord Source { get; private set; }
 
     public void BeginPlacement(EnvironmentTileType type)
     {
@@ -16,14 +16,14 @@ public sealed class EcoDragSession
         IsActive = true;
     }
 
-    public void BeginMove(EnvironmentTileType type, Vector2Int source)
+    public void BeginMove(EnvironmentTileType type, HexCoord source)
     {
         BeginPlacement(type);
         IsMoving = IsActive;
         Source = source;
     }
 
-    public bool CanDrop(EcoGridManager grid, bool insideGrid, Vector2Int target, out string reason)
+    public bool CanDrop(EcoGridManager grid, bool insideGrid, HexCoord target, out string reason)
     {
         reason = null;
         if (!IsActive || grid == null) { reason = "드래그 중인 환경물이 없습니다."; return false; }
@@ -31,7 +31,7 @@ public sealed class EcoDragSession
         return IsMoving ? grid.CanMove(Source, target, out reason) : grid.CanPlace(Type, target, out reason);
     }
 
-    public bool Drop(EcoGridManager grid, bool insideGrid, Vector2Int target, out string reason)
+    public bool Drop(EcoGridManager grid, bool insideGrid, HexCoord target, out string reason)
     {
         try
         {

@@ -29,7 +29,7 @@ public sealed class EcoGridDebugUI : MonoBehaviour
         if (controller.HasPicked)
         {
             EcoGridCell picked = grid.GetCell(controller.PickedCoord);
-            action = $"이동 대상: {EnvironmentTileTypes.DisplayName(picked.TileType)} ({controller.PickedCoord.x},{controller.PickedCoord.y})";
+            action = $"이동 대상: {EnvironmentTileTypes.DisplayName(picked.TileType)} ({controller.PickedCoord.q},{controller.PickedCoord.r})";
         }
         else action = $"배치할 환경 칸: {selected}";
 
@@ -38,7 +38,7 @@ public sealed class EcoGridDebugUI : MonoBehaviour
         {
             EcoGridCell cell = grid.GetCell(controller.HoverCoord);
             string content = cell.IsEmpty ? "빈 칸" : $"{EnvironmentTileTypes.DisplayName(cell.TileType)} · {StateName(cell)}";
-            hover = $"커서 ({controller.HoverCoord.x},{controller.HoverCoord.y}) {content} → {controller.HoverStatus}";
+            hover = $"커서 ({controller.HoverCoord.q},{controller.HoverCoord.r}) {content} → {controller.HoverStatus}";
         }
 
         return $"[{mode}] {grid.Width}×{grid.Height}\n" +

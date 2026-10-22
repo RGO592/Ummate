@@ -33,15 +33,15 @@ public sealed class EcoPlacementController : MonoBehaviour
     private bool pointerOverUI;
     private Renderer[] hoverRenderers;
     private bool hasHover, hasPlanePoint, lockedHover;
-    private Vector2Int hoverCoord;
+    private HexCoord hoverCoord;
     private int consumedFrame = -1;
 
     public EnvironmentTileType SelectedType => selectedType;
     public bool IsDragging => drag.IsActive;
     public bool HasHover => hasHover;
-    public Vector2Int HoverCoord => hoverCoord;
+    public HexCoord HoverCoord => hoverCoord;
     public bool HasPicked => drag.IsActive && drag.IsMoving;
-    public Vector2Int PickedCoord => drag.Source;
+    public HexCoord PickedCoord => drag.Source;
     public EnvironmentTileType PickedType => HasPicked ? drag.Type : EnvironmentTileType.None;
     public bool HoverPlaceable { get; private set; }
     public bool RemoveMode { get; private set; }
@@ -197,7 +197,7 @@ public sealed class EcoPlacementController : MonoBehaviour
     public void RemovePicked()
     {
         if (!HasPicked) return;
-        Vector2Int source = drag.Source;
+        HexCoord source = drag.Source;
         EndIntent();
         LastMessage = grid.TryRemove(source, out string reason) ? "환경물 제거" : reason;
         HideHighlights();
@@ -261,8 +261,8 @@ public sealed class EcoPlacementController : MonoBehaviour
             pointerWorld = ray.GetPoint(distance);
             // UI blocks dropping, but never stops the carried ghost from following the pointer.
             bool inside = grid.WorldToGrid(pointerWorld, out hoverCoord);
-            hasHover = !pointerOverUI && inside;
-            lockedHover = !pointerOverUI && !inside && buildArea != null && buildArea.IsLocked(ray);
+            hasHover = !pointerOverUI && inside && grid.IsUnlocked(hoverCoord);
+            lockedHover = !pointerOverUI && inside && grid.IsLocked(hoverCoord);
         }
         if (pointerOverUI) { if (drag.IsActive) HoverStatus = "UI 위 · 놓으면 취소"; return; }
         if (drag.IsActive)
@@ -339,12 +339,9 @@ public sealed class EcoPlacementController : MonoBehaviour
     {
         var pivot = new GameObject(name).transform;
         pivot.SetParent(grid.GridRoot, false);
-        float h = grid.CellSize * 0.5f, t = grid.CellSize * frameThicknessRatio;
         Material material = buildArea != null ? buildArea.OverlayMaterial : null;
-        EcoVisualUtil.Surface(pivot, "N", -h, h-t, h, h, frameHeight + 0.01f, color, material);
-        EcoVisualUtil.Surface(pivot, "S", -h, -h, h, -h+t, frameHeight + 0.01f, color, material);
-        EcoVisualUtil.Surface(pivot, "E", h-t, -h+t, h, h-t, frameHeight + 0.01f, color, material);
-        EcoVisualUtil.Surface(pivot, "W", -h, -h+t, -h+t, h-t, frameHeight + 0.01f, color, material);
+        HexMeshUtil.Create(pivot, "HexOutline", HexMeshUtil.Outline(grid.CellSize,
+            grid.CellSize * frameThicknessRatio), frameHeight + 0.01f, color, material);
         return pivot;
     }
 

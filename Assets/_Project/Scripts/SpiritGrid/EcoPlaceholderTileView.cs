@@ -1,8 +1,8 @@
 using UnityEngine;
 
-// Temporary tile look built from primitives. Same-type orthogonal neighbours merge into one area:
+// Temporary tile look built from primitives. Same-type hex neighbours merge into one area:
 // connected sides extend to the cell edge (no inner border), open sides keep an inset rim.
-// Thin surfaces sit above the continuous ground. Tree keeps only its object visual.
+// Thin surfaces sit above the continuous ground. Tree adds object visuals above its hex surface.
 [DisallowMultipleComponent]
 public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
 {
@@ -14,13 +14,13 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
     private float cellSize;
     private float groundInset;
     private Material surfaceMaterial;
-    private Vector2Int coord;
+    private HexCoord coord;
     private Transform layers;
     private Transform props;
-    private EcoNeighborMask mask = (EcoNeighborMask)(-1);
+    private HexDirectionMask mask = (HexDirectionMask)(-1);
     private BuildState state = BuildState.Complete;
 
-    public void Build(EnvironmentTileType tileType, Vector2Int cellCoord, float size, float edgeInset, Material material)
+    public void Build(EnvironmentTileType tileType, HexCoord cellCoord, float size, float edgeInset, Material material)
     {
         type = tileType;
         coord = cellCoord;
@@ -33,11 +33,11 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         props = new GameObject("Props").transform;
         props.SetParent(transform, false);
         BuildProps();
-        SetNeighbors(EcoNeighborMask.None);
+        SetNeighbors(HexDirectionMask.None);
     }
 
     // Called by the manager when the cell moves; props are re-seeded for the new cell.
-    public void SetCoord(Vector2Int cellCoord)
+    public void SetCoord(HexCoord cellCoord)
     {
         if (cellCoord == coord) return;
         coord = cellCoord;
@@ -49,7 +49,7 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         props.gameObject.SetActive(state == BuildState.Complete);
     }
 
-    public void SetNeighbors(EcoNeighborMask newMask)
+    public void SetNeighbors(HexDirectionMask newMask)
     {
         if (newMask == mask || layers == null) return;
         mask = newMask;
@@ -58,7 +58,7 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         Destroy(layers.gameObject);
         layers = new GameObject("Layers").transform;
         layers.SetParent(transform, false);
-        if (type != EnvironmentTileType.Tree) BuildSurface(DisplayColor());
+        BuildSurface(DisplayColor());
     }
 
     public void SetBuildState(BuildState newState)
@@ -66,8 +66,8 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         if (newState == state) return;
         state = newState;
         if (props != null) props.gameObject.SetActive(state == BuildState.Complete);
-        EcoNeighborMask current = mask;
-        mask = (EcoNeighborMask)(-1);   // force a rebuild with the new tint
+        HexDirectionMask current = mask;
+        mask = (HexDirectionMask)(-1);   // force a rebuild with the new tint
         SetNeighbors(current);
     }
 
@@ -80,13 +80,8 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
     // Only exposed edges retain a small inset. Joined faces have no rim, sidewall or gap.
     private void BuildSurface(Color color)
     {
-        float half = cellSize * 0.5f;
-        float inner = half - groundInset;
-        float x0 = (mask & EcoNeighborMask.West) != 0 ? -half : -inner;
-        float x1 = (mask & EcoNeighborMask.East) != 0 ? half : inner;
-        float z0 = (mask & EcoNeighborMask.South) != 0 ? -half : -inner;
-        float z1 = (mask & EcoNeighborMask.North) != 0 ? half : inner;
-        EcoVisualUtil.Surface(layers, "ConnectedSurface", x0, z0, x1, z1, SurfaceHeight, color, surfaceMaterial);
+        HexMeshUtil.Create(layers, "ConnectedHexSurface",
+            HexMeshUtil.InsetSurface(cellSize, groundInset, mask), SurfaceHeight, color, surfaceMaterial);
     }
 
     // Props keep a near-human scale (grows with sqrt of the cell) and get denser as cells get bigger.
@@ -95,9 +90,16 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         float k = cellSize / 2.5f;              // area factor per side
         float s = detail;                        // prop size factor
         float spread = cellSize * 0.38f;         // stay inside the rim
-        var random = new System.Random(coord.x * 73856093 ^ coord.y * 19349663 ^ (int)type * 83492791);
+        var random = new System.Random(coord.q * 73856093 ^ coord.r * 19349663 ^ (int)type * 83492791);
         float Range(float min, float max) => min + (float)random.NextDouble() * (max - min);
-        Vector3 RandomSpot(float y) => new Vector3(Range(-spread, spread), y, Range(-spread, spread));
+        Vector3 RandomSpot(float y)
+        {
+            Vector3 p;
+            do { p = new Vector3(Range(-spread, spread), 0, Range(-spread, spread)); }
+            while (!HexMetrics.Contains(p, cellSize, cellSize * 0.15f));
+            p.y = y;
+            return p;
+        }
         float top = SurfaceHeight;
         switch (type)
         {
@@ -108,9 +110,12 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
                 Vector3 size = new Vector3(0.14f, 0.7f, 0.14f) * s;
                 for (int x = 0; x < rows; x++)
                     for (int z = 0; z < rows; z++)
-                        EcoVisualUtil.Primitive(PrimitiveType.Cube, props, "Stalk",
-                            new Vector3(-spread + x * step + Range(-0.1f, 0.1f) * s, top + size.y * 0.5f, -spread + z * step + Range(-0.1f, 0.1f) * s),
-                            size, new Color(0.88f, 0.7f, 0.22f));
+                    {
+                        Vector3 spot = new Vector3(-spread + x * step + Range(-0.1f, 0.1f) * s,
+                            top + size.y * 0.5f, -spread + z * step + Range(-0.1f, 0.1f) * s);
+                        if (HexMetrics.Contains(spot, cellSize, groundInset + size.x))
+                            EcoVisualUtil.Primitive(PrimitiveType.Cube, props, "Stalk", spot, size, new Color(0.88f, 0.7f, 0.22f));
+                    }
                 break;
             }
             case EnvironmentTileType.Flower:

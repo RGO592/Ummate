@@ -7,21 +7,19 @@ public enum BuildState
     Complete
 }
 
-// Runtime data for one grid cell. Coordinates: X = grid column (world X), Y = grid row (world Z).
+// Runtime data for one grid cell. Coordinates: pointy-top axial q/r.
 public sealed class EcoGridCell
 {
-    public Vector2Int Coord { get; }
+    public HexCoord Coord { get; }
     public EnvironmentTileType TileType { get; private set; } = EnvironmentTileType.None;
     public BuildState State { get; private set; } = BuildState.Empty;
     public int RemainingBuildDays { get; private set; }
     public GameObject Visual { get; private set; }
-    // Grey base slab drawn under the cell; owned by the manager.
-    public GameObject BaseVisual { get; internal set; }
 
     public bool IsEmpty => State == BuildState.Empty;
     public bool IsComplete => State == BuildState.Complete;
 
-    public EcoGridCell(Vector2Int coord) => Coord = coord;
+    public EcoGridCell(HexCoord coord) => Coord = coord;
 
     internal void SetTile(EnvironmentTileType type, int buildDays, GameObject visual)
     {

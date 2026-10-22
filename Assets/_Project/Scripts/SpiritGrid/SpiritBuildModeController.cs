@@ -48,7 +48,7 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     private float orbitElapsed, orbitDuration, orbitStartYaw, orbitDistance, orbitPitch;
     private Vector3 orbitFocus;
 
-    private Vector3 PivotPosition => rotationPivot != null ? rotationPivot.position : grid.GridRoot.position;
+    private Vector3 PivotPosition => rotationPivot != null ? rotationPivot.position : grid.ActiveBounds.center;
 
     public bool IsBuildMode { get; private set; }
 
@@ -103,8 +103,9 @@ public sealed class SpiritBuildModeController : MonoBehaviour
         focus = PivotPosition;
         panOffset = Vector3.zero;
         currentYaw = quarterTurns * 90f;
-        Vector2 half = grid.HalfExtents;
-        float extent = Mathf.Max(half.x, half.y) + framingMargin;
+        Vector3 half = grid.ActiveBounds.extents;
+        // Circumscribed radius keeps all corners in frame through the 90-degree orbit.
+        float extent = new Vector2(half.x, half.z).magnitude + framingMargin;
         float vertical = viewCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
         float horizontal = Mathf.Atan(Mathf.Tan(vertical) * viewCamera.aspect);
         distance = Mathf.Clamp(extent / Mathf.Tan(Mathf.Min(vertical, horizontal)), minZoomDistance, maxZoomDistance);
