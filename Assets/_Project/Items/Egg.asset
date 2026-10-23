@@ -13,3 +13,5 @@ MonoBehaviour:
   m_Name: Egg
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   displayName: "\uB2EC\uAC40"
+  canSell: 1
+  sellPrice: 8

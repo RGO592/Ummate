@@ -7,6 +7,8 @@ public sealed class GameSaveData
     public int version;
     public int day;
     public int selectedSlot;
+    // Added after v1 shipped. JsonUtility leaves it 0 when an older save has no "gold" field.
+    public int gold;
     public ItemState[] inventory;
     public MissionState mission;
     public PlotState[] plots;

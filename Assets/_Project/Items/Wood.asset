@@ -13,3 +13,5 @@ MonoBehaviour:
   m_Name: Wood
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   displayName: "목재"
+  canSell: 1
+  sellPrice: 10

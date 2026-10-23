@@ -21,6 +21,7 @@ public sealed class GameSaveSystem : MonoBehaviour
     [SerializeField] private GameDay gameDay;
     [SerializeField] private SleepTransition sleepTransition;
     [SerializeField] private PlayerInventory inventory;
+    [SerializeField] private PlayerWallet wallet;
     [SerializeField] private PlayerQuickbar quickbar;
     [SerializeField] private MissionProgress mission;
     [SerializeField] private ItemBinding[] items;
@@ -72,6 +73,7 @@ public sealed class GameSaveSystem : MonoBehaviour
             var data = new GameSaveData
             {
                 version = 1, day = 1, selectedSlot = 0,
+                gold = 0,
                 inventory = items.Select(b => new GameSaveData.ItemState
                 {
                     id = b.id, quantity = b.id == WheatSeedsId ? 3 : b.id == WateringCanId ? 1 : 0
@@ -181,6 +183,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         foreach (var saved in data.chickens) chickens.Single(b => b.id == saved.id).chicken.RestoreState(saved);
         foreach (var saved in data.cows) cows.Single(b => b.id == saved.id).cow.RestoreState(saved);
         inventory.RestoreQuantities(restoredInventory);
+        wallet.RestoreGold(data.gold);
         quickbar.SelectSlot(data.selectedSlot);
     }
 
@@ -192,6 +195,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         return new GameSaveData
         {
             version = 1, day = gameDay.CurrentDay, selectedSlot = quickbar.SelectedSlotIndex,
+            gold = wallet.Gold,
             inventory = items.Select(b => new GameSaveData.ItemState { id = b.id, quantity = inventory.GetQuantity(b.item) }).ToArray(),
             mission = mission.CaptureState(),
             plots = plots.Select(b => b.plot.CaptureState(b.id)).ToArray(),
@@ -202,7 +206,7 @@ public sealed class GameSaveSystem : MonoBehaviour
 
     private void ValidateBindings()
     {
-        Require(gameDay != null && sleepTransition != null && inventory != null && quickbar != null &&
+        Require(gameDay != null && sleepTransition != null && inventory != null && wallet != null && quickbar != null &&
             mission != null && mission.SaveReferencesValid, "저장 시스템 기본 연결이 누락되었습니다.");
         Require(items != null && items.Length > 0 && items.All(b => b != null && b.item != null), "아이템 연결 누락");
         Require(plots != null && plots.Length > 0 && plots.All(b => b != null && b.plot != null && b.plot.SaveReferencesValid), "밭 연결 누락");
@@ -221,6 +225,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         ValidateBindings();
         Require(data != null && data.version == 1 && data.day >= 1, "지원하지 않거나 손상된 저장 파일입니다.");
         Require(data.selectedSlot >= 0 && data.selectedSlot < PlayerQuickbar.SlotCount, "퀵슬롯 값 오류");
+        Require(data.gold >= 0, "골드 값 오류");
         Require(data.inventory != null && data.inventory.All(s => s != null && s.quantity >= 0), "인벤토리 값 오류");
         Require(data.plots != null && data.plots.All(s => s != null), "밭 데이터 누락");
         Require(data.chickens != null && data.chickens.All(s => s != null), "닭 데이터 누락");
