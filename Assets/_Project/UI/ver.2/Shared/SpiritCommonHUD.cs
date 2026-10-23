@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Presentation only. FarmScene remains loaded but inactive during SpiritRealmTravel.
+// Presentation only. FarmScene remains loaded but inactive during regional scene travel.
 // Read its GameDay without creating another clock or changing save / mission state.
 [DisallowMultipleComponent]
 public sealed class SpiritCommonHUD : MonoBehaviour
@@ -17,7 +17,6 @@ public sealed class SpiritCommonHUD : MonoBehaviour
     [Header("Spirit guidance")]
     [SerializeField] private SpiritBuildModeController buildMode;
     [SerializeField] private EcoPlacementController placement;
-    [SerializeField] private EcoExpansionPrompt expansionPrompt;
     [SerializeField] private TMP_Text questText;
     [SerializeField, TextArea] private string questMessage = "현재 목표: 환경 칸을 배치해보세요.";
     [SerializeField] private TMP_Text tipText;
@@ -25,7 +24,6 @@ public sealed class SpiritCommonHUD : MonoBehaviour
     [SerializeField, TextArea] private string buildTip = "아래 환경 슬롯을 드래그해 원하는 칸에 배치하세요.";
     [SerializeField, TextArea] private string moveTip = "배치된 환경물을 드래그해 다른 빈 칸으로 옮길 수 있습니다.";
     [SerializeField, TextArea] private string removeTip = "제거할 환경물을 선택하세요.";
-    [SerializeField, TextArea] private string lockedTip = "아직 개방되지 않은 영역입니다.";
     [SerializeField, Min(1)] private float charactersPerSecond = 35f;
 
     [Header("Existing Tip DEV subtext")]
@@ -110,7 +108,6 @@ public sealed class SpiritCommonHUD : MonoBehaviour
     private string CurrentTip()
     {
         if (buildMode == null || !buildMode.IsBuildMode) return exploreTip;
-        if (expansionPrompt != null && expansionPrompt.IsOpen) return lockedTip;
         if (placement != null && placement.RemoveMode) return removeTip;
         if (placement != null && placement.HasPicked) return moveTip;
         return buildTip;

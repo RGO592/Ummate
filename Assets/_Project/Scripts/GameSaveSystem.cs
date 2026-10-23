@@ -8,7 +8,13 @@ using UnityEngine.InputSystem;
 [DisallowMultipleComponent]
 public sealed class GameSaveSystem : MonoBehaviour
 {
-    [Serializable] public sealed class ItemBinding { public string id; public ItemDefinition item; }
+    [Serializable] public sealed class ItemBinding
+    {
+        public string id;
+        public ItemDefinition item;
+        [Tooltip("Allow this newly introduced item to be absent from older saves (quantity 0). Existing items stay required.")]
+        public bool optionalInOlderSaves;
+    }
     [Serializable] public sealed class PlotBinding { public string id; public FarmPlot plot; }
     [Serializable] public sealed class ChickenBinding { public string id; public ChickenFeeding chicken; }
     [Serializable] public sealed class CowBinding { public string id; public CowFeeding cow; }
@@ -219,7 +225,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         Require(data.plots != null && data.plots.All(s => s != null), "밭 데이터 누락");
         Require(data.chickens != null && data.chickens.All(s => s != null), "닭 데이터 누락");
         Require(data.cows != null && data.cows.All(s => s != null), "소 데이터 누락");
-        MatchIds(data.inventory.Select(s => s.id), items.Select(b => b.id));
+        MatchInventoryIds(data.inventory.Select(s => s.id));
         MatchIds(data.plots.Select(s => s.id), plots.Select(b => b.id));
         MatchIds(data.chickens.Select(s => s.id), chickens.Select(b => b.id));
         MatchIds(data.cows.Select(s => s.id), cows.Select(b => b.id));
@@ -246,6 +252,16 @@ public sealed class GameSaveSystem : MonoBehaviour
     {
         var values = ids.ToArray();
         Require(values.All(id => !string.IsNullOrWhiteSpace(id)) && values.Distinct().Count() == values.Length, "저장 ID 누락/중복");
+    }
+    // Adding Wood must neither reject existing saves nor silently discard unknown saved items.
+    private void MatchInventoryIds(IEnumerable<string> saved)
+    {
+        string[] values = saved.ToArray();
+        CheckIds(values);
+        var ids = new HashSet<string>(values);
+        Require(ids.IsSubsetOf(items.Select(b => b.id)) &&
+            items.Where(b => !b.optionalInOlderSaves).All(b => ids.Contains(b.id)),
+            "저장 파일과 현재 Scene의 아이템 ID 목록이 다릅니다.");
     }
     private static void MatchIds(IEnumerable<string> saved, IEnumerable<string> configured)
     {

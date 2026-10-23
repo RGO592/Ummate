@@ -4,7 +4,7 @@ using UnityEngine.Serialization;
 using UnityEngine;
 
 // Owns the eco grid: cell data, grid <-> world conversion, and place / move / remove.
-// Requests (Can*) are separated from execution (Try*) so cost, lock and pattern rules can hook in later.
+// Requests (Can*) are separated from execution (Try*) so cost and pattern rules can hook in later.
 // Cell data is independent of the continuous natural ground supplied by the scene.
 [DisallowMultipleComponent]
 public sealed class EcoGridManager : MonoBehaviour
@@ -27,11 +27,6 @@ public sealed class EcoGridManager : MonoBehaviour
     [SerializeField, Min(1)] private int width = 6;
     [SerializeField, Min(1)] private int height = 6;
     [SerializeField, Min(0.5f), FormerlySerializedAs("cellSize")] private float hexWidth = 10f;
-    [SerializeField, Min(1)] private int mapColumns = 21;
-    [SerializeField, Min(1)] private int mapRows = 24;
-    [SerializeField, Min(0.05f)] private float boundaryThickness = 0.3f;
-    [SerializeField, Min(1f)] private float boundaryHeight = 12f;
-    [SerializeField, Range(0, 31)] private int boundaryLayer;
 
     [Header("Surface Presentation")]
     [SerializeField, Min(0f), Tooltip("Inset on exposed edges only; same-type neighbours always meet at the cell boundary.")]
@@ -53,7 +48,6 @@ public sealed class EcoGridManager : MonoBehaviour
 
     private Dictionary<HexCoord, EcoGridCell> cells;
     private readonly HashSet<HexCoord> mapHexes = new HashSet<HexCoord>();
-    private GameObject boundaryRoot;
 
     // Raised for every cell whose content or build state changed (both cells on a move).
     // Future ecosystem pattern evaluation and UI can subscribe here.
@@ -64,10 +58,10 @@ public sealed class EcoGridManager : MonoBehaviour
     public float CellSize => hexWidth;
     public bool DevFreePlacement => EcoDevMode.FreePlacement;
     public Transform GridRoot => gridRoot != null ? gridRoot : transform;
-    public int MapColumns => mapColumns;
-    public int MapRows => mapRows;
+    public int MapColumns => width;
+    public int MapRows => height;
     public IEnumerable<HexCoord> MapHexes => mapHexes;
-    public IEnumerable<HexCoord> UnlockedHexes => cells.Keys;
+    public IEnumerable<HexCoord> CellCoordinates => cells.Keys;
     private bool boundsReady;
     private Matrix4x4 boundsMatrix;
     private Bounds activeWorldBounds, mapWorldBounds, mapLocalBounds;
@@ -79,7 +73,7 @@ public sealed class EcoGridManager : MonoBehaviour
         EnsureGrid();
         Matrix4x4 matrix = GridRoot.localToWorldMatrix;
         if (boundsReady && matrix == boundsMatrix) return;
-        activeWorldBounds = CalculateBounds(UnlockedHexes, true);
+        activeWorldBounds = CalculateBounds(CellCoordinates, true);
         mapWorldBounds = CalculateBounds(MapHexes, true);
         mapLocalBounds = CalculateBounds(MapHexes, false);
         boundsMatrix = matrix;
@@ -93,25 +87,21 @@ public sealed class EcoGridManager : MonoBehaviour
     {
         if (cells != null) return;
         cells = new Dictionary<HexCoord, EcoGridCell>();
-        for (int row = 0; row < mapRows; row++)
-            for (int col = 0; col < mapColumns; col++) mapHexes.Add(HexMetrics.FromOffset(col, row));
         for (int row = 0; row < height; row++)
             for (int col = 0; col < width; col++)
             {
                 HexCoord coord = HexMetrics.FromOffset(col, row);
-                if (mapHexes.Contains(coord)) cells.Add(coord, new EcoGridCell(coord));
+                mapHexes.Add(coord);
+                cells.Add(coord, new EcoGridCell(coord));
             }
-        RebuildBoundaries();
     }
 
     public bool IsInMap(HexCoord coord) => mapHexes.Contains(coord);
-    public bool IsUnlocked(HexCoord coord) => cells != null && cells.ContainsKey(coord);
-    public bool IsLocked(HexCoord coord) => IsInMap(coord) && !IsUnlocked(coord);
-    public bool IsInside(HexCoord coord) => IsUnlocked(coord);
+    public bool IsInside(HexCoord coord) => cells != null && cells.ContainsKey(coord);
     public EcoGridCell GetCell(HexCoord coord) => cells != null && cells.TryGetValue(coord, out EcoGridCell cell) ? cell : null;
     public Vector3 GridToWorld(HexCoord coord) => HexMetrics.HexToWorld(GridRoot, coord, hexWidth);
 
-    // Returns map membership; callers explicitly distinguish unlocked and locked cells.
+    // Every map coordinate owns a usable cell.
     public bool WorldToGrid(Vector3 world, out HexCoord coord)
     {
         coord = HexMetrics.WorldToHex(GridRoot, world, hexWidth);
@@ -140,31 +130,6 @@ public sealed class EcoGridManager : MonoBehaviour
         return result;
     }
 
-    // Rebuild after the unlocked set changes in a future expansion implementation.
-    // Thin walls lie outside each open cell, so they do not shrink its usable interior.
-    public void RebuildBoundaries()
-    {
-        boundsReady = false;
-        if (boundaryRoot != null) { boundaryRoot.SetActive(false); Destroy(boundaryRoot); }
-        boundaryRoot = new GameObject("ActiveHexBoundary");
-        boundaryRoot.transform.SetParent(GridRoot, false);
-        foreach (HexCoord coord in cells.Keys)
-            for (int d = 0; d < 6; d++)
-            {
-                if (IsUnlocked(coord.Neighbor(d))) continue;
-                Vector3 normal = HexMetrics.EdgeNormal(d);
-                var wall = new GameObject($"Edge_{coord.q}_{coord.r}_{d}");
-                wall.layer = boundaryLayer;
-                wall.transform.SetParent(boundaryRoot.transform, false);
-                wall.transform.localPosition = HexMetrics.LocalCenter(coord, hexWidth)
-                    + normal * (hexWidth * 0.5f + boundaryThickness * 0.5f)
-                    + Vector3.up * (boundaryHeight * 0.5f - 2f);
-                wall.transform.localRotation = Quaternion.LookRotation(normal, Vector3.up);
-                wall.AddComponent<BoxCollider>().size = new Vector3(
-                    HexMetrics.Radius(hexWidth) + boundaryThickness * 1.2f, boundaryHeight, boundaryThickness);
-            }
-    }
-
     // ---- Place ----
 
     public int GetCost(EnvironmentTileType type) => GetSettings(type).cost;
@@ -174,9 +139,9 @@ public sealed class EcoGridManager : MonoBehaviour
         reason = null;
         if (type == EnvironmentTileType.None) { reason = "환경 칸 종류가 선택되지 않았습니다."; return false; }
         EcoGridCell cell = GetCell(coord);
-        if (cell == null) { reason = IsLocked(coord) ? "아직 개방되지 않은 영역입니다." : "그리드 범위 밖입니다."; return false; }
+        if (cell == null) { reason = "그리드 범위 밖입니다."; return false; }
         if (!cell.IsEmpty) { reason = "이미 환경물이 있습니다."; return false; }
-        // Only unlocked Hex coordinates own cell data; expansion remains presentation-only.
+        // All forest Hex cells use the same placement rules.
         return HasPlacementCost(type, out reason);
     }
 
@@ -341,8 +306,6 @@ public sealed class EcoGridManager : MonoBehaviour
     {
         width = Mathf.Max(1, width);
         height = Mathf.Max(1, height);
-        mapColumns = Mathf.Max(width, mapColumns);
-        mapRows = Mathf.Max(height, mapRows);
     }
 
     private void OnDrawGizmosSelected()
@@ -359,5 +322,4 @@ public sealed class EcoGridManager : MonoBehaviour
         Gizmos.matrix = Matrix4x4.identity;
     }
 
-    private void OnDestroy() { if (boundaryRoot != null) Destroy(boundaryRoot); }
 }

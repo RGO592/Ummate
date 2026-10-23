@@ -3,8 +3,7 @@ Shader "Ummate/SpiritGrid/GridLines"
     Properties
     {
         _BaseColor ("Line Color", Color) = (0.92,1,0.82,0.95)
-        _ActiveColor ("Unlocked Ground", Color) = (0.54,0.733,0.38,1)
-        _LockedColor ("Locked Ground", Color) = (0.294,0.388,0.267,1)
+        _ActiveColor ("Forest Ground", Color) = (0.54,0.733,0.38,1)
         _HexWidth ("Hex Flat-to-flat Width", Float) = 10
         _LineWidth ("Line Width", Float) = 0.14
         _BorderWidth ("Border Width", Float) = 0.22
@@ -12,7 +11,7 @@ Shader "Ummate/SpiritGrid/GridLines"
         _MapMin ("Map Local Minimum", Vector) = (-5,-5.773503,0,0)
         _MapSize ("Map Local Size", Vector) = (215,210.732,0,0)
         _MapDimensions ("Offset Columns / Rows", Vector) = (21,24,0,0)
-        _CellState ("Map State (R unlocked, G present)", 2D) = "black" {}
+        _CellState ("Map State (G present)", 2D) = "black" {}
         _FillOnly ("Ground Fill Pass", Float) = 0
     }
     SubShader
@@ -35,7 +34,7 @@ Shader "Ummate/SpiritGrid/GridLines"
             struct Varyings { float4 positionCS : SV_POSITION; float2 localGround : TEXCOORD0; };
             TEXTURE2D(_CellState); SAMPLER(sampler_CellState);
             CBUFFER_START(UnityPerMaterial)
-            float4 _BaseColor, _ActiveColor, _LockedColor, _MapMin, _MapSize, _MapDimensions;
+            float4 _BaseColor, _ActiveColor, _MapMin, _MapSize, _MapDimensions;
             float4 _HexDirections[6]; // Uploaded from HexCoord.Directions, never independently ordered.
             float _HexWidth, _LineWidth, _BorderWidth, _MinPixelWidth, _FillOnly;
             CBUFFER_END
@@ -79,7 +78,7 @@ Shader "Ummate/SpiritGrid/GridLines"
                 float2 hex = WorldHex(input.localGround);
                 float2 state = State(hex);
                 clip(state.y - 0.5);
-                if (_FillOnly > 0.5) return lerp(_LockedColor, _ActiveColor, state.x);
+                if (_FillOnly > 0.5) return _ActiveColor;
                 float2 offset = input.localGround - HexCenter(hex);
                 float pixel = max(length(fwidth(input.localGround)), 0.00001);
                 float lines = 0;
@@ -88,7 +87,7 @@ Shader "Ummate/SpiritGrid/GridLines"
                     float2 normal = normalize(HexCenter(_HexDirections[d].xy));
                     float distanceToEdge = max(0, _HexWidth * 0.5 - dot(offset, normal));
                     float2 other = State(hex + _HexDirections[d].xy);
-                    float boundary = max(abs(state.x - other.x), 1.0 - other.y);
+                    float boundary = 1.0 - other.y;
                     float width = lerp(_LineWidth, _BorderWidth, boundary);
                     lines = max(lines, Coverage(distanceToEdge, pixel, width));
                 }

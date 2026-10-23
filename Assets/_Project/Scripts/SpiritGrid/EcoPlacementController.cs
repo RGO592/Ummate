@@ -32,7 +32,7 @@ public sealed class EcoPlacementController : MonoBehaviour
     private Vector3 pointerWorld;
     private bool pointerOverUI;
     private Renderer[] hoverRenderers;
-    private bool hasHover, hasPlanePoint, lockedHover;
+    private bool hasHover, hasPlanePoint;
     private HexCoord hoverCoord;
     private int consumedFrame = -1;
 
@@ -62,7 +62,7 @@ public sealed class EcoPlacementController : MonoBehaviour
     {
         EndIntent();
         RemoveMode = false;
-        hasHover = hasPlanePoint = lockedHover = false;
+        hasHover = hasPlanePoint = false;
         HoverStatus = "";
         HideHighlights();
     }
@@ -72,14 +72,6 @@ public sealed class EcoPlacementController : MonoBehaviour
     private void Update()
     {
         if (grid == null || viewCamera == null) return;
-        if (InputBlocked)
-        {
-            if (drag.IsActive) CancelPick();
-            buildArea.HandleModalKeyboard();
-            hasHover = hasPlanePoint = lockedHover = false;
-            HideHighlights();
-            return;
-        }
         Mouse mouse = Mouse.current;
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)
@@ -106,12 +98,6 @@ public sealed class EcoPlacementController : MonoBehaviour
 
         if (!PointerOverUI(screen))
         {
-            if (lockedHover && mouse.leftButton.wasPressedThisFrame)
-            {
-                buildArea.ShowExpansionPrompt();
-                HideHighlights();
-                return;
-            }
             if (RemoveMode && mouse.leftButton.isPressed) RemoveHovered();
             else if (!RemoveMode && hasHover && mouse.leftButton.wasPressedThisFrame)
             {
@@ -250,7 +236,7 @@ public sealed class EcoPlacementController : MonoBehaviour
     {
         pointerScreen = screen;
         pointerOverUI = PointerOverUI(screen);
-        hasHover = hasPlanePoint = lockedHover = false;
+        hasHover = hasPlanePoint = false;
         HoverPlaceable = false;
         HoverStatus = drag.IsActive ? "배치 영역 밖 · 놓으면 취소" : "";
         Ray ray = viewCamera.ScreenPointToRay(screen);
@@ -261,8 +247,7 @@ public sealed class EcoPlacementController : MonoBehaviour
             pointerWorld = ray.GetPoint(distance);
             // UI blocks dropping, but never stops the carried ghost from following the pointer.
             bool inside = grid.WorldToGrid(pointerWorld, out hoverCoord);
-            hasHover = !pointerOverUI && inside && grid.IsUnlocked(hoverCoord);
-            lockedHover = !pointerOverUI && inside && grid.IsLocked(hoverCoord);
+            hasHover = !pointerOverUI && inside && grid.IsInside(hoverCoord);
         }
         if (pointerOverUI) { if (drag.IsActive) HoverStatus = "UI 위 · 놓으면 취소"; return; }
         if (drag.IsActive)
@@ -277,7 +262,7 @@ public sealed class EcoPlacementController : MonoBehaviour
             HoverStatus = RemoveMode ? (occupied ? "클릭 또는 드래그: 제거" : "빈 칸")
                 : occupied ? "드래그해서 이동" : "하단 슬롯을 이 칸으로 드래그하세요";
         }
-        else HoverStatus = lockedHover ? "잠긴 영역 · 클릭해서 개방 조건 확인" : "";
+        else HoverStatus = "";
     }
 
     private void BeginPreview()
@@ -308,7 +293,7 @@ public sealed class EcoPlacementController : MonoBehaviour
 
     private void UpdateHighlights()
     {
-        bool snap = hasHover || lockedHover;
+        bool snap = hasHover;
         bool show = drag.IsActive ? snap : hasHover && HoverPlaceable;
         hoverFrame.gameObject.SetActive(show);
         if (show)
