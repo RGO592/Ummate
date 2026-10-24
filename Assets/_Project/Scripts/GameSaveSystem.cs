@@ -81,7 +81,8 @@ public sealed class GameSaveSystem : MonoBehaviour
                 mission = new GameSaveData.MissionState { stage = 1 },
                 plots = plots.Select(b => new GameSaveData.PlotState { id = b.id }).ToArray(),
                 chickens = chickens.Select(b => new GameSaveData.ChickenState { id = b.id }).ToArray(),
-                cows = cows.Select(b => new GameSaveData.CowState { id = b.id }).ToArray()
+                cows = cows.Select(b => new GameSaveData.CowState { id = b.id }).ToArray(),
+                hexGrids = new GameSaveData.HexGridState[0]
             };
             Validate(data);
             // Commit the reset first. A write failure leaves both the old save and live state intact.
@@ -89,7 +90,7 @@ public sealed class GameSaveSystem : MonoBehaviour
             ApplyState(data);
             unreadableSave = false;
             sessionStarted = true;
-            Debug.Log($"새 게임 시작: 기존 세이브를 초기화하고 1일차 새 게임 데이터로 저장했습니다. 미션·인벤토리·밭·동물 상태가 초기화되었습니다.\n{SavePath}", this);
+            Debug.Log($"새 게임 시작: 기존 세이브를 초기화하고 1일차 새 게임 데이터로 저장했습니다. 미션·인벤토리·밭·동물·숲 Hex 상태가 초기화되었습니다.\n{SavePath}", this);
             return true;
         }
         catch (Exception ex)
@@ -185,6 +186,8 @@ public sealed class GameSaveSystem : MonoBehaviour
         inventory.RestoreQuantities(restoredInventory);
         wallet.RestoreGold(data.gold);
         quickbar.SelectSlot(data.selectedSlot);
+        // Region grids that are not loaded yet keep their state until their scene awakes.
+        EcoGridManager.RestoreAll(data.hexGrids);
     }
 
     private GameSaveData Capture()
@@ -200,7 +203,8 @@ public sealed class GameSaveSystem : MonoBehaviour
             mission = mission.CaptureState(),
             plots = plots.Select(b => b.plot.CaptureState(b.id)).ToArray(),
             chickens = chickens.Select(b => b.chicken.CaptureState(b.id)).ToArray(),
-            cows = cows.Select(b => b.cow.CaptureState(b.id)).ToArray()
+            cows = cows.Select(b => b.cow.CaptureState(b.id)).ToArray(),
+            hexGrids = EcoGridManager.CaptureAll()
         };
     }
 
@@ -234,6 +238,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         MatchIds(data.plots.Select(s => s.id), plots.Select(b => b.id));
         MatchIds(data.chickens.Select(s => s.id), chickens.Select(b => b.id));
         MatchIds(data.cows.Select(s => s.id), cows.Select(b => b.id));
+        ValidateHexGrids(data.hexGrids);
         var m = data.mission;
         Require(m != null, "미션 데이터 누락");
         Require(m.wheatHarvested >= 0 && m.wheatHarvested <= 9 && m.eggsCollected >= 0 && m.eggsCollected <= 4 &&
@@ -250,6 +255,18 @@ public sealed class GameSaveSystem : MonoBehaviour
             else
                 Require(p.crop != FarmPlot.CropKind.None && p.growthDays == (p.state == FarmPlot.CropState.ReadyToHarvest ? 1 : 0) &&
                     (p.state != FarmPlot.CropState.ReadyToHarvest || !p.wateredToday), "성장 상태 오류");
+        }
+    }
+    // Optional (older saves have none). Coordinates are checked against the map when the grid restores.
+    private static void ValidateHexGrids(GameSaveData.HexGridState[] grids)
+    {
+        if (grids == null) return;
+        Require(grids.All(g => g != null && !string.IsNullOrWhiteSpace(g.id)) && grids.Select(g => g.id).Distinct().Count() == grids.Length, "Hex Grid ID 누락/중복");
+        foreach (var grid in grids)
+        {
+            var cells = grid.cells ?? new GameSaveData.HexCellState[0];
+            Require(cells.All(c => c != null && c.tileType != EnvironmentTileType.None && Enum.IsDefined(typeof(EnvironmentTileType), c.tileType)), "Hex 환경 종류 오류");
+            Require(cells.Select(c => (c.q, c.r)).Distinct().Count() == cells.Length, "Hex 좌표 중복");
         }
     }
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidDataException(message); }

@@ -37,7 +37,7 @@ public sealed class EcoGridDebugUI : MonoBehaviour
         if (controller.HasHover)
         {
             EcoGridCell cell = grid.GetCell(controller.HoverCoord);
-            string content = cell.IsEmpty ? "빈 칸" : $"{EnvironmentTileTypes.DisplayName(cell.TileType)} · {StateName(cell)}";
+            string content = cell.IsEmpty ? "빈 칸" : EnvironmentTileTypes.DisplayName(cell.TileType);
             hover = $"커서 ({controller.HoverCoord.q},{controller.HoverCoord.r}) {content} → {controller.HoverStatus}";
         }
 
@@ -47,11 +47,4 @@ public sealed class EcoGridDebugUI : MonoBehaviour
                $"{controller.LastMessage}\n" +
                "슬롯 드래그: 배치 | 환경물 드래그: 이동 | 우클릭·Esc 취소 | X 철거 | Delete 이동 대상 제거";
     }
-
-    private static string StateName(EcoGridCell cell) => cell.State switch
-    {
-        BuildState.Constructing => $"조성 중 {cell.RemainingBuildDays}일",
-        BuildState.Complete => "완성",
-        _ => "빈 칸"
-    };
 }

@@ -163,7 +163,9 @@ public sealed class EcoPlacementController : MonoBehaviour
             slotDragSource = null;
             consumedFrame = Time.frameCount;
         }
-        LastMessage = committed ? $"{name} {(moving ? "이동" : "배치")}" : $"{(moving ? "이동" : "배치")} 취소: {reason}";
+        // Moving is always free; only a new placement reports what it charged.
+        LastMessage = !committed ? $"{(moving ? "이동" : "배치")} 취소: {reason}"
+            : moving ? $"{name} 이동 (비용 없음)" : $"{name} 배치 (사용: {grid.LastChargeText})";
         HideHighlights();
     }
 

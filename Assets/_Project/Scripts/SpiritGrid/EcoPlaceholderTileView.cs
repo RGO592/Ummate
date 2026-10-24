@@ -19,7 +19,6 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
     private Transform layers;
     private Transform props;
     private HexDirectionMask mask = (HexDirectionMask)(-1);
-    private BuildState state = BuildState.Complete;
 
     public void Build(EnvironmentTileType tileType, HexCoord cellCoord, float size, float edgeInset, Material material, Material tileSurfaceMaterial = null)
     {
@@ -54,7 +53,6 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         props = new GameObject("Props").transform;
         props.SetParent(transform, false);
         BuildProps();
-        props.gameObject.SetActive(state == BuildState.Complete);
     }
 
     public void SetNeighbors(HexDirectionMask newMask)
@@ -70,20 +68,9 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         else BuildTypeSurface();
     }
 
-    public void SetBuildState(BuildState newState)
-    {
-        if (newState == state) return;
-        state = newState;
-        if (props != null) props.gameObject.SetActive(state == BuildState.Complete);
-        HexDirectionMask current = mask;
-        mask = (HexDirectionMask)(-1);   // refresh the construction appearance
-        SetNeighbors(current);
-    }
-
     private void BuildTypeSurface()
     {
         Color color = EnvironmentTileTypes.DefaultColor(type);
-        if (state == BuildState.Constructing) color = Color.Lerp(color, Color.gray, 0.6f);
         // SG_TileSurface renders after HexGroundTint (2002), before grid lines (3010).
         // The ground fill uses depth bias, so drawing it after this face caused a
         // camera-dependent horizontal cutoff even with different surface heights.
@@ -95,13 +82,10 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
     // Only exposed water edges retain an inset. Joined faces have no rim or gap.
     private void BuildWaterSurface()
     {
-        GameObject surface = HexMeshUtil.Create(layers, "ConnectedWaterSurface",
+        // Preserve the authored water colours instead of overriding them with DefaultColor(Water).
+        HexMeshUtil.Create(layers, "ConnectedWaterSurface",
             HexMeshUtil.InsetSurface(cellSize, groundInset, mask), SurfaceHeight,
             Color.white, waterMaterial, tintMaterial: false);
-        // Preserve the authored water colours instead of overriding them with DefaultColor(Water).
-        var block = new MaterialPropertyBlock();
-        block.SetFloat("_Construction", state == BuildState.Constructing ? 1f : 0f);
-        surface.GetComponent<Renderer>().SetPropertyBlock(block);
     }
 
     // Props keep a near-human scale (grows with sqrt of the cell) and get denser as cells get bigger.

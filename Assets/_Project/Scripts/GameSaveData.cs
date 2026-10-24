@@ -14,8 +14,21 @@ public sealed class GameSaveData
     public PlotState[] plots;
     public ChickenState[] chickens;
     public CowState[] cows;
+    // Added after v1 shipped. Older saves have no field (null) and load as empty grids.
+    public HexGridState[] hexGrids;
 
     [Serializable] public sealed class ItemState { public string id; public int quantity; }
+    // One entry per region Hex grid (EcoGridManager.SaveId). Only placed cells are stored; background hexes never.
+    [Serializable] public sealed class HexGridState
+    {
+        public string id;
+        public HexCellState[] cells;
+    }
+    [Serializable] public sealed class HexCellState
+    {
+        public int q, r;
+        public EnvironmentTileType tileType;
+    }
     [Serializable] public sealed class MissionState
     {
         public int stage;

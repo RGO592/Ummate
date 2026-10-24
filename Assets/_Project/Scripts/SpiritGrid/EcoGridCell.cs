@@ -1,59 +1,34 @@
 using UnityEngine;
 
-public enum BuildState
-{
-    Empty,
-    Constructing,
-    Complete
-}
-
 // Runtime data for one grid cell. Coordinates: pointy-top axial q/r.
+// Placed tiles are complete immediately; there is no construction state.
 public sealed class EcoGridCell
 {
     public HexCoord Coord { get; }
     public EnvironmentTileType TileType { get; private set; } = EnvironmentTileType.None;
-    public BuildState State { get; private set; } = BuildState.Empty;
-    public int RemainingBuildDays { get; private set; }
     public GameObject Visual { get; private set; }
 
-    public bool IsEmpty => State == BuildState.Empty;
-    public bool IsComplete => State == BuildState.Complete;
+    public bool IsEmpty => TileType == EnvironmentTileType.None;
 
     public EcoGridCell(HexCoord coord) => Coord = coord;
 
-    internal void SetTile(EnvironmentTileType type, int buildDays, GameObject visual)
+    internal void SetTile(EnvironmentTileType type, GameObject visual)
     {
         TileType = type;
-        RemainingBuildDays = Mathf.Max(0, buildDays);
-        State = RemainingBuildDays > 0 ? BuildState.Constructing : BuildState.Complete;
         Visual = visual;
     }
 
-    // Moves tile, build progress and visual from another cell into this one.
+    // Moves tile and visual from another cell into this one.
     internal void TakeFrom(EcoGridCell source)
     {
         TileType = source.TileType;
-        State = source.State;
-        RemainingBuildDays = source.RemainingBuildDays;
         Visual = source.Visual;
         source.Clear();
-    }
-
-    // Returns true when this call finished construction.
-    internal bool AdvanceBuildDay()
-    {
-        if (State != BuildState.Constructing) return false;
-        RemainingBuildDays = Mathf.Max(0, RemainingBuildDays - 1);
-        if (RemainingBuildDays > 0) return false;
-        State = BuildState.Complete;
-        return true;
     }
 
     internal void Clear()
     {
         TileType = EnvironmentTileType.None;
-        State = BuildState.Empty;
-        RemainingBuildDays = 0;
         Visual = null;
     }
 }

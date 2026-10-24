@@ -14,6 +14,9 @@ public sealed class SpiritCommonHUD : MonoBehaviour
     [SerializeField, Min(1), Tooltip("Preview date when this scene is opened without FarmScene.")]
     private int standaloneDay = 1;
 
+    [Header("Gold (FarmScene player's PlayerWallet)")]
+    [SerializeField] private TMP_Text goldText;
+
     [Header("Spirit guidance")]
     [SerializeField] private SpiritBuildModeController buildMode;
     [SerializeField] private EcoPlacementController placement;
@@ -34,6 +37,7 @@ public sealed class SpiritCommonHUD : MonoBehaviour
     [SerializeField] private float developerMainTextOffset = 1f;
 
     private GameDay observedDay;
+    private PlayerWallet observedWallet;
     private string displayedTip;
     private float visibleCharacters;
 
@@ -42,6 +46,7 @@ public sealed class SpiritCommonHUD : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
         EcoDevMode.Changed += RefreshDeveloperView;
         BindDay();
+        BindWallet();
         if (questText != null) questText.text = questMessage;
         RefreshTip();
         RefreshDeveloperView();
@@ -52,9 +57,34 @@ public sealed class SpiritCommonHUD : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
         EcoDevMode.Changed -= RefreshDeveloperView;
         UnbindDay();
+        UnbindWallet();
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => BindDay();
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) { BindDay(); BindWallet(); }
+
+    // Rebound on every enable, so returning from FarmScene shows the latest balance immediately.
+    private void BindWallet()
+    {
+        UnbindWallet();
+        foreach (PlayerWallet wallet in FindObjectsByType<PlayerWallet>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            observedWallet = wallet;
+            break;
+        }
+        if (observedWallet != null) observedWallet.Changed += RefreshGold;
+        RefreshGold();
+    }
+
+    private void UnbindWallet()
+    {
+        if (observedWallet != null) observedWallet.Changed -= RefreshGold;
+        observedWallet = null;
+    }
+
+    private void RefreshGold()
+    {
+        if (goldText != null) goldText.text = observedWallet != null ? $"Gold: {observedWallet.Gold} G" : "Gold: - G";
+    }
 
     private void BindDay()
     {

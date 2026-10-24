@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Corn
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   displayName: "\uC625\uC218\uC218"
-  canSell: 1
+  canSell: 0
   sellPrice: 12

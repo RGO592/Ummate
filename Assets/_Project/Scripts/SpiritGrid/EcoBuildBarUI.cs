@@ -91,7 +91,7 @@ public sealed class EcoBuildBarUI : MonoBehaviour
             }
             if (slot.costLabel != null)
             {
-                string cost = EcoDevMode.FreePlacement ? "DEV 무료" : $"{grid.GetCost(slot.type)} G";
+                string cost = EcoDevMode.FreePlacement ? "DEV 무료" : grid.DescribeCost(slot.type);
                 if (slot.costLabel.text != cost) slot.costLabel.text = cost;
             }
         }
