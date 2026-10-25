@@ -34,19 +34,32 @@ public sealed class MissionProgress : MonoBehaviour
         cornHarvested = CornHarvested, milkCollected = MilkCollected,
         m01CompletedAndRewarded = M01Completed, m02CompletedAndRewarded = M02Completed,
         m03CompletedAndRewarded = M03Completed, prologueCompleted = PrologueCompleted,
-        chickenUnlocked = chickenArea.activeSelf, cowUnlocked = cowArea.activeSelf
+        // The areas open exactly with the M01 / M03 rewards. Never read area.activeSelf: ChickenArea and
+        // CowArea are FarmScene roots, so region travel turns them off while the farm is suspended.
+        chickenUnlocked = M01Completed, cowUnlocked = M03Completed
     };
 
     // Restore flags and visibility directly: completion/reward methods must not run here.
+    // Saved unlock flags are legacy data; visibility always follows the restored M01 / M03 flags.
     public void RestoreState(GameSaveData.MissionState saved)
     {
         WheatHarvested = saved.wheatHarvested; EggsCollected = saved.eggsCollected;
         CornHarvested = saved.cornHarvested; MilkCollected = saved.milkCollected;
         M01Completed = saved.m01CompletedAndRewarded; M02Completed = saved.m02CompletedAndRewarded;
         M03Completed = saved.m03CompletedAndRewarded; PrologueCompleted = saved.prologueCompleted;
-        chickenArea.SetActive(saved.chickenUnlocked);
-        cowArea.SetActive(saved.cowUnlocked);
+        SyncAreas();
         Refresh();
+    }
+
+    // A load while the farm is suspended (from a region) must not show the farm's root areas there, and
+    // resuming the farm re-enables the roots it had before. The running farm re-applies the unlocks here.
+    private void Update() => SyncAreas();
+
+    private void SyncAreas()
+    {
+        if (!gameObject.activeInHierarchy) return;
+        if (chickenArea != null && chickenArea.activeSelf != M01Completed) chickenArea.SetActive(M01Completed);
+        if (cowArea != null && cowArea.activeSelf != M03Completed) cowArea.SetActive(M03Completed);
     }
     public string CurrentMissionText => PrologueCompleted ? "프롤로그 완료" :
         M03Completed ? $"현재 미션: 우유 수집 {MilkCollected} / 4" :

@@ -473,7 +473,8 @@ public sealed class GameSaveSystem : MonoBehaviour
         Require((!m.m02CompletedAndRewarded || m.m01CompletedAndRewarded) &&
             (!m.m03CompletedAndRewarded || m.m02CompletedAndRewarded) && (!m.prologueCompleted || m.m03CompletedAndRewarded), "미션 완료 순서 오류");
         Require(m.stage == (m.prologueCompleted ? 5 : m.m03CompletedAndRewarded ? 4 : m.m02CompletedAndRewarded ? 3 : m.m01CompletedAndRewarded ? 2 : 1), "미션 단계 오류");
-        Require(m.chickenUnlocked == m.m01CompletedAndRewarded && m.cowUnlocked == m.m03CompletedAndRewarded, "해금 상태 오류");
+        // chickenUnlocked / cowUnlocked are legacy: restore derives the areas from M01 / M03, so a stale value
+        // (older builds captured it from an area suspended by region travel) is ignored instead of rejecting the save.
         foreach (var p in data.plots)
         {
             Require(Enum.IsDefined(typeof(FarmPlot.CropKind), p.crop) && Enum.IsDefined(typeof(FarmPlot.CropState), p.state), "작물 종류/상태 오류");
