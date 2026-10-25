@@ -49,6 +49,22 @@ public sealed class EcoPlacementController : MonoBehaviour
     public string LastMessage { get; private set; } = "";
     private bool InputBlocked => buildArea != null && buildArea.InputBlocked;
 
+    public bool IsPointerOverUI(Vector2 screen) => PointerOverUI(screen);
+
+    // Build-camera left-drag pan may start only where a left press does nothing here: not over UI
+    // (slots, buttons), not while carrying or in remove mode, and not on a placed (movable) Hex.
+    public bool CanStartLeftPan(Vector2 screen)
+    {
+        if (drag.IsActive || RemoveMode || PointerOverUI(screen)) return false;
+        if (grid == null || viewCamera == null) return true;
+        Ray ray = viewCamera.ScreenPointToRay(screen);
+        var plane = new Plane(grid.GridRoot.up, grid.GridRoot.position);
+        if (!plane.Raycast(ray, out float distance)) return true;
+        if (!grid.WorldToGrid(ray.GetPoint(distance), out HexCoord coord) || !grid.IsInside(coord)) return true;
+        EcoGridCell cell = grid.GetCell(coord);
+        return cell == null || cell.IsEmpty;
+    }
+
     private void Awake()
     {
         if (viewCamera == null) viewCamera = Camera.main;

@@ -1,5 +1,7 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 // Switches the spirit realm between exploring (player + quarter-view follow camera)
 // and build mode (player frozen, camera snaps to a top view over the grid, placement and build UI on).
@@ -36,6 +38,16 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float rotationDuration = 0.35f;
     [SerializeField] private AnimationCurve rotationCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+    [Header("Build Camera Mouse Pan (left-drag on empty ground, middle-drag anywhere but UI)")]
+    [SerializeField, Min(0.1f), Tooltip("1 = the ground under the cursor follows it exactly, so zooming out pans farther per pixel.")]
+    private float mousePanSpeed = 1f;
+    [SerializeField, Min(0f), Tooltip("Extra pan room beyond the Hex map. Background Hexes cover the view well past this.")]
+    private float panBoundsMargin = 0f;
+    [SerializeField, Tooltip("Limit the camera focus to panBoundsMin/Max (world X/Z) instead of the Hex map bounds.")]
+    private bool useCustomPanBounds;
+    [SerializeField] private Vector2 panBoundsMin = new Vector2(-150f, -150f);
+    [SerializeField] private Vector2 panBoundsMax = new Vector2(50f, 50f);
+
     private PlayerMovement playerMovement;
     private PlayerInteractor playerInteractor;
     private Rigidbody playerBody;
@@ -47,6 +59,8 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     private bool orbiting;
     private float orbitElapsed, orbitDuration, orbitStartYaw, orbitDistance, orbitPitch;
     private Vector3 orbitFocus;
+    private ButtonControl panButton;
+    private Vector2 lastPanScreen;
 
     private Vector3 PivotPosition => rotationPivot != null ? rotationPivot.position : grid.ActiveBounds.center;
 
@@ -83,6 +97,7 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     private void Apply(bool build)
     {
         orbiting = false;
+        panButton = null;
         IsBuildMode = build;
         if (buildArea != null) buildArea.SetVisible(build);
         if (playerMovement != null) playerMovement.enabled = !build;
@@ -116,8 +131,9 @@ public sealed class SpiritBuildModeController : MonoBehaviour
     {
         if (viewCamera == null || grid == null) return;
         // Freeze pan, zoom and repeated rotation requests until the fixed-radius arc finishes.
-        if (orbiting) { AdvanceOrbit(); return; }
+        if (orbiting) { panButton = null; AdvanceOrbit(); return; }
         focus = PivotPosition + panOffset;
+        UpdateMousePan(mouse);
         if (keyboard != null)
         {
             if (keyboard.rKey.wasPressedThisFrame && (keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed))
@@ -142,9 +158,61 @@ public sealed class SpiritBuildModeController : MonoBehaviour
         PlaceCamera();
     }
 
+    // Grab-the-map pan: the ground point under the cursor stays under it. Both rays use the current
+    // camera pose, so the move follows the screen at every orbit angle and scales with zoom.
+    private void UpdateMousePan(Mouse mouse)
+    {
+        if (mouse == null) { panButton = null; return; }
+        Vector2 screen = mouse.position.ReadValue();
+        if (panButton == null)
+        {
+            // Middle: pan anywhere but UI. Left: only where the placement controller would do nothing.
+            if (mouse.middleButton.wasPressedThisFrame && !PointerOverUI(screen)) panButton = mouse.middleButton;
+            else if (mouse.leftButton.wasPressedThisFrame && (placement == null ? !PointerOverUI(screen) : placement.CanStartLeftPan(screen)))
+                panButton = mouse.leftButton;
+            lastPanScreen = screen;
+            return;
+        }
+        // A Hex pick or remove mode that starts during a left drag takes the button back.
+        if (!panButton.isPressed || (panButton == mouse.leftButton && placement != null && (placement.IsDragging || placement.RemoveMode)))
+        {
+            panButton = null;
+            return;
+        }
+        if (screen != lastPanScreen && TryGroundPoint(lastPanScreen, out Vector3 from) && TryGroundPoint(screen, out Vector3 to))
+            focus += Vector3.ProjectOnPlane(from - to, grid.GridRoot.up) * mousePanSpeed;
+        lastPanScreen = screen;
+    }
+
+    private bool TryGroundPoint(Vector2 screen, out Vector3 point)
+    {
+        Ray ray = viewCamera.ScreenPointToRay(screen);
+        var plane = new Plane(grid.GridRoot.up, grid.GridRoot.position);
+        bool hit = plane.Raycast(ray, out float enter);
+        point = hit ? ray.GetPoint(enter) : default;
+        return hit;
+    }
+
+    private bool PointerOverUI(Vector2 screen)
+    {
+        if (placement != null) return placement.IsPointerOverUI(screen);
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    }
+
+    private Vector3 ClampFocus(Vector3 value)
+    {
+        if (useCustomPanBounds)
+        {
+            value.x = Mathf.Clamp(value.x, Mathf.Min(panBoundsMin.x, panBoundsMax.x), Mathf.Max(panBoundsMin.x, panBoundsMax.x));
+            value.z = Mathf.Clamp(value.z, Mathf.Min(panBoundsMin.y, panBoundsMax.y), Mathf.Max(panBoundsMin.y, panBoundsMax.y));
+            return value;
+        }
+        return buildArea != null ? buildArea.ClampCameraFocus(value, panBoundsMargin) : value;
+    }
+
     private void BeginOrbit()
     {
-        if (buildArea != null) focus = buildArea.ClampCameraFocus(focus);
+        focus = ClampFocus(focus);
         orbitFocus = focus;
         orbitDistance = distance;
         orbitPitch = buildPitch;
@@ -176,7 +244,7 @@ public sealed class SpiritBuildModeController : MonoBehaviour
 
     private void PlaceCamera()
     {
-        if (!orbiting && buildArea != null) focus = buildArea.ClampCameraFocus(focus);
+        if (!orbiting) focus = ClampFocus(focus);
         panOffset = focus - PivotPosition;
         Quaternion rotation = Quaternion.Euler(orbiting ? orbitPitch : buildPitch, currentYaw, 0f);
         viewCamera.transform.SetPositionAndRotation(focus - rotation * Vector3.forward * distance, rotation);

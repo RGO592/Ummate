@@ -72,12 +72,14 @@ public sealed class EcoBuildAreaView : MonoBehaviour
         if (overlayRoot != null) overlayRoot.SetActive(true);
     }
 
-    public Vector3 ClampCameraFocus(Vector3 focus)
+    // margin widens the limit on every side (build camera pan room beyond the map).
+    public Vector3 ClampCameraFocus(Vector3 focus, float margin = 0f)
     {
         Bounds bounds = grid.MapBounds;
         // ActiveBounds is contained in MapBounds. Do not subtract the viewport footprint,
         // so every map corner remains reachable at any zoom.
         bounds.Encapsulate(grid.ActiveBounds);
+        bounds.Expand(new Vector3(margin * 2f, 0f, margin * 2f));
         focus.x = Mathf.Clamp(focus.x, bounds.min.x, bounds.max.x);
         focus.z = Mathf.Clamp(focus.z, bounds.min.z, bounds.max.z);
         return focus;
