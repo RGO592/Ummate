@@ -40,7 +40,8 @@ public sealed class MainMenuController : MonoBehaviour
     private void RefreshButtons()
     {
         if (newGameButton != null) newGameButton.interactable = !IsLoading;
-        if (continueButton != null) continueButton.interactable = !IsLoading && GameSaveSystem.HasSaveFile;
+        // Any readable slot (auto or manual); Continue then loads the most recent one.
+        if (continueButton != null) continueButton.interactable = !IsLoading && GameSaveSystem.HasAnySave;
         if (settingsButton != null) settingsButton.interactable = !IsLoading;
         if (quitButton != null) quitButton.interactable = !IsLoading;
     }
@@ -51,7 +52,7 @@ public sealed class MainMenuController : MonoBehaviour
     public void ContinueGame()
     {
         if (IsLoading) return;
-        if (!GameSaveSystem.HasSaveFile)
+        if (!GameSaveSystem.HasAnySave)
         {
             SetStatus("저장된 게임이 없습니다.");
             RefreshButtons();
@@ -88,16 +89,20 @@ public sealed class MainMenuController : MonoBehaviour
         // Awake/Start initialize scene defaults before the existing save system replaces them.
         yield return null;
         var save = farm.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<GameSaveSystem>(true)).SingleOrDefault();
+        // The farm is the active gameplay scene before loading: Continue may then move on to the saved
+        // scene and position, suspending the farm the same way region travel does.
+        if (save != null) SceneManager.SetActiveScene(farm);
         bool success = save != null && (newGame ? save.NewGame() : save.ContinueGame());
         if (!success)
         {
+            SceneManager.SetActiveScene(gameObject.scene);
             yield return SceneManager.UnloadSceneAsync(farm);
             IsLoading = false; RefreshButtons();
             SetStatus(newGame ? "새 게임을 시작하지 못했습니다. 콘솔을 확인해 주세요." : "불러오기에 실패했습니다. 저장 파일을 확인해 주세요.");
             yield break;
         }
-        SceneManager.SetActiveScene(farm);
-        // Keep the opaque menu visible until data is ready, then reveal the farm.
+        // Keep the opaque menu visible until data is ready, then reveal the farm (or, under the
+        // travel curtain, the saved region).
         SceneManager.UnloadSceneAsync(gameObject.scene);
     }
     private void SetStatus(string message) { if (statusLabel != null) statusLabel.text = message; }

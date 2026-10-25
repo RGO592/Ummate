@@ -22,16 +22,22 @@ public sealed class SceneSpawnPoint : MonoBehaviour
 
     public InputLock LockInput() => new InputLock(this);
 
-    public void PlacePlayer()
+    public void PlacePlayer() => MovePlayer(playerRoot, transform.position, transform.rotation);
+
+    // Teleports a player root and its Rigidbody without carrying velocity. Save load uses it with the saved position.
+    public static void MovePlayer(Transform player, Vector3 position, Quaternion rotation)
     {
-        Rigidbody body = playerRoot.GetComponent<Rigidbody>();
-        playerRoot.SetPositionAndRotation(transform.position, transform.rotation);
-        body.position = transform.position;
-        body.rotation = transform.rotation;
-        if (!body.isKinematic)
+        Rigidbody body = player.GetComponent<Rigidbody>();
+        player.SetPositionAndRotation(position, rotation);
+        if (body != null)
         {
-            body.linearVelocity = Vector3.zero;
-            body.angularVelocity = Vector3.zero;
+            body.position = position;
+            body.rotation = rotation;
+            if (!body.isKinematic)
+            {
+                body.linearVelocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
         }
         Physics.SyncTransforms();
     }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // Function-check UI only; the team will replace the presentation later.
@@ -71,8 +70,10 @@ public sealed class TradingPostUI : MonoBehaviour
     private void Update()
     {
         if (!IsOpen) return;
-        if (Application.isFocused && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        // Consumed so the same Esc press does not also open the pause menu.
+        if (UIEscape.WasPressed)
         {
+            UIEscape.Consume();
             Close();
             return;
         }

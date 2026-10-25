@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public sealed class GameSaveSystem : MonoBehaviour
@@ -30,15 +31,144 @@ public sealed class GameSaveSystem : MonoBehaviour
     [SerializeField] private ChickenBinding[] chickens;
     [SerializeField] private CowBinding[] cows;
     [SerializeField] private FlowerBedBinding[] flowerBeds;
+    [SerializeField, Tooltip("Build Settings paths of the scenes a save may return the player to. Never the main menu.")]
+    private string[] gameplayScenes = new string[0];
     private bool busy;
-    private bool unreadableSave;
     private bool sessionStarted;
+    // Per slot: a file that failed to load. Only the silent auto-save refuses to overwrite it.
+    private readonly bool[] unreadableSlots = new bool[SlotCount];
     // Stable IDs already used by the scene's item catalog and JSON saves.
     private const string WheatSeedsId = "3208e0eca67ee604c9647d55200a0494";
     private const string WateringCanId = "d48ee8a945ecf1740a8a626dd4419e73";
-    public static string DefaultSavePath => Path.Combine(Application.persistentDataPath, "savegame.json");
-    public static bool HasSaveFile => File.Exists(DefaultSavePath);
-    public string SavePath => DefaultSavePath;
+
+    // Slot 0 is written only by the sleep auto-save (and New Game); slots 1–3 only by the player.
+    // Every slot is its own file, so a failed or damaged slot never touches the others.
+    public enum SlotKind { Auto, Manual1, Manual2, Manual3 }
+    public const int SlotCount = 4;
+    public const int AutoSlot = 0;
+    private static readonly string[] SlotFileNames = { "autosave.json", "save_1.json", "save_2.json", "save_3.json" };
+    // The single save file used before slots existed. Copied once, never deleted.
+    private const string LegacyFileName = "savegame.json";
+    private static bool legacyChecked;
+
+    // Display-only: what a menu needs for one slot row. Never validated or applied.
+    public readonly struct SlotSummary
+    {
+        public SlotSummary(int slot, bool exists, int day, DateTime savedAt, string scene)
+        {
+            Slot = slot; Exists = exists; Day = day; SavedAt = savedAt; Scene = scene ?? "";
+        }
+        public int Slot { get; }
+        public SlotKind Kind => (SlotKind)Slot;
+        // A file is present; it may still be unreadable (Day 0).
+        public bool Exists { get; }
+        public int Day { get; }
+        // Real-world time: the file's last write time.
+        public DateTime SavedAt { get; }
+        // Saved scene path; empty for older saves (they continue in FarmScene).
+        public string Scene { get; }
+        public string LocationName => GetLocationName(Scene);
+        public bool IsReadable => Day >= 1;
+    }
+    // Only the fields a summary needs; JsonUtility skips the rest of the file.
+    [Serializable] private sealed class SlotHeader { public int version; public int day; public string scene; }
+
+    // Player-facing region names by scene file name. A new region (desert, snowfield) adds one line here.
+    private const string DefaultLocationScene = "FarmScene";
+    private static readonly Dictionary<string, string> LocationNames = new Dictionary<string, string>
+    {
+        { "FarmScene", "숲 마을" },
+        { "SpiritGridScene", "숲&강" },
+    };
+
+    // Older saves without a scene continue in FarmScene, so they show its name. Unknown scenes show their file name.
+    public static string GetLocationName(string scenePath)
+    {
+        string key = string.IsNullOrEmpty(scenePath) ? DefaultLocationScene : Path.GetFileNameWithoutExtension(scenePath);
+        return LocationNames.TryGetValue(key, out string name) ? name : key;
+    }
+
+    // Player-facing result of the last NewGame / save / load, shown by PauseMenu. No dev key names.
+    public string LastMessage { get; private set; } = "";
+    public int CurrentDay => gameDay != null ? gameDay.CurrentDay : 0;
+    public bool IsSleeping => sleepTransition != null && sleepTransition.IsSleeping;
+
+    public static bool IsValidSlot(int slot) => slot >= 0 && slot < SlotCount;
+    public static string GetSlotName(int slot) => slot == AutoSlot ? "자동 저장" : $"수동 저장 {slot}";
+    public static string GetSlotPath(int slot) => Path.Combine(Application.persistentDataPath, SlotFileNames[slot]);
+
+    // True when the slot holds a readable save. The summary is filled either way (Exists for a damaged file).
+    public static bool TryGetSlotSummary(int slot, out SlotSummary summary)
+    {
+        summary = new SlotSummary(slot, false, 0, default, null);
+        if (!IsValidSlot(slot)) return false;
+        MigrateLegacySave();
+        try
+        {
+            string path = GetSlotPath(slot);
+            if (!File.Exists(path)) return false;
+            summary = new SlotSummary(slot, true, 0, default, null);
+            if (!TryReadHeader(path, out SlotHeader header)) return false;
+            summary = new SlotSummary(slot, true, header.day, File.GetLastWriteTime(path), header.scene);
+            return true;
+        }
+        catch (Exception) { return false; }
+    }
+
+    public static bool HasAnySave => TryFindLatestSlot(out _);
+
+    // Most recently written readable slot, auto and manual alike (main menu Continue).
+    public static bool TryFindLatestSlot(out int slot)
+    {
+        int[] slots = ReadableSlotsByRecency();
+        slot = slots.Length > 0 ? slots[0] : -1;
+        return slots.Length > 0;
+    }
+
+    private static int[] ReadableSlotsByRecency()
+    {
+        var summaries = new List<SlotSummary>();
+        for (int slot = 0; slot < SlotCount; slot++)
+            if (TryGetSlotSummary(slot, out SlotSummary summary)) summaries.Add(summary);
+        return summaries.OrderByDescending(s => s.SavedAt).Select(s => s.Slot).ToArray();
+    }
+
+    private static bool TryReadHeader(string path, out SlotHeader header)
+    {
+        header = JsonUtility.FromJson<SlotHeader>(File.ReadAllText(path));
+        return header != null && header.version == 1 && header.day >= 1;
+    }
+
+    // One-time move to slots: only when savegame.json exists and no slot file does yet. The old file was
+    // written by New Game and the sleep auto-save, so it becomes the auto slot. It is copied, never deleted,
+    // and an unreadable file is left alone (reported once).
+    private static void MigrateLegacySave()
+    {
+        if (legacyChecked) return;
+        legacyChecked = true;
+        string legacy = Path.Combine(Application.persistentDataPath, LegacyFileName);
+        try
+        {
+            if (!File.Exists(legacy) || Enumerable.Range(0, SlotCount).Any(slot => File.Exists(GetSlotPath(slot)))) return;
+            if (!TryReadHeader(legacy, out _))
+            {
+                Debug.LogWarning($"기존 저장 파일을 읽을 수 없어 슬롯으로 옮기지 않았습니다. 원본은 그대로 둡니다.\n{legacy}");
+                return;
+            }
+            string target = GetSlotPath(AutoSlot), temporary = target + ".tmp";
+            // A copy keeps the original write time, so the slot shows when the game was really saved.
+            File.Copy(legacy, temporary, true);
+            File.Move(temporary, target);
+            Debug.Log($"기존 저장 파일을 자동 저장 칸으로 옮겼습니다. 원본은 그대로 둡니다.\n{legacy} → {target}");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"기존 저장 파일을 슬롯으로 옮기지 못했습니다. 원본은 그대로 둡니다: {ex.Message}\n{legacy}");
+        }
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetSession() => legacyChecked = false;
 
     private void OnEnable()
     {
@@ -50,7 +180,7 @@ public sealed class GameSaveSystem : MonoBehaviour
     }
     private void Start()
     {
-        Debug.Log($"저장 파일: {SavePath}\nF8: 새 게임 (기존 세이브 초기화) / F9: 이어하기\n시작 방식을 선택한 뒤 취침하면 자동 저장됩니다.", this);
+        Debug.Log($"저장 폴더: {Application.persistentDataPath}\nF8: 새 게임 (자동 저장 칸 초기화) / F9: 이어하기 (가장 최근 저장)\n시작 방식을 선택한 뒤 취침하면 자동 저장 칸에 저장됩니다.", this);
     }
     private void Update()
     {
@@ -58,13 +188,20 @@ public sealed class GameSaveSystem : MonoBehaviour
         if (Keyboard.current.f8Key.wasPressedThisFrame) NewGame();
         else if (Keyboard.current.f9Key.wasPressedThisFrame) ContinueGame();
     }
-    private void AutoSave() => TrySave();
+    private void AutoSave() => TryAutoSave();
+
+    private void Report(string message, bool warning = false)
+    {
+        LastMessage = message;
+        if (warning) Debug.LogWarning(message, this);
+        else Debug.Log(message, this);
+    }
 
     public bool NewGame()
     {
         if (busy || sleepTransition == null || sleepTransition.IsSleeping)
         {
-            Debug.Log("저장 처리 또는 취침 전환 중에는 새 게임을 시작할 수 없습니다.", this);
+            Report("저장 처리 또는 취침 전환 중에는 새 게임을 시작할 수 없습니다.");
             return false;
         }
         busy = true;
@@ -88,94 +225,154 @@ public sealed class GameSaveSystem : MonoBehaviour
                 hexGrids = new GameSaveData.HexGridState[0]
             };
             Validate(data);
-            // Commit the reset first. A write failure leaves both the old save and live state intact.
-            WriteSave(data);
+            // Commit the reset to the auto slot first. A write failure leaves the old save and live state
+            // intact; manual slots are never touched.
+            WriteSave(AutoSlot, data);
             ApplyState(data);
-            unreadableSave = false;
+            unreadableSlots[AutoSlot] = false;
             sessionStarted = true;
-            Debug.Log($"새 게임 시작: 기존 세이브를 초기화하고 1일차 새 게임 데이터로 저장했습니다. 미션·인벤토리·밭·화단·동물·숲 Hex 상태가 초기화되었습니다.\n{SavePath}", this);
+            Report($"새 게임 시작: 1일차 새 게임 데이터를 자동 저장 칸에 저장했습니다. 미션·인벤토리·밭·화단·동물·숲 Hex 상태가 초기화되었습니다. 수동 저장 칸은 그대로입니다.\n{GetSlotPath(AutoSlot)}");
             return true;
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"새 게임 시작 실패: {ex.Message}", this);
+            Report($"새 게임 시작 실패: {ex.Message}", true);
             return false;
         }
         finally { busy = false; }
     }
 
-    public bool ContinueGame() => TryLoad();
-
-    public bool TrySave()
+    // Main menu Continue and F9: the most recent readable slot. Uses the same load as the pause menu;
+    // an older slot is tried only when a newer one fails validation.
+    public bool ContinueGame()
     {
-        if (busy || sleepTransition == null || sleepTransition.IsSleeping) return false;
-        if (!sessionStarted)
+        if (!CanUseSaves("저장 처리, 취침 전환 또는 지역 이동 중에는 불러올 수 없습니다.")) return false;
+        int[] slots = ReadableSlotsByRecency();
+        if (slots.Length == 0)
         {
-            Debug.Log("자동 저장 대기: 먼저 F8 새 게임 또는 F9 이어하기를 선택해 주세요. 기존 세이브는 유지됩니다.", this);
+            Report("저장된 게임이 없습니다.");
+            return false;
+        }
+        foreach (int slot in slots)
+            if (TryLoadSlot(slot)) return true;
+        return false;
+    }
+
+    // Sleep completed: always the auto slot, never a manual one.
+    public bool TryAutoSave() => SaveToSlot(AutoSlot);
+
+    // Player save from the pause menu: manual slots 1–3 only.
+    public bool TrySaveSlot(int slot)
+    {
+        if (!IsValidSlot(slot) || slot == AutoSlot)
+        {
+            Report("자동 저장 칸에는 직접 저장할 수 없습니다. 수동 저장 1~3을 선택해 주세요.");
+            return false;
+        }
+        return SaveToSlot(slot);
+    }
+
+    private bool SaveToSlot(int slot)
+    {
+        if (!CanUseSaves("저장할 수 없습니다: 취침·지역 이동 또는 저장 처리 중입니다.", report: false)) return false;
+        // Without New Game / Continue / Load (Play started straight in a gameplay scene) the live state is
+        // only the scene's defaults: the silent auto-save must not replace the auto slot with it. A manual
+        // save is the player's explicit choice of the current state and is always allowed.
+        if (slot == AutoSlot && !sessionStarted)
+        {
+            Report("자동 저장 대기: 새 게임·이어하기·불러오기로 시작한 게임만 자동 저장합니다. 기존 자동 저장은 유지됩니다.");
             return false;
         }
         busy = true;
         try
         {
-            // Preserve an incompatible/damaged existing file instead of overwriting it with defaults.
-            if (unreadableSave && File.Exists(SavePath))
-                throw new InvalidDataException("불러오기에 실패한 기존 파일을 보호하고 있습니다. 파일을 확인해 주세요.");
+            // The silent auto-save preserves an incompatible/damaged auto file instead of overwriting it.
+            // A manual slot is overwritten only after the player confirms it.
+            if (slot == AutoSlot && unreadableSlots[slot] && File.Exists(GetSlotPath(slot)))
+                throw new InvalidDataException("불러오기에 실패한 자동 저장 파일을 보호하고 있습니다. 파일을 확인해 주세요.");
             GameSaveData data = Capture();
             Validate(data);
-            WriteSave(data);
-            unreadableSave = false;
-            Debug.Log($"자동 저장 완료: {data.day}일차 아침 · {SavePath}", this);
+            WriteSave(slot, data);
+            unreadableSlots[slot] = false;
+            Report($"저장 완료: {GetSlotName(slot)} · {data.day}일차 · {GetSlotPath(slot)}");
             return true;
         }
         catch (Exception ex)
         {
-            Debug.LogWarning($"저장 실패: {ex.Message}", this);
+            Report($"저장할 수 없습니다: {ex.Message}", true);
             return false;
         }
         finally { busy = false; }
     }
 
-    public bool TryLoad()
+    // The single load path for every slot (pause menu and Continue).
+    public bool TryLoadSlot(int slot)
     {
-        if (busy || sleepTransition == null || sleepTransition.IsSleeping)
+        if (!CanUseSaves("저장 처리, 취침 전환 또는 지역 이동 중에는 불러올 수 없습니다.")) return false;
+        if (!IsValidSlot(slot))
         {
-            Debug.Log("취침 전환 중에는 불러올 수 없습니다.", this);
+            Report("잘못된 저장 슬롯입니다.", true);
             return false;
         }
-        if (!File.Exists(SavePath))
+        MigrateLegacySave();
+        string path = GetSlotPath(slot);
+        if (!File.Exists(path))
         {
-            Debug.Log("이어하기 불가: 저장된 게임이 없습니다. F8로 새 게임을 시작해 주세요.", this);
+            Report($"{GetSlotName(slot)}: 저장된 게임이 없습니다.");
             return false;
         }
         busy = true;
         try
         {
-            GameSaveData data = JsonUtility.FromJson<GameSaveData>(File.ReadAllText(SavePath));
+            GameSaveData data = JsonUtility.FromJson<GameSaveData>(File.ReadAllText(path));
             // Validate the entire file and every reference before changing any gameplay state.
             Validate(data);
             ApplyState(data);
-            unreadableSave = false;
+            unreadableSlots[slot] = false;
             sessionStarted = true;
-            Debug.Log($"저장된 게임 불러오기 완료: {data.day}일차. 날짜 진행·성장·생산·보상은 다시 실행하지 않았습니다.", this);
+            RestoreLocation(data);
+            Report($"저장된 게임 불러오기 완료: {GetSlotName(slot)} · {data.day}일차. 날짜 진행·성장·생산·보상은 다시 실행하지 않았습니다.");
             return true;
         }
         catch (Exception ex)
         {
-            unreadableSave = true;
-            Debug.LogWarning($"불러오기 실패: {ex.Message}", this);
+            unreadableSlots[slot] = true;
+            Report($"불러오기 실패 ({GetSlotName(slot)}): {ex.Message}", true);
             return false;
         }
         finally { busy = false; }
     }
 
-    private void WriteSave(GameSaveData data)
+    // Save load wins over travel spawns: the saved scene and player position. Older saves have no scene
+    // and continue in this scene (FarmScene), where its player already stands.
+    private void RestoreLocation(GameSaveData data)
     {
+        bool saved = !string.IsNullOrEmpty(data.scene);
+        string scene = saved ? data.scene : gameObject.scene.path;
+        if (!SceneTransitionService.RestoreLocation(scene, saved ? data.playerPosition : (Vector3?)null))
+            Debug.LogWarning($"저장 위치로 이동하지 못했습니다. 현재 위치에서 계속합니다: {scene}", this);
+    }
+
+    private bool IsGameplayScene(string path) =>
+        !string.IsNullOrEmpty(path) && gameplayScenes != null && gameplayScenes.Contains(path);
+
+    private bool CanUseSaves(string blockedMessage, bool report = true)
+    {
+        if (!busy && !SceneTransitionService.IsTraveling && sleepTransition != null && !sleepTransition.IsSleeping) return true;
+        if (report) Report(blockedMessage);
+        else LastMessage = blockedMessage;
+        return false;
+    }
+
+    private static void WriteSave(int slot, GameSaveData data)
+    {
+        MigrateLegacySave();
         Directory.CreateDirectory(Application.persistentDataPath);
-        string temporary = SavePath + ".tmp";
+        string path = GetSlotPath(slot), temporary = path + ".tmp";
         File.WriteAllText(temporary, JsonUtility.ToJson(data, true), new System.Text.UTF8Encoding(false));
-        // Same-directory replace keeps the previous save intact if writing is interrupted.
-        if (File.Exists(SavePath)) File.Replace(temporary, SavePath, null);
-        else File.Move(temporary, SavePath);
+        // Same-directory replace keeps this slot's previous save intact if writing is interrupted.
+        if (File.Exists(path)) File.Replace(temporary, path, null);
+        else File.Move(temporary, path);
     }
 
     private void ApplyState(GameSaveData data)
@@ -201,8 +398,15 @@ public sealed class GameSaveSystem : MonoBehaviour
         ValidateBindings();
         var quantities = inventory.CaptureQuantities();
         Require(quantities.Keys.All(item => items.Any(b => b.item == item)), "저장 목록에 등록되지 않은 아이템이 있습니다.");
+        // The player's actual scene: travel and Continue keep exactly that one active, suspended regions
+        // are inactive, and the main menu has no player and is not a gameplay scene.
+        Scene active = SceneManager.GetActiveScene();
+        Transform player = SceneTransitionService.FindPlayerRoot(active);
+        Require(IsGameplayScene(active.path), $"현재 Scene({active.name})은 게임 지역 목록에 없습니다.");
+        Require(player != null && player.gameObject.activeInHierarchy, "플레이어를 찾지 못했습니다.");
         return new GameSaveData
         {
+            scene = active.path, playerPosition = player.position,
             version = 1, day = gameDay.CurrentDay, selectedSlot = quickbar.SelectedSlotIndex,
             gold = wallet.Gold,
             inventory = items.Select(b => new GameSaveData.ItemState { id = b.id, quantity = inventory.GetQuantity(b.item) }).ToArray(),
@@ -224,6 +428,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         Require(chickens != null && chickens.All(b => b != null && b.chicken != null && b.chicken.SaveReferencesValid), "닭 연결 누락");
         Require(cows != null && cows.All(b => b != null && b.cow != null && b.cow.SaveReferencesValid), "소 연결 누락");
         Require(flowerBeds != null && flowerBeds.All(b => b != null && b.bed != null && b.bed.SaveReferencesValid), "화단 연결 누락");
+        Require(IsGameplayScene(gameObject.scene.path), "게임 지역 Scene 목록에 저장 시스템의 Scene이 없습니다.");
         CheckIds(items.Select(b => b.id)); CheckIds(plots.Select(b => b.id));
         CheckIds(chickens.Select(b => b.id)); CheckIds(cows.Select(b => b.id)); CheckIds(flowerBeds.Select(b => b.id));
         Require(items.Select(b => b.item).Distinct().Count() == items.Length &&
@@ -253,6 +458,14 @@ public sealed class GameSaveSystem : MonoBehaviour
             MatchIds(data.flowerBeds.Select(s => s.id), flowerBeds.Select(b => b.id));
         }
         ValidateHexGrids(data.hexGrids);
+        // Optional (older saves have none). Checked before any state changes or scene loads; the position
+        // itself is never clamped or moved.
+        if (!string.IsNullOrEmpty(data.scene))
+        {
+            Require(IsGameplayScene(data.scene) && Application.CanStreamedLevelBeLoaded(data.scene), "저장된 지역 Scene이 없거나 게임 지역이 아닙니다.");
+            Vector3 p = data.playerPosition;
+            Require(IsFinite(p.x) && IsFinite(p.y) && IsFinite(p.z), "플레이어 위치 값 오류");
+        }
         var m = data.mission;
         Require(m != null, "미션 데이터 누락");
         Require(m.wheatHarvested >= 0 && m.wheatHarvested <= 9 && m.eggsCollected >= 0 && m.eggsCollected <= 4 &&
@@ -284,6 +497,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         }
     }
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
+    private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
     private static void CheckIds(IEnumerable<string> ids)
     {
         var values = ids.ToArray();

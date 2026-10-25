@@ -76,7 +76,14 @@ public sealed class EcoPlacementController : MonoBehaviour
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null)
         {
-            if (keyboard.escapeKey.wasPressedThisFrame) { CancelPick(); SetRemoveMode(false); return; }
+            if (keyboard.escapeKey.wasPressedThisFrame)
+            {
+                // Cancelling a drag / remove mode uses up this Esc; with nothing to cancel it opens the pause menu.
+                if (drag.IsActive || RemoveMode) UIEscape.Consume();
+                CancelPick();
+                SetRemoveMode(false);
+                return;
+            }
             if (keyboard.xKey.wasPressedThisFrame) { ToggleRemoveMode(); return; }
             if (keyboard.deleteKey.wasPressedThisFrame || keyboard.backspaceKey.wasPressedThisFrame)
             { RemovePicked(); return; }

@@ -6,8 +6,11 @@ using UnityEngine.SceneManagement;
 
 // Keeps visited regions loaded but inactive, preserving their existing live game state.
 // No save, new-game, day advancement or inventory initialization belongs in travel.
+// Two ways in: Travel (a region exit → the destination's spawn point) and RestoreLocation (save load →
+// the saved scene and player position, which win over every spawn point).
 public sealed class SceneTransitionService : MonoBehaviour
 {
+    private const float RestoreFadeDuration = 0.3f;
     private static SceneTransitionService instance;
     private readonly Dictionary<int, List<GameObject>> suspendedRoots = new Dictionary<int, List<GameObject>>();
     private CanvasGroup curtain;
@@ -26,14 +29,143 @@ public sealed class SceneTransitionService : MonoBehaviour
             return;
         }
         if (destination == source.name || destination == source.path) return;
-        if (instance == null)
-        {
-            GameObject runner = new GameObject("SceneTransitionService");
-            instance = runner.AddComponent<SceneTransitionService>();
-            DontDestroyOnLoad(runner);
-        }
+        EnsureInstance();
         instance.busy = true; // Set before the coroutine; multiple player colliders cannot start duplicate loads.
         instance.StartCoroutine(instance.Transition(source, localPlayer, destination, spawnId, Mathf.Max(0f, fadeDuration)));
+    }
+
+    // Save load, after GameSaveSystem applied the state. The active scene being the saved one only moves
+    // its player (no reload); another scene is resumed or loaded like travel, with the player placed at
+    // the saved position instead of a spawn point. No position (older saves) keeps a fresh scene's own
+    // start position and returns a suspended one through its arrival spawn, as ordinary travel would.
+    public static bool RestoreLocation(string destination, Vector3? position)
+    {
+        if (IsTraveling || string.IsNullOrWhiteSpace(destination)) return false;
+        Scene current = SceneManager.GetActiveScene();
+        Scene target = FindScene(destination);
+        if (target.IsValid() && target.isLoaded && target == current)
+        {
+            if (!position.HasValue) return true;
+            Transform player = FindPlayerRoot(target);
+            if (player == null) return false;
+            SceneSpawnPoint.MovePlayer(player, position.Value, player.rotation);
+            ResetCameras(target);
+            return true;
+        }
+        if (!Application.CanStreamedLevelBeLoaded(destination)) return false;
+        EnsureInstance();
+        instance.busy = true;
+        // Black at once: the loaded state must never be shown in the scene being left.
+        instance.EnsureCurtain();
+        instance.curtain.alpha = 1f;
+        instance.curtain.blocksRaycasts = true;
+        instance.StartCoroutine(instance.Restore(current, destination, position));
+        return true;
+    }
+
+    // The scene's player root: the Rigidbody object PlayerMovement drives (never its Visual child).
+    public static Transform FindPlayerRoot(Scene scene)
+    {
+        if (!scene.IsValid() || !scene.isLoaded) return null;
+        Transform found = null;
+        foreach (GameObject root in scene.GetRootGameObjects())
+            foreach (PlayerMovement player in root.GetComponentsInChildren<PlayerMovement>(true))
+            {
+                if (found != null) { Debug.LogError($"'{scene.name}'에 플레이어(PlayerMovement)가 둘 이상 있습니다."); return null; }
+                found = player.transform;
+            }
+        return found;
+    }
+
+    private static void EnsureInstance()
+    {
+        if (instance != null) return;
+        GameObject runner = new GameObject("SceneTransitionService");
+        instance = runner.AddComponent<SceneTransitionService>();
+        DontDestroyOnLoad(runner);
+    }
+
+    private IEnumerator Restore(Scene source, string destination, Vector3? position)
+    {
+        Scene target = default;
+        SceneSpawnPoint.InputLock targetLock = null;
+        bool sourceHidden = false, completed = false;
+        try
+        {
+            // Let the click or main-menu step that started the load finish before its scene is suspended.
+            yield return null;
+            if (source.IsValid() && source.isLoaded)
+            {
+                Suspend(source);
+                sourceHidden = true;
+            }
+            target = FindScene(destination);
+            bool newlyLoaded = !target.IsValid() || !target.isLoaded;
+            if (newlyLoaded)
+            {
+                AsyncOperation loading = BeginLoad(destination);
+                if (loading == null) yield break;
+                yield return loading;
+                target = FindScene(destination);
+            }
+            if (!target.IsValid() || !target.isLoaded) yield break;
+
+            Transform player = FindPlayerRoot(target);
+            if (player == null)
+            {
+                Debug.LogError($"'{destination}'에서 플레이어를 찾을 수 없습니다. 출발 지역으로 복구합니다.");
+                yield break;
+            }
+            SceneSpawnPoint arrival = FindPlayerSpawn(target);
+            targetLock = arrival != null ? arrival.LockInput() : null;
+            PlaceRestored(player, position, newlyLoaded ? null : arrival);
+            SceneManager.SetActiveScene(target);
+            Resume(target);
+            yield return null; // Let a new scene finish Start while the screen is covered.
+            targetLock?.Enforce();
+            PlaceRestored(player, position, newlyLoaded ? null : arrival);
+            ResetCameras(target);
+            yield return null;
+            yield return Fade(0f, RestoreFadeDuration);
+            completed = true;
+        }
+        finally
+        {
+            targetLock?.Dispose();
+            if (!completed && sourceHidden && source.IsValid() && source.isLoaded)
+            {
+                Debug.LogError($"저장된 지역 '{destination}'을 열지 못해 출발 지역으로 복구했습니다.");
+                if (target.IsValid() && target.isLoaded && target != source) Suspend(target);
+                SceneManager.SetActiveScene(source);
+                Resume(source);
+            }
+            if (curtain != null) { curtain.alpha = 0f; curtain.blocksRaycasts = false; }
+            busy = false;
+        }
+    }
+
+    private static void PlaceRestored(Transform player, Vector3? position, SceneSpawnPoint fallback)
+    {
+        if (position.HasValue) SceneSpawnPoint.MovePlayer(player, position.Value, player.rotation);
+        else if (fallback != null) fallback.PlacePlayer();
+    }
+
+    // Any spawn point of this scene's player: its input list locks the arrival, and it is the fallback
+    // position for a suspended scene when the save has none.
+    private static SceneSpawnPoint FindPlayerSpawn(Scene scene)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+            foreach (SceneSpawnPoint point in root.GetComponentsInChildren<SceneSpawnPoint>(true))
+                if (point.HasPlayer) return point;
+        return null;
+    }
+
+    // CameraFollow resets its smoothing on enable, so a teleported player is not chased across the map.
+    private static void ResetCameras(Scene scene)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+            foreach (CameraFollow follow in root.GetComponentsInChildren<CameraFollow>(true))
+                if (follow.isActiveAndEnabled) { follow.enabled = false; follow.enabled = true; }
     }
 
     private IEnumerator Transition(Scene source, SceneSpawnPoint localPlayer, string destination,
@@ -77,10 +209,8 @@ public sealed class SceneTransitionService : MonoBehaviour
             yield return null; // Let a new scene finish Start while the screen is covered.
             targetLock.Enforce();
             arrival.PlacePlayer();
-            // CameraFollow resets its smoothing on enable; a fresh camera may already have had one frame.
-            foreach (GameObject root in target.GetRootGameObjects())
-                foreach (CameraFollow follow in root.GetComponentsInChildren<CameraFollow>(true))
-                    if (follow.isActiveAndEnabled) { follow.enabled = false; follow.enabled = true; }
+            // A fresh camera may already have had one frame.
+            ResetCameras(target);
             yield return null;
             yield return Fade(0f, duration);
             completed = true;

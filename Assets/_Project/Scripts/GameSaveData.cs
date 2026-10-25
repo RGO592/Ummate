@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 // Plain JSON data only. IDs are assigned in the scene, not taken from runtime instance IDs.
 [Serializable]
@@ -18,6 +19,10 @@ public sealed class GameSaveData
     public HexGridState[] hexGrids;
     // Added after v1 shipped. Older saves have no field (null) and load with every flower bed empty.
     public FlowerBedState[] flowerBeds;
+    // Added after v1 shipped: where the player was (Build Settings scene path + player root position).
+    // Older saves have no scene (empty) and continue in FarmScene where its player already stands.
+    public string scene;
+    public Vector3 playerPosition;
 
     [Serializable] public sealed class ItemState { public string id; public int quantity; }
     // The state covers planted / watered / harvestable.
