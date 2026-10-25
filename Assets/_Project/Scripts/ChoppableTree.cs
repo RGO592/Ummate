@@ -22,6 +22,8 @@ public sealed class ChoppableTree : Interactable
     public int RequiredHits => Mathf.Max(1, requiredHits);
     public int RemainingHits => isChopped ? 0 : Mathf.Max(0, RequiredHits - completedHits);
 
+    public override string GetInteractionPrompt(GameObject interactor) => isChopped ? null : "나무 베기";
+
     public override void Interact(GameObject interactor)
     {
         if (interacting || isChopped || !isActiveAndEnabled || interactor == null) return;
@@ -40,6 +42,7 @@ public sealed class ChoppableTree : Interactable
             {
                 completedHits = nextHits;
                 Debug.Log($"나무를 베는 중... {RemainingHits}", this);
+                PlayerFeedback.Notify($"나무를 베는 중... {RemainingHits}");
                 onHit?.Invoke();
                 return;
             }
@@ -47,6 +50,7 @@ public sealed class ChoppableTree : Interactable
             if (inventory.GetQuantity(woodItem) > int.MaxValue - amount)
             {
                 Debug.LogWarning("목재를 더 받을 수 없습니다. 나무는 마지막 작업 전 상태로 유지됩니다.", this);
+                PlayerFeedback.Notify("목재를 더 받을 수 없습니다.");
                 return;
             }
             int previousHits = completedHits;
@@ -63,6 +67,7 @@ public sealed class ChoppableTree : Interactable
                 return;
             }
             Debug.Log($"목재 {amount}개를 획득했습니다. (보유 목재: {inventory.GetQuantity(woodItem)}개)", this);
+            PlayerFeedback.Notify($"목재 {amount}개를 획득했습니다.");
             onHit?.Invoke();
             onChopped?.Invoke();
         }

@@ -14,17 +14,35 @@ public sealed class PlayerInteractor : MonoBehaviour
             TryInteract();
     }
 
+    private Collider[] nearby = new Collider[32];
+
     public bool TryInteract()
+    {
+        Interactable target = FindTarget();
+        if (target == null)
+            return false;
+
+        target.Interact(gameObject);
+        return true;
+    }
+
+    // The single target rule: F presses and the shared prompt (PlayerFeedbackUI) both use it,
+    // so the prompt always names what F would actually interact with.
+    public Interactable FindTarget()
     {
         Vector3 origin = transform.position;
         float range = Mathf.Max(0f, interactionDistance);
         float nearestDistanceSquared = range * range;
         Interactable nearest = null;
 
-        // Query only on a key press. Collider surfaces determine interaction distance.
-        Collider[] nearby = Physics.OverlapSphere(origin, range, ~0, QueryTriggerInteraction.Collide);
-        foreach (Collider candidate in nearby)
+        // Polled every frame by the prompt, so reuse a buffer. A full buffer grows and queries again.
+        // Collider surfaces determine interaction distance.
+        int count;
+        while ((count = Physics.OverlapSphereNonAlloc(origin, range, nearby, ~0, QueryTriggerInteraction.Collide)) == nearby.Length)
+            nearby = new Collider[nearby.Length * 2];
+        for (int i = 0; i < count; i++)
         {
+            Collider candidate = nearby[i];
             if (candidate.transform.IsChildOf(transform))
                 continue;
 
@@ -43,11 +61,6 @@ public sealed class PlayerInteractor : MonoBehaviour
                 nearestDistanceSquared = distanceSquared;
             }
         }
-
-        if (nearest == null)
-            return false;
-
-        nearest.Interact(gameObject);
-        return true;
+        return nearest;
     }
 }

@@ -6,6 +6,8 @@ public sealed class TradingPost : Interactable
 {
     [SerializeField] private TradingPostUI ui;
 
+    public override string GetInteractionPrompt(GameObject interactor) => ui != null ? "교역소 이용" : null;
+
     public override void Interact(GameObject interactor)
     {
         if (interactor == null) return;

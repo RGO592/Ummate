@@ -11,4 +11,7 @@ public sealed class HouseDoorInteractable : Interactable
         if (sleepTransition != null) sleepTransition.TrySleep();
         else if (gameDay != null) gameDay.Sleep();
     }
+
+    public override string GetInteractionPrompt(GameObject interactor) =>
+        sleepTransition != null || gameDay != null ? "잠자기" : null;
 }

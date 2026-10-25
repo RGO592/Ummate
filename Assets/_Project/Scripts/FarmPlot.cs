@@ -62,6 +62,12 @@ public sealed class FarmPlot : Interactable
         if (gameDay != null) gameDay.DayChanged -= OnDayChanged;
     }
 
+    // Prompt only; which seed / tool is required is still decided by Interact.
+    public override string GetInteractionPrompt(GameObject interactor) =>
+        state == CropState.ReadyToHarvest ? $"{CropName} 수확하기" :
+        state == CropState.Empty ? "씨앗 심기" :
+        !WateredToday ? "물 주기" : null;
+
     public override void Interact(GameObject interactor)
     {
         if (interacting || interactor == null) return;
