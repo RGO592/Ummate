@@ -6302,7 +6302,9 @@ MonoBehaviour:
   - type: 2
     prefab: {fileID: 0}
     cost: 30
-    itemCosts: []
+    itemCosts:
+    - item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
+      amount: 1
   - type: 3
     prefab: {fileID: 0}
     cost: 30

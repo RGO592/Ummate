@@ -18,6 +18,7 @@ public sealed class GameSaveSystem : MonoBehaviour
     [Serializable] public sealed class PlotBinding { public string id; public FarmPlot plot; }
     [Serializable] public sealed class ChickenBinding { public string id; public ChickenFeeding chicken; }
     [Serializable] public sealed class CowBinding { public string id; public CowFeeding cow; }
+    [Serializable] public sealed class FlowerBedBinding { public string id; public FlowerBed bed; }
     [SerializeField] private GameDay gameDay;
     [SerializeField] private SleepTransition sleepTransition;
     [SerializeField] private PlayerInventory inventory;
@@ -28,6 +29,7 @@ public sealed class GameSaveSystem : MonoBehaviour
     [SerializeField] private PlotBinding[] plots;
     [SerializeField] private ChickenBinding[] chickens;
     [SerializeField] private CowBinding[] cows;
+    [SerializeField] private FlowerBedBinding[] flowerBeds;
     private bool busy;
     private bool unreadableSave;
     private bool sessionStarted;
@@ -82,6 +84,7 @@ public sealed class GameSaveSystem : MonoBehaviour
                 plots = plots.Select(b => new GameSaveData.PlotState { id = b.id }).ToArray(),
                 chickens = chickens.Select(b => new GameSaveData.ChickenState { id = b.id }).ToArray(),
                 cows = cows.Select(b => new GameSaveData.CowState { id = b.id }).ToArray(),
+                flowerBeds = flowerBeds.Select(b => new GameSaveData.FlowerBedState { id = b.id }).ToArray(),
                 hexGrids = new GameSaveData.HexGridState[0]
             };
             Validate(data);
@@ -90,7 +93,7 @@ public sealed class GameSaveSystem : MonoBehaviour
             ApplyState(data);
             unreadableSave = false;
             sessionStarted = true;
-            Debug.Log($"새 게임 시작: 기존 세이브를 초기화하고 1일차 새 게임 데이터로 저장했습니다. 미션·인벤토리·밭·동물·숲 Hex 상태가 초기화되었습니다.\n{SavePath}", this);
+            Debug.Log($"새 게임 시작: 기존 세이브를 초기화하고 1일차 새 게임 데이터로 저장했습니다. 미션·인벤토리·밭·화단·동물·숲 Hex 상태가 초기화되었습니다.\n{SavePath}", this);
             return true;
         }
         catch (Exception ex)
@@ -183,6 +186,9 @@ public sealed class GameSaveSystem : MonoBehaviour
         foreach (var saved in data.plots) plots.Single(b => b.id == saved.id).plot.RestoreState(saved);
         foreach (var saved in data.chickens) chickens.Single(b => b.id == saved.id).chicken.RestoreState(saved);
         foreach (var saved in data.cows) cows.Single(b => b.id == saved.id).cow.RestoreState(saved);
+        // Older saves have no flower beds: every bed restores as empty.
+        foreach (var binding in flowerBeds)
+            binding.bed.RestoreState(data.flowerBeds?.SingleOrDefault(s => s.id == binding.id));
         inventory.RestoreQuantities(restoredInventory);
         wallet.RestoreGold(data.gold);
         quickbar.SelectSlot(data.selectedSlot);
@@ -204,6 +210,7 @@ public sealed class GameSaveSystem : MonoBehaviour
             plots = plots.Select(b => b.plot.CaptureState(b.id)).ToArray(),
             chickens = chickens.Select(b => b.chicken.CaptureState(b.id)).ToArray(),
             cows = cows.Select(b => b.cow.CaptureState(b.id)).ToArray(),
+            flowerBeds = flowerBeds.Select(b => b.bed.CaptureState(b.id)).ToArray(),
             hexGrids = EcoGridManager.CaptureAll()
         };
     }
@@ -216,12 +223,14 @@ public sealed class GameSaveSystem : MonoBehaviour
         Require(plots != null && plots.Length > 0 && plots.All(b => b != null && b.plot != null && b.plot.SaveReferencesValid), "밭 연결 누락");
         Require(chickens != null && chickens.All(b => b != null && b.chicken != null && b.chicken.SaveReferencesValid), "닭 연결 누락");
         Require(cows != null && cows.All(b => b != null && b.cow != null && b.cow.SaveReferencesValid), "소 연결 누락");
+        Require(flowerBeds != null && flowerBeds.All(b => b != null && b.bed != null && b.bed.SaveReferencesValid), "화단 연결 누락");
         CheckIds(items.Select(b => b.id)); CheckIds(plots.Select(b => b.id));
-        CheckIds(chickens.Select(b => b.id)); CheckIds(cows.Select(b => b.id));
+        CheckIds(chickens.Select(b => b.id)); CheckIds(cows.Select(b => b.id)); CheckIds(flowerBeds.Select(b => b.id));
         Require(items.Select(b => b.item).Distinct().Count() == items.Length &&
             plots.Select(b => b.plot).Distinct().Count() == plots.Length &&
             chickens.Select(b => b.chicken).Distinct().Count() == chickens.Length &&
-            cows.Select(b => b.cow).Distinct().Count() == cows.Length, "중복 연결이 있습니다.");
+            cows.Select(b => b.cow).Distinct().Count() == cows.Length &&
+            flowerBeds.Select(b => b.bed).Distinct().Count() == flowerBeds.Length, "중복 연결이 있습니다.");
     }
 
     private void Validate(GameSaveData data)
@@ -238,6 +247,11 @@ public sealed class GameSaveSystem : MonoBehaviour
         MatchIds(data.plots.Select(s => s.id), plots.Select(b => b.id));
         MatchIds(data.chickens.Select(s => s.id), chickens.Select(b => b.id));
         MatchIds(data.cows.Select(s => s.id), cows.Select(b => b.id));
+        if (data.flowerBeds != null)
+        {
+            Require(data.flowerBeds.All(s => s != null && Enum.IsDefined(typeof(FlowerBed.BedState), s.state)), "화단 상태 오류");
+            MatchIds(data.flowerBeds.Select(s => s.id), flowerBeds.Select(b => b.id));
+        }
         ValidateHexGrids(data.hexGrids);
         var m = data.mission;
         Require(m != null, "미션 데이터 누락");

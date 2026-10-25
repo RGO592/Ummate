@@ -6971,6 +6971,12 @@ MonoBehaviour:
   - id: Wood
     item: {fileID: 11400000, guid: fc619eae7f6d564fbbdaad19066eb3ed, type: 2}
     optionalInOlderSaves: 1
+  - id: Flower
+    item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
+    optionalInOlderSaves: 1
+  - id: FlowerSeeds
+    item: {fileID: 11400000, guid: 58e02bd667bb4e02968c9e8ca9893cc7, type: 2}
+    optionalInOlderSaves: 1
   - id: 3208e0eca67ee604c9647d55200a0494
     item: {fileID: 11400000, guid: 3208e0eca67ee604c9647d55200a0494, type: 2}
   - id: 38a0a5a364aa32440b722f92566d4c39
@@ -7006,6 +7012,11 @@ MonoBehaviour:
     cow: {fileID: 1535695335}
   - id: cow-02
     cow: {fileID: 1065923120}
+  flowerBeds:
+  - id: flower-bed-01
+    bed: {fileID: 6600000001}
+  - id: flower-bed-02
+    bed: {fileID: 6600000002}
 --- !u!1 &512307968
 GameObject:
   m_ObjectHideFlags: 0
@@ -10467,6 +10478,7 @@ GameObject:
   - component: {fileID: 731213318}
   - component: {fileID: 731213317}
   - component: {fileID: 731213316}
+  - component: {fileID: 6600000002}
   m_Layer: 0
   m_Name: Bed_2
   m_TagString: Untagged
@@ -21513,7 +21525,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6828dd67bdaffe248808311157da149b, type: 2}
   - {fileID: 11400000, guid: 53d28924864b3ff4aaea70d34c4c8007, type: 2}
   - {fileID: 11400000, guid: 04b7e52770bc94740a80ac6c0d3b37f7, type: 2}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 58e02bd667bb4e02968c9e8ca9893cc7, type: 2}
   selectedSlotIndex: 0
 --- !u!114 &1739143746
 MonoBehaviour:
@@ -22483,6 +22495,7 @@ GameObject:
   - component: {fileID: 1812346193}
   - component: {fileID: 1812346192}
   - component: {fileID: 1812346191}
+  - component: {fileID: 6600000001}
   m_Layer: 0
   m_Name: Bed_1
   m_TagString: Untagged
@@ -33195,3 +33208,39 @@ MonoBehaviour:
   fadeDuration: 0.4
   maxVisible: 4
   notificationTopOffset: 20
+--- !u!114 &6600000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1812346189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dea016350a0499cbb56734915f9c6d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FlowerBed
+  gameDay: {fileID: 511175215}
+  flowerSeeds: {fileID: 11400000, guid: 58e02bd667bb4e02968c9e8ca9893cc7, type: 2}
+  flower: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
+  seedsPerPlanting: 1
+  harvestAmount: 2
+  plantsRenderer: {fileID: 1486989324}
+--- !u!114 &6600000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 731213314}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9dea016350a0499cbb56734915f9c6d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FlowerBed
+  gameDay: {fileID: 511175215}
+  flowerSeeds: {fileID: 11400000, guid: 58e02bd667bb4e02968c9e8ca9893cc7, type: 2}
+  flower: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
+  seedsPerPlanting: 1
+  harvestAmount: 2
+  plantsRenderer: {fileID: 502818775}
