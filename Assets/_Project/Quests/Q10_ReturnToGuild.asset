@@ -13,14 +13,15 @@ MonoBehaviour:
   m_Name: Q10_ReturnToGuild
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
   id: Q10
-  title: "협회 복귀"
-  description: "시험을 마치고 협회로 돌아가 보고하자. 1챕터의 마지막 퀘스트. (진행 조건은 준비 중)"
+  title: "\uD611\uD68C \uBCF5\uADC0"
+  description: "\uC2DC\uD5D8\uC744 \uB9C8\uCE58\uACE0 \uD611\uD68C\uB85C \uB3CC\uC544\uAC00
+    \uBCF4\uACE0\uD558\uC790. 1\uCC55\uD130\uC758 \uB9C8\uC9C0\uB9C9 \uD018\uC2A4\uD2B8."
   category: 0
   prerequisites:
   - {fileID: 11400000, guid: 6f9c1bc628f9459c850e5505e9c9b44a, type: 2}
   objectives:
   - id: return_guild
-    description: "협회로 돌아가기 (조건 준비 중)"
+    description: "\uD611\uD68C\uB85C \uB3CC\uC544\uAC00\uAE30"
     eventType: 0
     item: {fileID: 0}
     target: 

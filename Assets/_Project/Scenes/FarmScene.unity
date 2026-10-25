@@ -33342,7 +33342,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestTravelGate
   quests: {fileID: 6800000001}
   requiredQuestId: Q05
-  lockedMessage: "아직 숲으로 갈 수 없어. 마을에서 시험 준비부터 끝내자!"
+  lockedMessage: "아직 숲으로 갈 수 없어.\n마을에서 시험 준비부터 끝내고 가자!"
 --- !u!1 &6800000010
 GameObject:
   m_ObjectHideFlags: 0

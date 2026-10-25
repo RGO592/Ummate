@@ -8,7 +8,7 @@ public sealed class QuestTravelGate : MonoBehaviour
 {
     [SerializeField] private QuestLog quests;
     [SerializeField] private string requiredQuestId = "Q05";
-    [SerializeField, TextArea] private string lockedMessage = "아직 숲으로 갈 수 없어. 마을에서 시험 준비부터 끝내자!";
+    [SerializeField, TextArea] private string lockedMessage = "아직 숲으로 갈 수 없어.\n마을에서 시험 준비부터 끝내고 가자!";
 
     // An unassigned log leaves the exit open rather than trapping the player.
     public bool IsOpen => quests == null || quests.GetStatus(requiredQuestId) != QuestStatus.Locked;

@@ -13,22 +13,25 @@ MonoBehaviour:
   m_Name: Q03_ForestNeeds
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
   id: Q03
-  title: "숲에서 필요한 것"
-  description: "숲에서 일하려면 목재가 필요해. 마을의 나무를 한 그루 베어 보자."
+  title: "\uC232\uC5D0\uC11C \uD544\uC694\uD55C \uAC83"
+  description: "\uC232\uC5D0\uC11C \uC77C\uD558\uB824\uBA74 \uBAA9\uC7AC\uAC00 \uD544\uC694\uD574.
+    \n\uB9C8\uC744\uC758 \uB098\uBB34\uB97C \uD55C \uADF8\uB8E8 \uBCA0\uC5B4 \uBCF4\uC790."
   category: 0
   prerequisites:
   - {fileID: 11400000, guid: a483731513304b67ad784644b4005688, type: 2}
   objectives:
   - id: chop_tree
-    description: "나무 1그루 베기"
+    description: "\uB098\uBB34 1\uADF8\uB8E8 \uBCA0\uAE30"
     eventType: 7
     item: {fileID: 11400000, guid: fc619eae7f6d564fbbdaad19066eb3ed, type: 2}
     target: 
     requiredAmount: 1
-    tip: "마을의 나무 앞에서 F를 세 번 눌러 베어 보세요!"
+    tip: "\uB9C8\uC744\uC758 \uB098\uBB34 \uC55E\uC5D0\uC11C F\uB97C \n\uC138 \uBC88
+      \uB20C\uB7EC \uBCA0\uC5B4 \uBCF4\uC138\uC694!"
   startItems: []
   startMessage: 
   rewardItems: []
   rewardGold: 0
   pendingRewards:
-  - "도끼 (지급 예정 · 지금은 도구 없이 벨 수 있어요)"
+  - "\uB3C4\uB07C (\uC9C0\uAE09 \uC608\uC815 \xB7 \uC9C0\uAE08\uC740 \uB3C4\uAD6C
+    \uC5C6\uC774 \uBCA8 \uC218 \uC788\uC5B4\uC694)"

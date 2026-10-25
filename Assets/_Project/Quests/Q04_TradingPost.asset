@@ -13,19 +13,22 @@ MonoBehaviour:
   m_Name: Q04_TradingPost
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
   id: Q04
-  title: "교역소 이용하기"
-  description: "교역소에서는 기른 작물과 재료를 골드로 바꿀 수 있어. 아무거나 한 번 팔아 보자."
+  title: "\uAD50\uC5ED\uC18C \uC774\uC6A9\uD558\uAE30"
+  description: "\uAD50\uC5ED\uC18C\uC5D0\uC11C\uB294 \uAE30\uB978 \uC791\uBB3C\uACFC
+    \uC7AC\uB8CC\uB97C \uACE8\uB4DC\uB85C \uBC14\uAFC0 \uC218 \uC788\uC5B4. \n\uC544\uBB34\uAC70\uB098
+    \uD55C \uBC88 \uD314\uC544 \uBCF4\uC790."
   category: 0
   prerequisites:
   - {fileID: 11400000, guid: 172689c3b45b4dbcbe950d42064c9026, type: 2}
   objectives:
   - id: sell_item
-    description: "교역소에서 아이템 판매하기"
+    description: "\uAD50\uC5ED\uC18C\uC5D0\uC11C \uC544\uC774\uD15C \uD310\uB9E4\uD558\uAE30"
     eventType: 8
     item: {fileID: 0}
     target: 
     requiredAmount: 1
-    tip: "교역소 앞에서 F를 눌러 목재·꽃·밀 중 하나를 팔아 골드를 받아 보세요!"
+    tip: "\uAD50\uC5ED\uC18C\uC5D0\uC11C \uBAA9\uC7AC\xB7\uAF43\xB7\uBC00 \uC911
+      \n\uD558\uB098\uB97C \uD314\uC544 \uB3C8\uC744 \uBC8C\uC5B4\uBCF4\uC138\uC694!"
   startItems: []
   startMessage: 
   rewardItems: []

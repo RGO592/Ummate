@@ -13,19 +13,21 @@ MonoBehaviour:
   m_Name: Q09_ClearTheFog
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
   id: Q09
-  title: "안개 너머로 (임시 제목)"
-  description: "생태계를 총 3종 복원하면 숲의 안개가 걷힌다. (진행 조건은 준비 중)"
+  title: "\uC548\uAC1C \uB108\uBA38\uB85C (\uC784\uC2DC \uC81C\uBAA9)"
+  description: "\uC0DD\uD0DC\uACC4\uB97C \uCD1D 3\uC885 \uBCF5\uC6D0\uD558\uBA74
+    \uC232\uC758 \uC548\uAC1C\uAC00 \uAC77\uD78C\uB2E4. (\uC9C4\uD589 \uC870\uAC74\uC740
+    \uC900\uBE44 \uC911)"
   category: 0
   prerequisites:
   - {fileID: 11400000, guid: 286d0ff58520464e9bd05ec3353b3ea2, type: 2}
   objectives:
   - id: restore_total_three
-    description: "생태계 총 3종 복원 (조건 준비 중)"
+    description: "\uC548\uAC1C\uAC00 \uAC77\uD788\uB2E4"
     eventType: 0
     item: {fileID: 0}
     target: 
     requiredAmount: 3
-    tip: 
+    tip: "\uC2B9\uAC15\uC7A5\uC73C\uB85C \uAC00\uBCF4\uC790!"
   startItems: []
   startMessage: 
   rewardItems: []

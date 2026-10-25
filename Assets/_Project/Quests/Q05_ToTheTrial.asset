@@ -13,19 +13,22 @@ MonoBehaviour:
   m_Name: Q05_ToTheTrial
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
   id: Q05
-  title: "시험장으로"
-  description: "준비는 끝났어! 마을 끝의 숲길로 나가 숲 자연 복원 지역의 시험장으로 가 보자."
+  title: "\uC2DC\uD5D8\uC7A5\uC73C\uB85C"
+  description: "\uC900\uBE44\uB294 \uB05D\uB0AC\uC5B4! \uB9C8\uC744 \uB05D\uC758
+    \uC232\uAE38\uB85C \uB098\uAC00 \uC232 \uC790\uC5F0 \uBCF5\uC6D0 \uC9C0\uC5ED\uC758
+    \uC2DC\uD5D8\uC7A5\uC73C\uB85C \uAC00 \uBCF4\uC790."
   category: 0
   prerequisites:
   - {fileID: 11400000, guid: 429670540ecd42d19647a3fc823c8579, type: 2}
   objectives:
   - id: enter_forest
-    description: "숲 자연 복원 지역에 들어가기"
+    description: "\uC232 \uC790\uC5F0 \uBCF5\uC6D0 \uC9C0\uC5ED\uC5D0 \uB4E4\uC5B4\uAC00\uAE30"
     eventType: 9
     item: {fileID: 0}
     target: SpiritGridScene
     requiredAmount: 1
-    tip: "마을 끝의 숲길 출구로 나가 숲 자연 복원 지역에 가 보세요!"
+    tip: "\uB9C8\uC744 \uB05D\uC758 \uC232\uAE38 \uCD9C\uAD6C\uB85C \uB098\uAC00
+      \n\uC790\uC5F0 \uC9C0\uC5ED\uC5D0 \uAC00 \uBCF4\uC138\uC694!"
   startItems: []
   startMessage: 
   rewardItems: []

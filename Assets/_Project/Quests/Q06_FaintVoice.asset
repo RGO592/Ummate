@@ -13,21 +13,24 @@ MonoBehaviour:
   m_Name: Q06_FaintVoice
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
   id: Q06
-  title: "희미한 목소리"
-  description: "숲 어딘가에서 희미한 목소리가 들려. (Hex 튜토리얼 · 진행 조건은 준비 중)"
+  title: "\uD76C\uBBF8\uD55C \uBAA9\uC18C\uB9AC"
+  description: "\uC232 \uC5B4\uB518\uAC00\uC5D0\uC11C \uD76C\uBBF8\uD55C \uBAA9\uC18C\uB9AC\uAC00
+    \uB4E4\uB824. (Hex \uD29C\uD1A0\uB9AC\uC5BC \xB7 \uC9C4\uD589 \uC870\uAC74\uC740
+    \uC900\uBE44 \uC911)"
   category: 0
   prerequisites:
   - {fileID: 11400000, guid: e0ef3d033bed498d80209cd716c075db, type: 2}
   objectives:
   - id: hex_tutorial
-    description: "Hex 튜토리얼 (조건 준비 중)"
+    description: "Hex \uD29C\uD1A0\uB9AC\uC5BC (\uC870\uAC74 \uC900\uBE44 \uC911)"
     eventType: 0
     item: {fileID: 0}
     target: 
     requiredAmount: 1
-    tip: "숲 어딘가에서 희미한 목소리가 들려요. (다음 단계는 준비 중입니다)"
+    tip: "\uC232 \uC5B4\uB518\uAC00\uC5D0\uC11C \n\uD76C\uBBF8\uD55C \uBAA9\uC18C\uB9AC\uAC00
+      \uB4E4\uB824\uC694..."
   startItems: []
-  startMessage: "꽃향기가 그리워……."
+  startMessage: "\uAF43\uD5A5\uAE30\uAC00 \uADF8\uB9AC\uC6CC\u2026\u2026."
   rewardItems: []
   rewardGold: 0
   pendingRewards: []

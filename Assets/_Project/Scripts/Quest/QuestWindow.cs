@@ -142,6 +142,9 @@ public sealed class QuestWindow : MonoBehaviour
             string id = entry.Definition.Id;
             Button button = CreateButton($"Quest_{id}", active ? activeList : completedList,
                 entry.Definition.Title, -1f, () => Select(id), TextAlignmentOptions.MidlineLeft);
+            // No completion time is stored; the quest line completes in data order (Q01 → Q10), so the
+            // newest completed quest is the latest in that order. Each one goes on top: newest first.
+            if (!active) button.transform.SetAsFirstSibling();
             Image background = button.GetComponent<Image>();
             background.color = id == selectedId ? SelectedColor : active ? Color.white : new Color(0.87f, 0.84f, 0.78f);
             TMP_Text label = button.GetComponentInChildren<TMP_Text>();

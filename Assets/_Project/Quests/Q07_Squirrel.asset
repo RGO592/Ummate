@@ -13,14 +13,16 @@ MonoBehaviour:
   m_Name: Q07_Squirrel
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
   id: Q07
-  title: "다람쥐 생태계"
-  description: "숲&강의 필수 생태계. 다람쥐가 살 수 있는 숲을 되살리자. (진행 조건은 준비 중)"
+  title: "\uB2E4\uB78C\uC950 \uC0DD\uD0DC\uACC4"
+  description: "\uC232&\uAC15\uC758 \uD544\uC218 \uC0DD\uD0DC\uACC4. \uB2E4\uB78C\uC950\uAC00
+    \uC0B4 \uC218 \uC788\uB294 \uC232\uC744 \uB418\uC0B4\uB9AC\uC790. (\uC9C4\uD589
+    \uC870\uAC74\uC740 \uC900\uBE44 \uC911)"
   category: 0
   prerequisites:
   - {fileID: 11400000, guid: b1084e5d435844acbaf3f1b66488b957, type: 2}
   objectives:
   - id: restore_squirrel
-    description: "다람쥐 생태계 복원 (조건 준비 중)"
+    description: "\uB2E4\uB78C\uC950 \uC0DD\uD0DC\uACC4 \uBCF5\uC6D0"
     eventType: 0
     item: {fileID: 0}
     target: 

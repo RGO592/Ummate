@@ -13,33 +13,37 @@ MonoBehaviour:
   m_Name: Q02_Flowers
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
   id: Q02
-  title: "꽃을 피워 볼까요?"
-  description: "마을 화단에 꽃을 길러 보자. 씨앗을 심고 물을 준 뒤, 하룻밤 지나면 꽃을 수확할 수 있어."
+  title: "\uAF43\uC744 \uD53C\uC6CC \uBCFC\uAE4C\uC694?"
+  description: "\uB9C8\uC744 \uD654\uB2E8\uC5D0 \uAF43\uC744 \uAE38\uB7EC \uBCF4\uC790.
+    \n\uC528\uC557\uC744 \uC2EC\uACE0 \uBB3C\uC744 \uC900 \uB4A4, \uD558\uB8FB\uBC24
+    \uC9C0\uB098\uBA74 \uAF43\uC744 \uC218\uD655\uD560 \uC218 \uC788\uC5B4."
   category: 0
   prerequisites:
   - {fileID: 11400000, guid: 44f633da22c647b5b95c39a81bd0a016, type: 2}
   objectives:
   - id: plant_flower
-    description: "꽃 씨앗 심기"
+    description: "\uAF43 \uC528\uC557 \uC2EC\uAE30"
     eventType: 4
     item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
     target: 
     requiredAmount: 1
-    tip: "화단 앞에서 F를 눌러 꽃 씨앗을 심어 보세요!"
+    tip: "\uD654\uB2E8 \uC55E\uC5D0\uC11C F\uB97C \uB20C\uB7EC\n\uAF43 \uC528\uC557\uC744
+      \uC2EC\uC5B4 \uBCF4\uC138\uC694!"
   - id: water_flower
-    description: "꽃에 물 주기"
+    description: "\uAF43\uC5D0 \uBB3C \uC8FC\uAE30"
     eventType: 5
     item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
     target: 
     requiredAmount: 1
-    tip: "화단 앞에서 F를 눌러 물을 주세요!"
+    tip: "\uD654\uB2E8 \uC55E\uC5D0\uC11C F\uB97C \uB20C\uB7EC \uBB3C\uC744 \uC8FC\uC138\uC694!"
   - id: harvest_flower
-    description: "꽃 수확하기"
+    description: "\uAF43 \uC218\uD655\uD558\uAE30"
     eventType: 6
     item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
     target: 
     requiredAmount: 1
-    tip: "하룻밤 자고 나면 꽃이 펴요. 화단에서 F로 꽃을 수확하세요!"
+    tip: "\uD558\uB8FB\uBC24 \uC790\uACE0 \uB098\uBA74 \uAF43\uC774 \uD3B4\uC694.
+      \uD654\uB2E8\uC5D0\uC11C F\uB85C \uAF43\uC744 \uC218\uD655\uD558\uC138\uC694!"
   startItems:
   - item: {fileID: 11400000, guid: 58e02bd667bb4e02968c9e8ca9893cc7, type: 2}
     quantity: 1

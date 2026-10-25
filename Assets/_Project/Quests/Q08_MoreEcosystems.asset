@@ -13,19 +13,21 @@ MonoBehaviour:
   m_Name: Q08_MoreEcosystems
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
   id: Q08
-  title: "숲의 이웃들 (임시 제목)"
-  description: "꿀벌·토끼·수달·사슴 중 두 생태계를 복원하자. (진행 조건은 준비 중)"
+  title: "\uC232\uC758 \uC774\uC6C3\uB4E4 (\uC784\uC2DC \uC81C\uBAA9)"
+  description: "\uAFC0\uBC8C\xB7\uD1A0\uB07C\xB7\uC218\uB2EC\xB7\uC0AC\uC2B4 \uC911
+    \uB450 \uC0DD\uD0DC\uACC4\uB97C \uBCF5\uC6D0\uD558\uC790. (\uC9C4\uD589 \uC870\uAC74\uC740
+    \uC900\uBE44 \uC911)"
   category: 0
   prerequisites:
   - {fileID: 11400000, guid: d46de41d5b754d9b80e99c750d4259ff, type: 2}
   objectives:
   - id: restore_two
-    description: "꿀벌·토끼·수달·사슴 중 2종 복원 (조건 준비 중)"
+    description: "\uC0DD\uD0DC\uACC4 2\uC885 \uBCF5\uC6D0"
     eventType: 0
     item: {fileID: 0}
     target: 
     requiredAmount: 2
-    tip: 
+    tip: "\uC11C\uB85C \uB2E4\uB978 \uC0DD\uD0DC\uACC4 2\uC885\uC744 \n\uB9CC\uB4E4\uC5B4\uBCF4\uC138\uC694!"
   startItems: []
   startMessage: 
   rewardItems: []
