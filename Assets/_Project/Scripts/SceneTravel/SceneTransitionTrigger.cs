@@ -17,6 +17,11 @@ public sealed class SceneTransitionTrigger : MonoBehaviour
     {
         if (localSpawnPoint == null || !localSpawnPoint.IsPlayer(other)) return;
         if (other.attachedRigidbody.isKinematic) return; // No travel while construction freezes the player.
+        if (TryGetComponent(out QuestTravelGate gate) && !gate.IsOpen)
+        {
+            gate.ReportLocked();
+            return;
+        }
         SceneTransitionService.Travel(gameObject.scene, localSpawnPoint, targetScene,
             targetSpawnPointId, useFade ? fadeDuration : 0f);
     }

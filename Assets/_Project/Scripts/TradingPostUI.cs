@@ -93,6 +93,7 @@ public sealed class TradingPostUI : MonoBehaviour
             TradeService.SellResult.NotEnoughItems => "보유 수량보다 많이 판매할 수 없습니다.",
             TradeService.SellResult.NotSellable => "판매할 수 없는 아이템입니다.",
             TradeService.SellResult.WalletFull => "골드를 더 받을 수 없습니다.",
+            TradeService.SellResult.Blocked => TradeService.LastBlockReason,
             _ => "판매에 실패했습니다."
         };
         if (result == TradeService.SellResult.Sold)

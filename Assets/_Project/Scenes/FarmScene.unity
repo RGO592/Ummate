@@ -6893,6 +6893,7 @@ MonoBehaviour:
   wallet: {fileID: 6400000001}
   quickbar: {fileID: 1739143745}
   mission: {fileID: 1739143747}
+  quests: {fileID: 6800000001}
   items:
   - id: Wood
     item: {fileID: 11400000, guid: fc619eae7f6d564fbbdaad19066eb3ed, type: 2}
@@ -15710,7 +15711,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD604\uC7AC \uBBF8\uC158: \uBC00 \uC218\uD655 0 / 9"
+  m_text: "수습 마녀의 첫 시험"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: e9189a8d4dd46714da53ecfa7131f7f7, type: 2}
   m_sharedMaterial: {fileID: 2715029378351798479, guid: e9189a8d4dd46714da53ecfa7131f7f7, type: 2}
@@ -17891,6 +17892,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 792f9a37034dc2c4f9d9add4d60efe9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GuideTooltip
+  quests: {fileID: 6800000001}
   mission: {fileID: 1739143747}
   inventory: {fileID: 1739143746}
   plots:
@@ -21344,6 +21346,8 @@ GameObject:
   - component: {fileID: 1739143745}
   - component: {fileID: 1739143747}
   - component: {fileID: 6400000001}
+  - component: {fileID: 6800000001}
+  - component: {fileID: 6800000002}
   m_Layer: 0
   m_Name: P
   m_TagString: Untagged
@@ -21556,12 +21560,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c957b4b02e66bba46afa536223770797, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MissionProgress
+  legacyMissionsEnabled: 0
   basket: {fileID: 11400000, guid: db6ade421cff36a4bba064297d3d7b0c, type: 2}
   cornSeeds: {fileID: 11400000, guid: 1e2c5eab0a402694c9dc3c0d4c221243, type: 2}
   bucket: {fileID: 11400000, guid: 6828dd67bdaffe248808311157da149b, type: 2}
   chickenArea: {fileID: 1079099204}
   cowArea: {fileID: 568227970}
-  missionLabel: {fileID: 1178912382}
+  missionLabel: {fileID: 0}
 --- !u!1 &1741702949
 GameObject:
   m_ObjectHideFlags: 0
@@ -32269,6 +32274,7 @@ GameObject:
   - component: {fileID: 6000000003}
   - component: {fileID: 6000000004}
   - component: {fileID: 6000000005}
+  - component: {fileID: 6800000003}
   m_Layer: 0
   m_Name: TransitionTrigger
   m_TagString: Untagged
@@ -33178,7 +33184,7 @@ MonoBehaviour:
   notificationDuration: 2
   fadeDuration: 0.4
   maxVisible: 4
-  notificationTopOffset: 20
+  notificationBottomOffset: 168
 --- !u!114 &6600000001
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -33272,6 +33278,130 @@ MonoBehaviour:
   - {fileID: 2141775270}
   - {fileID: 511175218}
   mainMenuScene: Assets/_Project/Scenes/MainMenuScene.unity
+--- !u!114 &6800000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739143737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b95fedafdb9d4378a30eb9782945e047, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestLog
+  quests:
+  - {fileID: 11400000, guid: 44f633da22c647b5b95c39a81bd0a016, type: 2}
+  - {fileID: 11400000, guid: a483731513304b67ad784644b4005688, type: 2}
+  - {fileID: 11400000, guid: 172689c3b45b4dbcbe950d42064c9026, type: 2}
+  - {fileID: 11400000, guid: 429670540ecd42d19647a3fc823c8579, type: 2}
+  - {fileID: 11400000, guid: e0ef3d033bed498d80209cd716c075db, type: 2}
+  - {fileID: 11400000, guid: b1084e5d435844acbaf3f1b66488b957, type: 2}
+  - {fileID: 11400000, guid: d46de41d5b754d9b80e99c750d4259ff, type: 2}
+  - {fileID: 11400000, guid: 286d0ff58520464e9bd05ec3353b3ea2, type: 2}
+  - {fileID: 11400000, guid: 6f9c1bc628f9459c850e5505e9c9b44a, type: 2}
+  - {fileID: 11400000, guid: 93663b8abefc4d7ca5394b3f6917caef, type: 2}
+  inventory: {fileID: 1739143746}
+  wallet: {fileID: 6400000001}
+  hudLabel: {fileID: 1178912382}
+  noQuestText: "진행 중인 퀘스트가 없습니다."
+  noQuestTip: "J 키로 퀘스트 목록을 볼 수 있습니다."
+--- !u!114 &6800000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739143737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 022c45019ec943668cde8c8146f92805, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestSeedSaleGuard
+  quests: {fileID: 6800000001}
+  protectUntilQuestId: Q01
+  protectedSeeds: {fileID: 11400000, guid: 3208e0eca67ee604c9647d55200a0494, type: 2}
+  crop: 1
+  plots:
+  - {fileID: 651528383}
+  - {fileID: 1791851955}
+  - {fileID: 1455621786}
+  keepAtLeast: 1
+  blockedMessage: "안 돼, 안 돼! 이거까지 팔면 시험을 통과할 수 없어!"
+--- !u!114 &6800000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6000000002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8210f643f4fa4584a5ef7779b67ecc24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestTravelGate
+  quests: {fileID: 6800000001}
+  requiredQuestId: Q05
+  lockedMessage: "아직 숲으로 갈 수 없어. 마을에서 시험 준비부터 끝내자!"
+--- !u!1 &6800000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6800000011}
+  - component: {fileID: 6800000012}
+  m_Layer: 0
+  m_Name: QuestWindow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6800000011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6800000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6800000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6800000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc52d3b2c8f74b4d829bc58fe921c19d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestWindow
+  font: {fileID: 11400000, guid: e9189a8d4dd46714da53ecfa7131f7f7, type: 2}
+  panelSprite: {fileID: 21300000, guid: 51e3a051a38a4f0891edb40369923c21, type: 3}
+  buttonSprite: {fileID: 21300000, guid: 53ad6e9fe1224a36893566447829746f, type: 3}
+  closeSprite: {fileID: 21300000, guid: a5f0f88e2e4227842bd545c0222dba58, type: 3}
+  sortingOrder: 250
+  inputComponents:
+  - {fileID: 1739143742}
+  - {fileID: 1739143744}
+  - {fileID: 1739143745}
+  - {fileID: 2141775270}
+  - {fileID: 511175218}
+  playerBody: {fileID: 1739143743}
+  pauseMenu: {fileID: 6700000003}
+  tradingPost: {fileID: 6400000041}
+  sleepTransition: {fileID: 511175217}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -33302,3 +33432,4 @@ SceneRoots:
   - {fileID: 6400000042}
   - {fileID: 6500000002}
   - {fileID: 6700000002}
+  - {fileID: 6800000011}

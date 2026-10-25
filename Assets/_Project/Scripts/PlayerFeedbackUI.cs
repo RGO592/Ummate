@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 // Function-check view for the shared player feedback; the team will replace the presentation later.
 // Bottom centre: "[F] ..." for the target PlayerInteractor would actually pick (same FindTarget rule).
-// Top centre: result notifications from PlayerFeedback.Notify, stacked so consecutive messages are not lost.
+// Above the quickbar / interaction prompt: result notifications from PlayerFeedback.Notify, stacked so consecutive messages are not lost.
 // Builds its own overlay canvas at runtime (same approach as TradingPostUI); one per scene that needs it.
 [DisallowMultipleComponent]
 public sealed class PlayerFeedbackUI : MonoBehaviour
@@ -27,11 +27,14 @@ public sealed class PlayerFeedbackUI : MonoBehaviour
     [SerializeField, Min(0.5f)] private float notificationDuration = 2f;
     [SerializeField, Min(0.05f)] private float fadeDuration = 0.4f;
     [SerializeField, Min(1)] private int maxVisible = 4;
-    [SerializeField, Tooltip("Canvas units below the top edge, between the date/Tip (left) and buttons (right).")]
-    private float notificationTopOffset = 20f;
+    [SerializeField, Tooltip("Canvas units (1280×720) above the bottom edge. Keeps the 112–156 interaction-prompt lane clear.")]
+    private float notificationBottomOffset = 168f;
 
     private const float FadeInDuration = 0.15f;
-    private const float EntryHeight = 40f;
+    private const float EntryHeight = 44f;
+    private const float NotificationWidth = 480f;
+    private const float TextInsetX = 20f;
+    private const float TextInsetY = 12f;
     private const float EntrySpacing = 6f;
     private static readonly Color TextColor = new Color(0.27f, 0.19f, 0.12f);
     private static readonly Color PanelFallback = new Color(0.98f, 0.95f, 0.88f);
@@ -113,14 +116,21 @@ public sealed class PlayerFeedbackUI : MonoBehaviour
         while (entries.Count >= maxVisible) RemoveAt(0);
 
         RectTransform rect = CreateRect("Notification", notificationArea);
-        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0f);
         ApplySprite(rect.gameObject.AddComponent<Image>(), notificationSprite);
         CanvasGroup group = rect.gameObject.AddComponent<CanvasGroup>();
         group.alpha = 0f;
         group.blocksRaycasts = group.interactable = false;
         TMP_Text text = CreateText("Text", rect, message, 19f);
         Stretch((RectTransform)text.transform);
-        rect.sizeDelta = new Vector2(Mathf.Min(text.GetPreferredValues(message).x + 48f, 640f), EntryHeight);
+        text.rectTransform.offsetMin = new Vector2(TextInsetX, TextInsetY);
+        text.rectTransform.offsetMax = new Vector2(-TextInsetX, -TextInsetY);
+        text.textWrappingMode = TextWrappingModes.Normal;
+        text.overflowMode = TextOverflowModes.Overflow;
+        // Typical short feedback fits one or two lines at 19pt. Measure instead of clipping
+        // unusually long notices: the same fixed width can grow vertically if necessary.
+        float textHeight = text.GetPreferredValues(message, NotificationWidth - TextInsetX * 2f, Mathf.Infinity).y;
+        rect.sizeDelta = new Vector2(NotificationWidth, Mathf.Max(EntryHeight, Mathf.Ceil(textHeight) + TextInsetY * 2f));
         entries.Add(new Entry { rect = rect, group = group, message = message });
         LayoutNotifications();
     }
@@ -148,8 +158,13 @@ public sealed class PlayerFeedbackUI : MonoBehaviour
 
     private void LayoutNotifications()
     {
-        for (int i = 0; i < entries.Count; i++)
-            entries[i].rect.anchoredPosition = new Vector2(0f, -i * (EntryHeight + EntrySpacing));
+        float offset = 0f;
+        // Keep the latest notification nearest the quickbar; older entries stack upward.
+        for (int i = entries.Count - 1; i >= 0; i--)
+        {
+            entries[i].rect.anchoredPosition = new Vector2(0f, offset);
+            offset += entries[i].rect.sizeDelta.y + EntrySpacing;
+        }
     }
 
     // ---- Construction ----
@@ -178,8 +193,8 @@ public sealed class PlayerFeedbackUI : MonoBehaviour
         promptPanel.gameObject.SetActive(false);
 
         notificationArea = CreateRect("Notifications", root.transform);
-        notificationArea.anchorMin = notificationArea.anchorMax = notificationArea.pivot = new Vector2(0.5f, 1f);
-        notificationArea.anchoredPosition = new Vector2(0f, -notificationTopOffset);
+        notificationArea.anchorMin = notificationArea.anchorMax = notificationArea.pivot = new Vector2(0.5f, 0f);
+        notificationArea.anchoredPosition = new Vector2(0f, notificationBottomOffset);
     }
 
     private static RectTransform CreateRect(string objectName, Transform parent)

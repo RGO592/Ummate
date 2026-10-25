@@ -250,5 +250,14 @@ public sealed class SpiritBuildModeController : MonoBehaviour
         viewCamera.transform.SetPositionAndRotation(focus - rotation * Vector3.forward * distance, rotation);
     }
 
-    private void OnDisable() { orbiting = false; }
+    // Disabled by a modal input lock (pause menu, quest window) mid-rotation: land on the target quarter
+    // turn instead of freezing between angles. Build mode itself is left as it was.
+    private void OnDisable()
+    {
+        panButton = null;
+        if (!orbiting) return;
+        if (viewCamera == null || grid == null) { orbiting = false; return; }
+        orbitElapsed = orbitDuration;
+        AdvanceOrbit();
+    }
 }

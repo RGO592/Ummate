@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e482e40644fa45e1966ef6af8034cc4e, type: 3}
+  m_Name: Q07_Squirrel
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
+  id: Q07
+  title: "다람쥐 생태계"
+  description: "숲&강의 필수 생태계. 다람쥐가 살 수 있는 숲을 되살리자. (진행 조건은 준비 중)"
+  category: 0
+  prerequisites:
+  - {fileID: 11400000, guid: b1084e5d435844acbaf3f1b66488b957, type: 2}
+  objectives:
+  - id: restore_squirrel
+    description: "다람쥐 생태계 복원 (조건 준비 중)"
+    eventType: 0
+    item: {fileID: 0}
+    target: 
+    requiredAmount: 1
+    tip: 
+  startItems: []
+  startMessage: 
+  rewardItems: []
+  rewardGold: 0
+  pendingRewards: []

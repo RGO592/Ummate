@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e482e40644fa45e1966ef6af8034cc4e, type: 3}
+  m_Name: Q05_ToTheTrial
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
+  id: Q05
+  title: "시험장으로"
+  description: "준비는 끝났어! 마을 끝의 숲길로 나가 숲 자연 복원 지역의 시험장으로 가 보자."
+  category: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 429670540ecd42d19647a3fc823c8579, type: 2}
+  objectives:
+  - id: enter_forest
+    description: "숲 자연 복원 지역에 들어가기"
+    eventType: 9
+    item: {fileID: 0}
+    target: SpiritGridScene
+    requiredAmount: 1
+    tip: "마을 끝의 숲길 출구로 나가 숲 자연 복원 지역에 가 보세요!"
+  startItems: []
+  startMessage: 
+  rewardItems: []
+  rewardGold: 0
+  pendingRewards: []

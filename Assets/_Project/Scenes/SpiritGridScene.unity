@@ -17934,6 +17934,119 @@ MonoBehaviour:
   - {fileID: 1647448966}
   - {fileID: 1976902116}
   mainMenuScene: Assets/_Project/Scenes/MainMenuScene.unity
+--- !u!1 &6800000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6800000011}
+  - component: {fileID: 6800000012}
+  m_Layer: 0
+  m_Name: QuestWindow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6800000011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6800000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6800000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6800000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc52d3b2c8f74b4d829bc58fe921c19d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestWindow
+  font: {fileID: 11400000, guid: e9189a8d4dd46714da53ecfa7131f7f7, type: 2}
+  panelSprite: {fileID: 21300000, guid: 51e3a051a38a4f0891edb40369923c21, type: 3}
+  buttonSprite: {fileID: 21300000, guid: 53ad6e9fe1224a36893566447829746f, type: 3}
+  closeSprite: {fileID: 21300000, guid: a5f0f88e2e4227842bd545c0222dba58, type: 3}
+  sortingOrder: 250
+  inputComponents:
+  - {fileID: 126465200}
+  - {fileID: 126465199}
+  - {fileID: 1647448966}
+  - {fileID: 1976902116}
+  playerBody: {fileID: 126465201}
+  pauseMenu: {fileID: 6700000003}
+  tradingPost: {fileID: 0}
+  sleepTransition: {fileID: 0}
+--- !u!1 &6800000020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6800000021}
+  - component: {fileID: 6800000022}
+  m_Layer: 0
+  m_Name: PlayerFeedbackUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6800000021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6800000020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6800000022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6800000020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0107e01844f47269881ab9199401cf3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerFeedbackUI
+  font: {fileID: 11400000, guid: e9189a8d4dd46714da53ecfa7131f7f7, type: 2}
+  promptSprite: {fileID: 21300000, guid: f0f0cca2318a45b787a83f81e8152ef0, type: 3}
+  notificationSprite: {fileID: 21300000, guid: 51e3a051a38a4f0891edb40369923c21, type: 3}
+  sortingOrder: 100
+  interactor: {fileID: 0}
+  interactKeyLabel: F
+  promptBottomOffset: 112
+  notificationDuration: 2
+  fadeDuration: 0.4
+  maxVisible: 4
+  notificationBottomOffset: 168
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -17949,3 +18062,5 @@ SceneRoots:
   - {fileID: 386083273}
   - {fileID: 6000000001}
   - {fileID: 6700000002}
+  - {fileID: 6800000011}
+  - {fileID: 6800000021}

@@ -17,6 +17,9 @@ public sealed class SceneTransitionService : MonoBehaviour
     private bool busy;
 
     public static bool IsTraveling => instance != null && instance.busy;
+    // Raised once a region exit (Travel) has fully arrived in the destination scene. Save loads
+    // (RestoreLocation) never raise it, so loading cannot count as entering a region.
+    public static event Action<Scene> Arrived;
 
     public static void Travel(Scene source, SceneSpawnPoint localPlayer, string destination,
         string spawnId, float fadeDuration)
@@ -214,6 +217,9 @@ public sealed class SceneTransitionService : MonoBehaviour
             yield return null;
             yield return Fade(0f, duration);
             completed = true;
+            // Listener errors must not undo a completed trip.
+            try { Arrived?.Invoke(target); }
+            catch (Exception exception) { Debug.LogException(exception); }
         }
         finally
         {
@@ -310,5 +316,9 @@ public sealed class SceneTransitionService : MonoBehaviour
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetSession() => instance = null;
+    private static void ResetSession()
+    {
+        instance = null;
+        Arrived = null;
+    }
 }

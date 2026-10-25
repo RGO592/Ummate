@@ -29,6 +29,8 @@ public sealed class FarmPlot : Interactable
     public int GrowthDays { get; private set; }
     public int RequiredGrowthDays => CurrentCrop == CropKind.Corn ? 1 : CurrentCrop == CropKind.Wheat ? 1 : 0;
     private string CropName => CurrentCrop == CropKind.Corn ? "옥수수" : "밀";
+    // Quest events identify the crop by its produce item (wheat / corn).
+    private ItemDefinition Produce => CurrentCrop == CropKind.Corn ? corn : wheat;
     public bool WateredToday => gameDay != null && wateredDay == gameDay.CurrentDay;
     public bool SaveReferencesValid => gameDay != null;
 
@@ -102,6 +104,7 @@ public sealed class FarmPlot : Interactable
                 GrowthDays = 0;
                 inventory.AddItem(produce, 3);
                 inventory.AddItem(seeds, 1);
+                // Legacy prologue counter; MissionProgress ignores it unless legacy missions are enabled.
                 MissionProgress mission = interactor.GetComponent<MissionProgress>();
                 if (mission != null)
                 {
@@ -110,6 +113,7 @@ public sealed class FarmPlot : Interactable
                 }
                 RefreshAppearance();
                 Log($"수확 완료: {harvestedName} 3개 + {harvestedName} 씨앗 1개. 빈 밭으로 돌아갑니다.");
+                QuestEvents.Raise(QuestEventType.CropHarvested, produce);
                 return;
             }
 
@@ -143,6 +147,7 @@ public sealed class FarmPlot : Interactable
                 wateredDay = -1;
                 RefreshAppearance();
                 Log($"{CropName} 파종 완료: 씨앗 1개 소비. 성장에 물 준 날 {RequiredGrowthDays}일이 필요합니다.");
+                QuestEvents.Raise(QuestEventType.CropPlanted, Produce);
                 return;
             }
 
@@ -164,6 +169,7 @@ public sealed class FarmPlot : Interactable
             wateredDay = gameDay.CurrentDay;
             RefreshAppearance();
             Log($"{wateredDay}일차 물 주기 완료. 취침하면 {CropName} 성장량이 1 증가합니다.");
+            QuestEvents.Raise(QuestEventType.CropWatered, Produce);
         }
         finally { interacting = false; }
     }

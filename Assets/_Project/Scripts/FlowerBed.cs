@@ -83,10 +83,12 @@ public sealed class FlowerBed : Interactable
                     }
                     SetState(BedState.Planted);
                     Report("꽃 씨앗을 심었습니다.");
+                    QuestEvents.Raise(QuestEventType.FlowerPlanted, flower);
                     return;
                 case BedState.Planted:
                     SetState(BedState.Watered);
                     Report("꽃에 물을 주었습니다.");
+                    QuestEvents.Raise(QuestEventType.FlowerWatered, flower);
                     return;
                 case BedState.Watered:
                     Report("꽃이 자라는 중입니다. 하루가 지나면 수확할 수 있습니다.");
@@ -102,6 +104,7 @@ public sealed class FlowerBed : Interactable
                     SetState(BedState.Empty);
                     inventory.AddItem(flower, harvestAmount);
                     Report($"꽃 {harvestAmount}개를 획득했습니다.");
+                    QuestEvents.Raise(QuestEventType.FlowerHarvested, flower);
                     return;
             }
         }

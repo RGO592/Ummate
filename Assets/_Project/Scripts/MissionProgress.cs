@@ -1,10 +1,15 @@
 using TMPro;
 using UnityEngine;
 
+// LEGACY: the old ranch prologue (밀 → 닭 → 달걀 → 옥수수 → 소 → 우유), replaced by QuestLog.
+// Kept so existing saves keep their mission block and still validate. While legacyMissionsEnabled is off
+// (the default) nothing here advances, grants rewards, opens ChickenArea / CowArea or writes the HUD.
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerInventory))]
 public sealed class MissionProgress : MonoBehaviour
 {
+    [SerializeField, Tooltip("Old ranch prologue. Off: saved flags still load and save unchanged, but nothing progresses or unlocks.")]
+    private bool legacyMissionsEnabled;
     [SerializeField] private ItemDefinition basket;
     [SerializeField] private ItemDefinition cornSeeds;
     [SerializeField] private ItemDefinition bucket;
@@ -58,8 +63,11 @@ public sealed class MissionProgress : MonoBehaviour
     private void SyncAreas()
     {
         if (!gameObject.activeInHierarchy) return;
-        if (chickenArea != null && chickenArea.activeSelf != M01Completed) chickenArea.SetActive(M01Completed);
-        if (cowArea != null && cowArea.activeSelf != M03Completed) cowArea.SetActive(M03Completed);
+        // Chickens and cows are discarded with the legacy prologue: an old save with M01 / M03 done keeps
+        // its flags but no longer shows the areas.
+        bool chickens = legacyMissionsEnabled && M01Completed, cows = legacyMissionsEnabled && M03Completed;
+        if (chickenArea != null && chickenArea.activeSelf != chickens) chickenArea.SetActive(chickens);
+        if (cowArea != null && cowArea.activeSelf != cows) cowArea.SetActive(cows);
     }
     public string CurrentMissionText => PrologueCompleted ? "프롤로그 완료" :
         M03Completed ? $"현재 미션: 우유 수집 {MilkCollected} / 4" :
@@ -79,7 +87,7 @@ public sealed class MissionProgress : MonoBehaviour
     // Inventory starting items, test additions, and returned seeds do not call this.
     public void RecordWheatHarvest(int amount)
     {
-        if (amount <= 0 || M01Completed || processingHarvest) return;
+        if (!legacyMissionsEnabled || amount <= 0 || M01Completed || processingHarvest) return;
         processingHarvest = true;
         try
         {
@@ -96,7 +104,7 @@ public sealed class MissionProgress : MonoBehaviour
     // Inventory additions do not count; only a successful EggPickup calls this.
     public void RecordEggCollection(int amount)
     {
-        if (!M01Completed || M02Completed || amount <= 0 || processingEggCollection) return;
+        if (!legacyMissionsEnabled || !M01Completed || M02Completed || amount <= 0 || processingEggCollection) return;
         processingEggCollection = true;
         try
         {
@@ -112,7 +120,7 @@ public sealed class MissionProgress : MonoBehaviour
 
     public void RecordCornHarvest(int amount)
     {
-        if (!M02Completed || M03Completed || amount <= 0 || processingCornHarvest) return;
+        if (!legacyMissionsEnabled || !M02Completed || M03Completed || amount <= 0 || processingCornHarvest) return;
         processingCornHarvest = true;
         try
         {
@@ -129,7 +137,7 @@ public sealed class MissionProgress : MonoBehaviour
     // Only successful cow collection counts; inventory test additions do not count.
     public void RecordMilkCollection(int amount)
     {
-        if (!M03Completed || PrologueCompleted || amount <= 0 || processingMilkCollection) return;
+        if (!legacyMissionsEnabled || !M03Completed || PrologueCompleted || amount <= 0 || processingMilkCollection) return;
         processingMilkCollection = true;
         try
         {
@@ -189,7 +197,7 @@ public sealed class MissionProgress : MonoBehaviour
     public void DebugAdvanceMission()
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (!Application.isPlaying || !isActiveAndEnabled ||
+        if (!legacyMissionsEnabled || !Application.isPlaying || !isActiveAndEnabled ||
             processingHarvest || processingEggCollection || processingCornHarvest || processingMilkCollection) return;
         if (PrologueCompleted)
         {
@@ -211,8 +219,9 @@ public sealed class MissionProgress : MonoBehaviour
 #endif
     }
 
+    // The HUD label now belongs to QuestLog; the legacy text is written only when legacy missions run.
     private void Refresh()
     {
-        if (missionLabel != null) missionLabel.text = CurrentMissionText;
+        if (legacyMissionsEnabled && missionLabel != null) missionLabel.text = CurrentMissionText;
     }
 }

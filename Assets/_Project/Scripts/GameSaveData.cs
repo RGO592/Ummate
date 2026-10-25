@@ -23,7 +23,17 @@ public sealed class GameSaveData
     // Older saves have no scene (empty) and continue in FarmScene where its player already stands.
     public string scene;
     public Vector3 playerPosition;
+    // Added after v1 shipped. Older saves have no field (null) and new games write none (empty):
+    // both start the quest line from its first quest. Quests missing from a save load as Locked.
+    public QuestSaveState[] quests;
 
+    [Serializable] public sealed class QuestSaveState
+    {
+        public string id;
+        public QuestStatus state;
+        public ObjectiveSaveState[] objectives;
+    }
+    [Serializable] public sealed class ObjectiveSaveState { public string id; public int progress; }
     [Serializable] public sealed class ItemState { public string id; public int quantity; }
     // The state covers planted / watered / harvestable.
     [Serializable] public sealed class FlowerBedState
@@ -42,6 +52,8 @@ public sealed class GameSaveData
         public int q, r;
         public EnvironmentTileType tileType;
     }
+    // Legacy ranch prologue (M01–M03). Still written and validated so existing saves keep loading;
+    // MissionProgress no longer advances it (see legacyMissionsEnabled).
     [Serializable] public sealed class MissionState
     {
         public int stage;

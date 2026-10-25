@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e482e40644fa45e1966ef6af8034cc4e, type: 3}
+  m_Name: Q06_FaintVoice
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
+  id: Q06
+  title: "희미한 목소리"
+  description: "숲 어딘가에서 희미한 목소리가 들려. (Hex 튜토리얼 · 진행 조건은 준비 중)"
+  category: 0
+  prerequisites:
+  - {fileID: 11400000, guid: e0ef3d033bed498d80209cd716c075db, type: 2}
+  objectives:
+  - id: hex_tutorial
+    description: "Hex 튜토리얼 (조건 준비 중)"
+    eventType: 0
+    item: {fileID: 0}
+    target: 
+    requiredAmount: 1
+    tip: "숲 어딘가에서 희미한 목소리가 들려요. (다음 단계는 준비 중입니다)"
+  startItems: []
+  startMessage: "꽃향기가 그리워……."
+  rewardItems: []
+  rewardGold: 0
+  pendingRewards: []

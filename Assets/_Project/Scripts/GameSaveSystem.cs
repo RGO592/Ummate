@@ -25,7 +25,9 @@ public sealed class GameSaveSystem : MonoBehaviour
     [SerializeField] private PlayerInventory inventory;
     [SerializeField] private PlayerWallet wallet;
     [SerializeField] private PlayerQuickbar quickbar;
-    [SerializeField] private MissionProgress mission;
+    [SerializeField, Tooltip("Legacy ranch prologue block; still saved so older saves stay valid.")]
+    private MissionProgress mission;
+    [SerializeField] private QuestLog quests;
     [SerializeField] private ItemBinding[] items;
     [SerializeField] private PlotBinding[] plots;
     [SerializeField] private ChickenBinding[] chickens;
@@ -40,6 +42,8 @@ public sealed class GameSaveSystem : MonoBehaviour
     // Stable IDs already used by the scene's item catalog and JSON saves.
     private const string WheatSeedsId = "3208e0eca67ee604c9647d55200a0494";
     private const string WateringCanId = "d48ee8a945ecf1740a8a626dd4419e73";
+    // Shown once on the first morning of a game (the first sleep), not a quest.
+    private const string SaveTip = "Tip · ESC 메뉴에서 수동 저장할 수 있습니다.";
 
     // Slot 0 is written only by the sleep auto-save (and New Game); slots 1–3 only by the player.
     // Every slot is its own file, so a failed or damaged slot never touches the others.
@@ -188,7 +192,11 @@ public sealed class GameSaveSystem : MonoBehaviour
         if (Keyboard.current.f8Key.wasPressedThisFrame) NewGame();
         else if (Keyboard.current.f9Key.wasPressedThisFrame) ContinueGame();
     }
-    private void AutoSave() => TryAutoSave();
+    private void AutoSave()
+    {
+        TryAutoSave();
+        if (CurrentDay == 2) PlayerFeedback.Notify(SaveTip);
+    }
 
     private void Report(string message, bool warning = false)
     {
@@ -218,6 +226,8 @@ public sealed class GameSaveSystem : MonoBehaviour
                     id = b.id, quantity = b.id == WheatSeedsId ? 3 : b.id == WateringCanId ? 1 : 0
                 }).ToArray(),
                 mission = new GameSaveData.MissionState { stage = 1 },
+                // Empty = the quest line's initial state (Q01 Active). Q01's seeds are the 3 above.
+                quests = new GameSaveData.QuestSaveState[0],
                 plots = plots.Select(b => new GameSaveData.PlotState { id = b.id }).ToArray(),
                 chickens = chickens.Select(b => new GameSaveData.ChickenState { id = b.id }).ToArray(),
                 cows = cows.Select(b => new GameSaveData.CowState { id = b.id }).ToArray(),
@@ -231,7 +241,7 @@ public sealed class GameSaveSystem : MonoBehaviour
             ApplyState(data);
             unreadableSlots[AutoSlot] = false;
             sessionStarted = true;
-            Report($"새 게임 시작: 1일차 새 게임 데이터를 자동 저장 칸에 저장했습니다. 미션·인벤토리·밭·화단·동물·숲 Hex 상태가 초기화되었습니다. 수동 저장 칸은 그대로입니다.\n{GetSlotPath(AutoSlot)}");
+            Report($"새 게임 시작: 1일차 새 게임 데이터를 자동 저장 칸에 저장했습니다. 퀘스트·인벤토리·밭·화단·숲 Hex 상태가 초기화되었습니다. 수동 저장 칸은 그대로입니다.\n{GetSlotPath(AutoSlot)}");
             return true;
         }
         catch (Exception ex)
@@ -380,6 +390,8 @@ public sealed class GameSaveSystem : MonoBehaviour
         var restoredInventory = data.inventory.ToDictionary(s => items.Single(b => b.id == s.id).item, s => s.quantity);
         gameDay.RestoreDay(data.day);
         mission.RestoreState(data.mission);
+        // Copies quest states and counts only: no start items, rewards or progress are replayed.
+        quests.RestoreState(data.quests);
         foreach (var saved in data.plots) plots.Single(b => b.id == saved.id).plot.RestoreState(saved);
         foreach (var saved in data.chickens) chickens.Single(b => b.id == saved.id).chicken.RestoreState(saved);
         foreach (var saved in data.cows) cows.Single(b => b.id == saved.id).cow.RestoreState(saved);
@@ -411,6 +423,7 @@ public sealed class GameSaveSystem : MonoBehaviour
             gold = wallet.Gold,
             inventory = items.Select(b => new GameSaveData.ItemState { id = b.id, quantity = inventory.GetQuantity(b.item) }).ToArray(),
             mission = mission.CaptureState(),
+            quests = quests.CaptureState(),
             plots = plots.Select(b => b.plot.CaptureState(b.id)).ToArray(),
             chickens = chickens.Select(b => b.chicken.CaptureState(b.id)).ToArray(),
             cows = cows.Select(b => b.cow.CaptureState(b.id)).ToArray(),
@@ -423,6 +436,7 @@ public sealed class GameSaveSystem : MonoBehaviour
     {
         Require(gameDay != null && sleepTransition != null && inventory != null && wallet != null && quickbar != null &&
             mission != null && mission.SaveReferencesValid, "저장 시스템 기본 연결이 누락되었습니다.");
+        Require(quests != null && quests.SaveReferencesValid, "퀘스트 연결 또는 퀘스트 데이터(ID·목표 ID·선행 퀘스트)를 확인해 주세요.");
         Require(items != null && items.Length > 0 && items.All(b => b != null && b.item != null), "아이템 연결 누락");
         Require(plots != null && plots.Length > 0 && plots.All(b => b != null && b.plot != null && b.plot.SaveReferencesValid), "밭 연결 누락");
         Require(chickens != null && chickens.All(b => b != null && b.chicken != null && b.chicken.SaveReferencesValid), "닭 연결 누락");
@@ -475,6 +489,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         Require(m.stage == (m.prologueCompleted ? 5 : m.m03CompletedAndRewarded ? 4 : m.m02CompletedAndRewarded ? 3 : m.m01CompletedAndRewarded ? 2 : 1), "미션 단계 오류");
         // chickenUnlocked / cowUnlocked are legacy: restore derives the areas from M01 / M03, so a stale value
         // (older builds captured it from an area suspended by region travel) is ignored instead of rejecting the save.
+        Require(quests.TryValidateState(data.quests, out string questError), questError);
         foreach (var p in data.plots)
         {
             Require(Enum.IsDefined(typeof(FarmPlot.CropKind), p.crop) && Enum.IsDefined(typeof(FarmPlot.CropState), p.state), "작물 종류/상태 오류");

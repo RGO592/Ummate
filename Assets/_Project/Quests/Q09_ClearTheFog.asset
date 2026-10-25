@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e482e40644fa45e1966ef6af8034cc4e, type: 3}
+  m_Name: Q09_ClearTheFog
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
+  id: Q09
+  title: "안개 너머로 (임시 제목)"
+  description: "생태계를 총 3종 복원하면 숲의 안개가 걷힌다. (진행 조건은 준비 중)"
+  category: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 286d0ff58520464e9bd05ec3353b3ea2, type: 2}
+  objectives:
+  - id: restore_total_three
+    description: "생태계 총 3종 복원 (조건 준비 중)"
+    eventType: 0
+    item: {fileID: 0}
+    target: 
+    requiredAmount: 3
+    tip: 
+  startItems: []
+  startMessage: 
+  rewardItems: []
+  rewardGold: 0
+  pendingRewards: []

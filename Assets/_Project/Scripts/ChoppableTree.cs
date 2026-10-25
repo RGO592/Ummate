@@ -68,6 +68,7 @@ public sealed class ChoppableTree : Interactable
             }
             Debug.Log($"목재 {amount}개를 획득했습니다. (보유 목재: {inventory.GetQuantity(woodItem)}개)", this);
             PlayerFeedback.Notify($"목재 {amount}개를 획득했습니다.");
+            QuestEvents.Raise(QuestEventType.TreeChopped, woodItem);
             onHit?.Invoke();
             onChopped?.Invoke();
         }

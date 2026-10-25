@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e482e40644fa45e1966ef6af8034cc4e, type: 3}
+  m_Name: Q10_ReturnToGuild
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
+  id: Q10
+  title: "협회 복귀"
+  description: "시험을 마치고 협회로 돌아가 보고하자. 1챕터의 마지막 퀘스트. (진행 조건은 준비 중)"
+  category: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 6f9c1bc628f9459c850e5505e9c9b44a, type: 2}
+  objectives:
+  - id: return_guild
+    description: "협회로 돌아가기 (조건 준비 중)"
+    eventType: 0
+    item: {fileID: 0}
+    target: 
+    requiredAmount: 1
+    tip: 
+  startItems: []
+  startMessage: 
+  rewardItems: []
+  rewardGold: 0
+  pendingRewards: []

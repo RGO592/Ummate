@@ -15,6 +15,13 @@ public sealed class MissionDebugInteractable : Interactable
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (!isActiveAndEnabled || interactor == null) return;
+        // The quest line replaced the ranch prologue: finish the current main quest instead.
+        QuestLog quests = interactor.GetComponent<QuestLog>();
+        if (quests != null)
+        {
+            quests.DebugCompleteCurrentMain();
+            return;
+        }
         MissionProgress mission = interactor.GetComponent<MissionProgress>();
         if (mission == null)
         {

@@ -8,6 +8,8 @@ public sealed class GuideTooltip : MonoBehaviour
         PlantCorn, HarvestCorn, CollectMilk, FeedCow, Complete }
 
     [Header("Read-only game references")]
+    [SerializeField, Tooltip("When set, the Tip follows the current main quest objective (the legacy mission guide is skipped).")]
+    private QuestLog quests;
     [SerializeField] private MissionProgress mission;
     [SerializeField] private PlayerInventory inventory;
     [SerializeField] private FarmPlot[] plots;
@@ -65,9 +67,15 @@ public sealed class GuideTooltip : MonoBehaviour
 
     private void RefreshGuide()
     {
-        if (mission == null || inventory == null || mainText == null) return;
-        CurrentStep = Evaluate();
-        string message = Message(CurrentStep);
+        if (mainText == null) return;
+        string message;
+        if (quests != null) message = quests.CurrentTip;
+        else
+        {
+            if (mission == null || inventory == null) return;
+            CurrentStep = Evaluate();
+            message = Message(CurrentStep);
+        }
         // Polling, toggling DEV, and reopening must not restart the same sentence.
         if (message == displayedMessage) return;
         displayedMessage = message;
