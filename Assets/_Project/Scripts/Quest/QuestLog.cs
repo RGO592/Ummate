@@ -112,6 +112,8 @@ public sealed class QuestLog : MonoBehaviour
     {
         EnsureBuilt();
         ResetToInitial();
+        // FarmScene loads fresh for New Game and Load; a story line left from the previous run must not carry over.
+        PlayerFeedback.ClearUntilClick();
         if (!SaveReferencesValid) Debug.LogWarning("QuestLog: 퀘스트 목록(ID·목표 ID·선행 퀘스트)과 인벤토리/지갑 연결을 확인해 주세요.", this);
         QuestEvents.Raised += OnQuestEvent;
         SceneTransitionService.Arrived += OnArrived;
@@ -230,7 +232,8 @@ public sealed class QuestLog : MonoBehaviour
             {
                 Debug.Log($"새 퀘스트: {entry.Definition.Id} {entry.Definition.Title}", this);
                 PlayerFeedback.Notify($"새 퀘스트: {entry.Definition.Title}");
-                PlayerFeedback.Notify(entry.Definition.StartMessage);
+                if (entry.Definition.StartMessageUntilClick) PlayerFeedback.NotifyUntilClick(entry.Definition.StartMessage);
+                else PlayerFeedback.Notify(entry.Definition.StartMessage);
             }
             if (grant) GrantItems(entry.Definition.StartItems, entry.Definition);
         }

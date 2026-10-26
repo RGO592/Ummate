@@ -1,11 +1,15 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // Function-check view for the shared player feedback; the team will replace the presentation later.
 // Bottom centre: "[F] ..." for the target PlayerInteractor would actually pick (same FindTarget rule).
 // Above the quickbar / interaction prompt: result notifications from PlayerFeedback.Notify, stacked so consecutive messages are not lost.
+// PlayerFeedback.NotifyUntilClick lines use the same panel look, sit nearest the quickbar and never fade;
+// while one is up a transparent full-screen blocker takes left clicks, so the dismissing click reaches no HUD button or Hex.
 // Builds its own overlay canvas at runtime (same approach as TradingPostUI); one per scene that needs it.
 [DisallowMultipleComponent]
 public sealed class PlayerFeedbackUI : MonoBehaviour
@@ -53,26 +57,43 @@ public sealed class PlayerFeedbackUI : MonoBehaviour
     private TMP_Text promptText;
     private RectTransform notificationArea;
     private string shownPrompt;
+    private RectTransform untilClickPanel;
+    private CanvasGroup untilClickGroup;
+    private TMP_Text untilClickText;
+    private GameObject clickBlocker;
+    private readonly List<RaycastResult> uiHits = new List<RaycastResult>();
+    private float untilClickAge;
+    private bool waitingForRelease;
 
     private void OnEnable()
     {
         EnsureBuilt();
         PlayerFeedback.Notified += Show;
+        PlayerFeedback.UntilClickChanged += RefreshUntilClick;
+        RefreshUntilClick();
     }
 
     // Suspended scenes (regional travel) and disabled views drop what they were showing; nothing stale returns.
+    // An undismissed NotifyUntilClick line stays queued in PlayerFeedback and shows again on the next enable.
     private void OnDisable()
     {
         PlayerFeedback.Notified -= Show;
+        PlayerFeedback.UntilClickChanged -= RefreshUntilClick;
         foreach (Entry entry in entries) if (entry.rect != null) Destroy(entry.rect.gameObject);
         entries.Clear();
         SetPrompt(null);
+        waitingForRelease = false;
+        if (untilClickPanel != null) untilClickPanel.gameObject.SetActive(false);
+        if (clickBlocker != null) clickBlocker.SetActive(false);
     }
+
+    private void Update() => HandleUntilClickInput();
 
     private void LateUpdate()
     {
         RefreshPrompt();
         AgeNotifications(Time.unscaledDeltaTime);
+        FadeInUntilClick(Time.unscaledDeltaTime);
     }
 
     // ---- Interaction prompt ----
@@ -159,12 +180,71 @@ public sealed class PlayerFeedbackUI : MonoBehaviour
     private void LayoutNotifications()
     {
         float offset = 0f;
+        if (untilClickPanel != null && untilClickPanel.gameObject.activeSelf)
+            offset = untilClickPanel.sizeDelta.y + EntrySpacing;
         // Keep the latest notification nearest the quickbar; older entries stack upward.
         for (int i = entries.Count - 1; i >= 0; i--)
         {
             entries[i].rect.anchoredPosition = new Vector2(0f, offset);
             offset += entries[i].rect.sizeDelta.y + EntrySpacing;
         }
+    }
+
+    // ---- Click-to-dismiss line ----
+
+    private void RefreshUntilClick()
+    {
+        if (untilClickPanel == null) return;
+        string message = PlayerFeedback.CurrentUntilClick;
+        bool show = message != null;
+        if (show && (!untilClickPanel.gameObject.activeSelf || untilClickText.text != message))
+        {
+            untilClickText.text = message;
+            float textHeight = untilClickText.GetPreferredValues(message, NotificationWidth - TextInsetX * 2f, Mathf.Infinity).y;
+            untilClickPanel.sizeDelta = new Vector2(NotificationWidth, Mathf.Max(EntryHeight, Mathf.Ceil(textHeight) + TextInsetY * 2f));
+            untilClickAge = 0f;
+            untilClickGroup.alpha = 0f;
+        }
+        untilClickPanel.gameObject.SetActive(show);
+        // The blocker outlives the line until the dismissing press is released (see HandleUntilClickInput).
+        clickBlocker.SetActive(show || waitingForRelease);
+        LayoutNotifications();
+    }
+
+    private void HandleUntilClickInput()
+    {
+        if (clickBlocker == null || !clickBlocker.activeSelf) return;
+        Mouse mouse = Mouse.current;
+        if (waitingForRelease)
+        {
+            // Hex placement / camera pan check the UI under the pointer on press and while held, so the
+            // blocker stays until release; a click that started on it never turns into a drag or pick.
+            if (mouse != null && mouse.leftButton.isPressed) return;
+            waitingForRelease = false;
+            RefreshUntilClick();
+            return;
+        }
+        if (mouse == null || !mouse.leftButton.wasPressedThisFrame || !PointerOnBlocker(mouse.position.ReadValue())) return;
+        waitingForRelease = true;
+        PlayerFeedback.DismissUntilClick();
+    }
+
+    // Only a press that lands on the blocker dismisses: modal UI drawn above this canvas
+    // (TradingPostUI, QuestWindow, PauseMenu) keeps its own clicks.
+    private bool PointerOnBlocker(Vector2 screen)
+    {
+        EventSystem events = EventSystem.current;
+        if (events == null) return true;
+        uiHits.Clear();
+        events.RaycastAll(new PointerEventData(events) { position = screen }, uiHits);
+        return uiHits.Count > 0 && uiHits[0].gameObject == clickBlocker;
+    }
+
+    private void FadeInUntilClick(float deltaTime)
+    {
+        if (untilClickPanel == null || !untilClickPanel.gameObject.activeSelf || untilClickGroup.alpha >= 1f) return;
+        untilClickAge += deltaTime;
+        untilClickGroup.alpha = Mathf.Clamp01(untilClickAge / FadeInDuration);
     }
 
     // ---- Construction ----
@@ -182,7 +262,17 @@ public sealed class PlayerFeedbackUI : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280f, 720f);
         scaler.matchWidthOrHeight = 0.5f;
-        // No GraphicRaycaster: feedback never takes clicks from the HUD or the build bar.
+        // The raycaster only ever hits the click blocker below; every other graphic here has raycastTarget off,
+        // so ordinary notifications never take clicks from the HUD or the build bar.
+        root.AddComponent<GraphicRaycaster>();
+
+        RectTransform blocker = CreateRect("UntilClickBlocker", root.transform);
+        Stretch(blocker);
+        Image blockerImage = blocker.gameObject.AddComponent<Image>();
+        blockerImage.color = Color.clear;
+        blockerImage.raycastTarget = true;
+        clickBlocker = blocker.gameObject;
+        clickBlocker.SetActive(false);
 
         promptPanel = CreateRect("InteractionPrompt", root.transform);
         promptPanel.anchorMin = promptPanel.anchorMax = promptPanel.pivot = new Vector2(0.5f, 0f);
@@ -195,6 +285,21 @@ public sealed class PlayerFeedbackUI : MonoBehaviour
         notificationArea = CreateRect("Notifications", root.transform);
         notificationArea.anchorMin = notificationArea.anchorMax = notificationArea.pivot = new Vector2(0.5f, 0f);
         notificationArea.anchoredPosition = new Vector2(0f, notificationBottomOffset);
+
+        // Same pill as a notification (sprite, 480 width, wrapped 19pt text), built once and reused.
+        untilClickPanel = CreateRect("UntilClickNotification", notificationArea);
+        untilClickPanel.anchorMin = untilClickPanel.anchorMax = untilClickPanel.pivot = new Vector2(0.5f, 0f);
+        ApplySprite(untilClickPanel.gameObject.AddComponent<Image>(), notificationSprite);
+        untilClickGroup = untilClickPanel.gameObject.AddComponent<CanvasGroup>();
+        untilClickGroup.blocksRaycasts = untilClickGroup.interactable = false;
+        untilClickText = CreateText("Text", untilClickPanel, "", 19f);
+        Stretch((RectTransform)untilClickText.transform);
+        untilClickText.rectTransform.offsetMin = new Vector2(TextInsetX, TextInsetY);
+        untilClickText.rectTransform.offsetMax = new Vector2(-TextInsetX, -TextInsetY);
+        untilClickText.textWrappingMode = TextWrappingModes.Normal;
+        untilClickText.overflowMode = TextOverflowModes.Overflow;
+        untilClickPanel.anchoredPosition = Vector2.zero;
+        untilClickPanel.gameObject.SetActive(false);
     }
 
     private static RectTransform CreateRect(string objectName, Transform parent)

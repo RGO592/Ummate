@@ -31,6 +31,7 @@ MonoBehaviour:
       \uB4E4\uB824\uC694..."
   startItems: []
   startMessage: "\uAF43\uD5A5\uAE30\uAC00 \uADF8\uB9AC\uC6CC\u2026\u2026."
+  startMessageUntilClick: 1
   rewardItems: []
   rewardGold: 0
   pendingRewards: []

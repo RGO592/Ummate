@@ -49,6 +49,8 @@ public sealed class QuestDefinition : ScriptableObject
     [SerializeField] private ItemGrant[] startItems = new ItemGrant[0];
     [SerializeField, TextArea, Tooltip("Optional line shown when the quest starts, e.g. a spirit hint.")]
     private string startMessage;
+    [SerializeField, Tooltip("Show the start message until the player left-clicks it, instead of as a timed notification.")]
+    private bool startMessageUntilClick;
 
     [Header("Reward (granted once, on completion)")]
     [SerializeField] private ItemGrant[] rewardItems = new ItemGrant[0];
@@ -64,6 +66,7 @@ public sealed class QuestDefinition : ScriptableObject
     public Objective[] Objectives => objectives ?? new Objective[0];
     public ItemGrant[] StartItems => startItems ?? new ItemGrant[0];
     public string StartMessage => startMessage;
+    public bool StartMessageUntilClick => startMessageUntilClick;
     public ItemGrant[] RewardItems => rewardItems ?? new ItemGrant[0];
     public int RewardGold => Mathf.Max(0, rewardGold);
     public string[] PendingRewards => pendingRewards ?? new string[0];
