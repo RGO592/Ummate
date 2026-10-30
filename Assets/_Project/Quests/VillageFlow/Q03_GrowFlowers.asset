@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e482e40644fa45e1966ef6af8034cc4e, type: 3}
+  m_Name: Q03_GrowFlowers
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
+  id: Q03
+  title: "꽃을 키워보자"
+  description: "꽃 화단을 설치하고 꽃을 길러 보자. (임시 문구)"
+  category: 0
+  prerequisites:
+  - {fileID: 11400000, guid: c8eff64e1d1a2d814742308e93adf86b, type: 2}
+  objectives:
+  - id: place_flower_bed
+    description: "꽃 화단 1개 설치"
+    eventType: 10
+    item: {fileID: 0}
+    target: village_flower_bed
+    requiredAmount: 1
+    tip: "B 건설모드에서 꽃 화단을 설치하세요!"
+  - id: plant_flower
+    description: "꽃 씨앗 심기"
+    eventType: 4
+    item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
+    target: 
+    requiredAmount: 1
+    tip: "화단 앞에서 F를 눌러 꽃 씨앗을 심으세요!"
+  - id: water_flower
+    description: "꽃에 물 주기"
+    eventType: 5
+    item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
+    target: 
+    requiredAmount: 1
+    tip: "화단 앞에서 F를 눌러 물을 주세요!"
+  - id: harvest_flower
+    description: "꽃 수확하기"
+    eventType: 6
+    item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
+    target: 
+    requiredAmount: 1
+    tip: "하룻밤 자고 나면 꽃이 펴요.\n화단에서 F로 수확하세요!"
+  startItems:
+  - item: {fileID: 11400000, guid: 58e02bd667bb4e02968c9e8ca9893cc7, type: 2}
+    quantity: 1
+  startMessage: 
+  startMessageUntilClick: 0
+  rewardItems: []
+  rewardGold: 0
+  pendingRewards: []

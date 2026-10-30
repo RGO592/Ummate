@@ -13,6 +13,7 @@ public sealed class ChoppableTree : Interactable
     [SerializeField, Tooltip("Optional hook for a future hit animation or effect.")]
     private UnityEvent onHit = new UnityEvent();
     [SerializeField] private UnityEvent onChopped = new UnityEvent();
+    private ItemDefinition requiredTool;
     private int completedHits;
     private bool isChopped;
     private bool interacting;
@@ -21,6 +22,10 @@ public sealed class ChoppableTree : Interactable
     public int CompletedHits => completedHits;
     public int RequiredHits => Mathf.Max(1, requiredHits);
     public int RemainingHits => isChopped ? 0 : Mathf.Max(0, RequiredHits - completedHits);
+    public UnityEvent Chopped => onChopped;
+
+    // Optional: this item must be in the inventory to chop. Scene trees leave it empty.
+    public void RequireTool(ItemDefinition tool) => requiredTool = tool;
 
     public override string GetInteractionPrompt(GameObject interactor) => isChopped ? null : "나무 베기";
 
@@ -32,6 +37,11 @@ public sealed class ChoppableTree : Interactable
         if (woodItem == null || visual == null || treeColliders == null || treeColliders.Length == 0)
         {
             Debug.LogWarning($"{name}: 목재·Visual·Collider 연결을 확인해 주세요.", this);
+            return;
+        }
+        if (requiredTool != null && inventory.GetQuantity(requiredTool) < 1)
+        {
+            PlayerFeedback.Notify($"{requiredTool.DisplayName}가 필요합니다.");
             return;
         }
         interacting = true;

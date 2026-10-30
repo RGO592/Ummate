@@ -6303,6 +6303,7 @@ GameObject:
   - component: {fileID: 1976902115}
   - component: {fileID: 1976902116}
   - component: {fileID: 4400000001}
+  - component: {fileID: 6900000001}
   m_Layer: 0
   m_Name: EcoGridManager
   m_TagString: Untagged
@@ -18047,6 +18048,21 @@ MonoBehaviour:
   fadeDuration: 0.4
   maxVisible: 4
   notificationBottomOffset: 168
+--- !u!114 &6900000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1976902114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e45277cfd73ffeb5196524bc590eca05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HabitatTracker
+  grid: {fileID: 1976902115}
+  habitats:
+  - {fileID: 11400000, guid: 0bf9a973313278d03fc5ea3325777087, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

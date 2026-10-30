@@ -26,6 +26,8 @@ public sealed class QuestDefinition : ScriptableObject
         [Min(1)] public int requiredAmount = 1;
         [TextArea, Tooltip("Shown in the Tip panel while this is the current objective.")]
         public string tip;
+        [TextArea, Tooltip("Sequential quests only. Shown until clicked when this objective becomes the current one.")]
+        public string startMessage;
     }
 
     [Serializable]
@@ -44,6 +46,10 @@ public sealed class QuestDefinition : ScriptableObject
     private QuestDefinition[] prerequisites = new QuestDefinition[0];
     [SerializeField, Tooltip("Completed when every objective is done. No objectives = never completes on its own.")]
     private Objective[] objectives = new Objective[0];
+    [SerializeField, Tooltip("Objectives are shown and progressed one at a time, in data order. An event that fits a later objective before its turn does not count.")]
+    private bool sequentialObjectives;
+    [SerializeField, Tooltip("Objective IDs older saves may still hold. They are ignored on load instead of rejecting the save.")]
+    private string[] retiredObjectiveIds = new string[0];
 
     [Header("Start (granted once, when the quest becomes Active during play)")]
     [SerializeField] private ItemGrant[] startItems = new ItemGrant[0];
@@ -64,6 +70,8 @@ public sealed class QuestDefinition : ScriptableObject
     public QuestCategory Category => category;
     public QuestDefinition[] Prerequisites => prerequisites ?? new QuestDefinition[0];
     public Objective[] Objectives => objectives ?? new Objective[0];
+    public bool SequentialObjectives => sequentialObjectives;
+    public string[] RetiredObjectiveIds => retiredObjectiveIds ?? new string[0];
     public ItemGrant[] StartItems => startItems ?? new ItemGrant[0];
     public string StartMessage => startMessage;
     public bool StartMessageUntilClick => startMessageUntilClick;

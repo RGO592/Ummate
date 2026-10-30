@@ -180,7 +180,8 @@ public sealed class QuestWindow : MonoBehaviour
         var objectives = new StringBuilder();
         for (int i = 0; i < entry.ObjectiveCount; i++)
         {
-            string line = $"· {quest.Objectives[i].description}  {entry.GetProgress(i)} / {entry.GetRequired(i)}";
+            if (!entry.IsObjectiveVisible(i)) continue;
+            string line =$"· {quest.Objectives[i].description}  {entry.GetProgress(i)} / {entry.GetRequired(i)}";
             objectives.AppendLine(entry.IsObjectiveDone(i) ? $"<color={MutedHex}>{line}  (완료)</color>" : line);
         }
         if (entry.ObjectiveCount == 0) objectives.AppendLine($"<color={MutedHex}>· 목표 준비 중 (조건 미정)</color>");

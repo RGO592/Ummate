@@ -9,7 +9,13 @@ public enum QuestEventType
     FlowerPlanted, FlowerWatered, FlowerHarvested,
     TreeChopped,
     ItemSold,
-    RegionEntered
+    RegionEntered,
+    FacilityPlaced, // target = VillageFacilityDefinition.Id
+    FieldPrepared,
+    SaplingPlanted,
+    EnvironmentTilePlaced, // A Hex newly placed or moved onto a cell (never ghosts, failures or loads). target = EnvironmentTileType name
+    HabitatCompleted, // First discovery only. target = HabitatDefinition.Id
+    HabitatPatternStanding // Every cell change that leaves the pattern on the grid, so a quest whose turn comes after the discovery can still finish. target = HabitatDefinition.Id
 }
 
 // Gameplay systems report what actually succeeded; QuestLog decides what it means.

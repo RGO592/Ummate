@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e482e40644fa45e1966ef6af8034cc4e, type: 3}
+  m_Name: Q02_FirstFarming
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
+  id: Q02
+  title: "첫 농사"
+  description: "설치한 밭에서 농사를 처음부터 끝까지 해 보자. (임시 문구)"
+  category: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 3d25f0e9e7e6d7c3df2e55c81157099f, type: 2}
+  objectives:
+  - id: prepare_field
+    description: "밭 갈기"
+    eventType: 11
+    item: {fileID: 0}
+    target: 
+    requiredAmount: 1
+    tip: "설치한 밭 앞에서 F를 눌러 땅을 갈아 보세요!"
+  - id: plant_wheat
+    description: "밀 씨앗 심기"
+    eventType: 1
+    item: {fileID: 11400000, guid: 38a0a5a364aa32440b722f92566d4c39, type: 2}
+    target: 
+    requiredAmount: 1
+    tip: "퀵슬롯에서 밀 씨앗을 고르고\n갈아 둔 밭 앞에서 F를 누르세요!"
+  - id: water_wheat
+    description: "밀에 물 주기"
+    eventType: 2
+    item: {fileID: 11400000, guid: 38a0a5a364aa32440b722f92566d4c39, type: 2}
+    target: 
+    requiredAmount: 1
+    tip: "물뿌리개를 고르고 밭 앞에서 F를 누르세요!"
+  - id: harvest_wheat
+    description: "밀 수확하기"
+    eventType: 3
+    item: {fileID: 11400000, guid: 38a0a5a364aa32440b722f92566d4c39, type: 2}
+    target: 
+    requiredAmount: 1
+    tip: "집에서 잠을 자면 밀이 자라요.\n다 자란 밀을 F로 수확하세요!"
+  startItems:
+  - item: {fileID: 11400000, guid: 3208e0eca67ee604c9647d55200a0494, type: 2}
+    quantity: 3
+  startMessage: 
+  startMessageUntilClick: 0
+  rewardItems: []
+  rewardGold: 0
+  pendingRewards: []

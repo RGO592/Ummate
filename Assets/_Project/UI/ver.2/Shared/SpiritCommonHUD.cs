@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Presentation only. FarmScene remains loaded but inactive during regional scene travel.
+// Presentation only. The village scene remains loaded but inactive during regional scene travel.
 // Read its GameDay without creating another clock or changing save / mission state.
 [DisallowMultipleComponent]
 public sealed class SpiritCommonHUD : MonoBehaviour
@@ -38,6 +38,8 @@ public sealed class SpiritCommonHUD : MonoBehaviour
 
     private GameDay observedDay;
     private PlayerWallet observedWallet;
+    private QuestLog observedQuests;
+    private string questTip;
     private string displayedTip;
     private float visibleCharacters;
 
@@ -47,7 +49,7 @@ public sealed class SpiritCommonHUD : MonoBehaviour
         EcoDevMode.Changed += RefreshDeveloperView;
         BindDay();
         BindWallet();
-        if (questText != null) questText.text = questMessage;
+        BindQuests();
         RefreshTip();
         RefreshDeveloperView();
     }
@@ -58,9 +60,39 @@ public sealed class SpiritCommonHUD : MonoBehaviour
         EcoDevMode.Changed -= RefreshDeveloperView;
         UnbindDay();
         UnbindWallet();
+        UnbindQuests();
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) { BindDay(); BindWallet(); }
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) { BindDay(); BindWallet(); BindQuests(); }
+
+    // The village player's QuestLog, read like the wallet. Without one (this scene opened alone) the fixed texts stay.
+    private void BindQuests()
+    {
+        UnbindQuests();
+        foreach (QuestLog log in FindObjectsByType<QuestLog>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            observedQuests = log;
+            break;
+        }
+        if (observedQuests != null) observedQuests.Changed += RefreshQuest;
+        RefreshQuest();
+    }
+
+    private void UnbindQuests()
+    {
+        if (observedQuests != null) observedQuests.Changed -= RefreshQuest;
+        observedQuests = null;
+    }
+
+    private void RefreshQuest()
+    {
+        if (questText != null) questText.text = observedQuests != null ? observedQuests.HudText : questMessage;
+        // An objective with no condition yet has nothing to instruct; the build guidance below stays.
+        QuestLog.Entry main = observedQuests != null ? observedQuests.CurrentMain : null;
+        int index = main != null ? main.CurrentObjective : -1;
+        questTip = index >= 0 && main.Definition.Objectives[index].eventType != QuestEventType.None
+            ? observedQuests.CurrentTip : null;
+    }
 
     // Rebound on every enable, so returning from FarmScene shows the latest balance immediately.
     private void BindWallet()
@@ -90,16 +122,13 @@ public sealed class SpiritCommonHUD : MonoBehaviour
     {
         UnbindDay();
         observedDay = gameDay;
+        // Whichever village scene the player came from (FarmScene or a work scene); this scene has no clock of its own.
         if (observedDay == null)
-        {
-            Scene farm = SceneManager.GetSceneByName("FarmScene");
-            if (farm.IsValid() && farm.isLoaded)
-                foreach (GameObject root in farm.GetRootGameObjects())
-                {
-                    observedDay = root.GetComponentInChildren<GameDay>(true);
-                    if (observedDay != null) break;
-                }
-        }
+            foreach (GameDay day in FindObjectsByType<GameDay>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                observedDay = day;
+                break;
+            }
         if (observedDay != null)
         {
             observedDay.DayChanged += OnDayChanged;
@@ -137,10 +166,11 @@ public sealed class SpiritCommonHUD : MonoBehaviour
     // Read existing interaction state only; no placement, camera or modal behavior is changed.
     private string CurrentTip()
     {
-        if (buildMode == null || !buildMode.IsBuildMode) return exploreTip;
-        if (placement != null && placement.RemoveMode) return removeTip;
-        if (placement != null && placement.HasPicked) return moveTip;
-        return buildTip;
+        bool building = buildMode != null && buildMode.IsBuildMode;
+        if (building && placement != null && placement.RemoveMode) return removeTip;
+        if (building && placement != null && placement.HasPicked) return moveTip;
+        if (questTip != null) return questTip;
+        return building ? buildTip : exploreTip;
     }
 
     private void RefreshTip()

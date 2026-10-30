@@ -58,8 +58,16 @@ public sealed class EcoGridManager : MonoBehaviour
         new TileSettings { type = EnvironmentTileType.Tree, cost = 20 }
     };
 
+    [Header("Tutorial removal protection")]
+    [SerializeField, Tooltip("While this objective is pending, the last Hex of each type below cannot be removed. Removal refunds nothing, so losing it could strand the quest.")]
+    private string protectQuestId = "Q06";
+    [SerializeField] private string protectObjectiveId = "complete_squirrel_habitat";
+    [SerializeField] private EnvironmentTileType[] protectedLastTiles = { EnvironmentTileType.Tree, EnvironmentTileType.Flower };
+    [SerializeField, TextArea] private string removalBlockedMessage = "시험에 필요한 환경은 남겨 두자!";
+
     private Dictionary<HexCoord, EcoGridCell> cells;
     private readonly HashSet<HexCoord> mapHexes = new HashSet<HexCoord>();
+    private QuestLog quests;
     private PlayerWallet payerWallet;
     private PlayerInventory payerInventory;
     private int payerSearchFrame = -1;
@@ -115,6 +123,21 @@ public sealed class EcoGridManager : MonoBehaviour
     }
 
     public string SaveId => string.IsNullOrWhiteSpace(saveId) ? name : saveId;
+
+    // The village player's QuestLog, found like the payer. Null when this scene is opened alone.
+    public QuestLog Quests
+    {
+        get
+        {
+            if (quests == null)
+                foreach (QuestLog log in FindObjectsByType<QuestLog>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    quests = log;
+                    break;
+                }
+            return quests;
+        }
+    }
 
     private void Awake()
     {
@@ -220,6 +243,8 @@ public sealed class EcoGridManager : MonoBehaviour
         EcoGridCell cell = cells[coord];
         cell.SetTile(type, CreateTileVisual(type, coord));
         RefreshTerrain();
+        // Before CellChanged, here and in TryMove: the placement is reported first, then what it completed (HabitatTracker).
+        QuestEvents.Raise(QuestEventType.EnvironmentTilePlaced, null, type.ToString());
         CellChanged?.Invoke(cell);
     }
 
@@ -368,6 +393,7 @@ public sealed class EcoGridManager : MonoBehaviour
             if (placeholder != null) placeholder.SetCoord(to);
         }
         RefreshTerrain();
+        QuestEvents.Raise(QuestEventType.EnvironmentTilePlaced, null, target.TileType.ToString());
         CellChanged?.Invoke(source);
         CellChanged?.Invoke(target);
         return true;
@@ -380,18 +406,33 @@ public sealed class EcoGridManager : MonoBehaviour
         reason = null;
         EcoGridCell cell = GetCell(coord);
         if (cell == null || cell.IsEmpty) { reason = "제거할 환경물이 없습니다."; return false; }
+        if (IsProtectedLastTile(cell)) { reason = removalBlockedMessage; return false; }
         return true;
     }
 
     public bool TryRemove(HexCoord coord, out string reason)
     {
-        if (!CanRemove(coord, out reason)) return false;
+        if (!CanRemove(coord, out reason))
+        {
+            if (reason == removalBlockedMessage) PlayerFeedback.Notify(reason);
+            return false;
+        }
         EcoGridCell cell = cells[coord];
         if (cell.Visual != null) Destroy(cell.Visual);
         cell.Clear();
         RefreshTerrain();
         CellChanged?.Invoke(cell);
         return true;
+    }
+
+    private bool IsProtectedLastTile(EcoGridCell cell)
+    {
+        if (protectedLastTiles == null || Array.IndexOf(protectedLastTiles, cell.TileType) < 0) return false;
+        if (Quests == null || !Quests.IsObjectivePending(protectQuestId, protectObjectiveId)) return false;
+        int count = 0;
+        foreach (EcoGridCell other in cells.Values)
+            if (!other.IsEmpty && other.TileType == cell.TileType) count++;
+        return count <= 1;
     }
 
     // ---- Save / load ----

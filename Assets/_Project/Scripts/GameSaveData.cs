@@ -26,7 +26,32 @@ public sealed class GameSaveData
     // Added after v1 shipped. Older saves have no field (null) and new games write none (empty):
     // both start the quest line from its first quest. Quests missing from a save load as Locked.
     public QuestSaveState[] quests;
+    // Added after v1 shipped. Older saves and scenes without village build mode have none: nothing is placed.
+    public VillageFacilityState[] villageFacilities;
+    // Added after v1 shipped. Older saves have no field (null): nothing has been discovered.
+    public HabitatState[] habitats;
 
+    // completed = the pattern stood on the grid when saved; re-read from the grid after loading.
+    [Serializable] public sealed class HabitatState
+    {
+        public string id;
+        public bool discovered, completed;
+    }
+    // One placed village facility. Only the block matching its prefab's component is read.
+    [Serializable] public sealed class VillageFacilityState
+    {
+        public string definitionId;
+        public int x, y; // Footprint's minimum cell; the size comes from the definition and rotation.
+        public int rotationSteps; // 0-3, 90 degrees each. Older saves have no field and load as 0.
+        public PlotState plot;
+        public FlowerBedState flowerBed;
+        public TreePlotState treePlot;
+    }
+    [Serializable] public sealed class TreePlotState
+    {
+        public TreePlot.PlotStage stage;
+        public int growthDays;
+    }
     [Serializable] public sealed class QuestSaveState
     {
         public string id;

@@ -50,6 +50,14 @@ public sealed class FlowerBed : Interactable
         if (gameDay != null) gameDay.DayChanged -= OnDayChanged;
     }
 
+    // For instances spawned at runtime (village build mode): prefabs cannot reference the scene's GameDay.
+    public void BindGameDay(GameDay day)
+    {
+        if (isActiveAndEnabled && gameDay != null) gameDay.DayChanged -= OnDayChanged;
+        gameDay = day;
+        if (isActiveAndEnabled && gameDay != null) gameDay.DayChanged += OnDayChanged;
+    }
+
     public override string GetInteractionPrompt(GameObject interactor) => state switch
     {
         BedState.Empty => "꽃 씨앗 심기",

@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e482e40644fa45e1966ef6af8034cc4e, type: 3}
+  m_Name: Q04_TreeSite
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
+  id: Q04
+  title: "나무를 키울 자리"
+  description: "나무터를 설치하고 묘목을 키워 벌목해 보자. (임시 문구)"
+  category: 0
+  prerequisites:
+  - {fileID: 11400000, guid: bd8704ee28b0afdf7d6d35cb6eca93ce, type: 2}
+  objectives:
+  - id: place_tree_plot
+    description: "나무터 1개 설치"
+    eventType: 10
+    item: {fileID: 0}
+    target: village_tree_plot
+    requiredAmount: 1
+    tip: "B 건설모드에서 나무터를 설치하세요!"
+  - id: plant_sapling
+    description: "묘목 심기"
+    eventType: 12
+    item: {fileID: 11400000, guid: b5bde02f8f41a972f98475f9d2c020e1, type: 2}
+    target: 
+    requiredAmount: 1
+    tip: "나무터 앞에서 F를 눌러 묘목을 심으세요!"
+  - id: chop_tree
+    description: "다 자란 나무 베기"
+    eventType: 7
+    item: {fileID: 11400000, guid: fc619eae7f6d564fbbdaad19066eb3ed, type: 2}
+    target: 
+    requiredAmount: 1
+    tip: "하룻밤 자면 나무가 다 자라요.\n도끼를 가진 채 F로 세 번 베세요!"
+  startItems:
+  - item: {fileID: 11400000, guid: b5bde02f8f41a972f98475f9d2c020e1, type: 2}
+    quantity: 1
+  - item: {fileID: 11400000, guid: ec5bd5f63bd93e8061604f8c6770cfd9, type: 2}
+    quantity: 1
+  startMessage: 
+  startMessageUntilClick: 0
+  rewardItems: []
+  rewardGold: 0
+  pendingRewards: []

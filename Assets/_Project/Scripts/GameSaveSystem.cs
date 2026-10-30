@@ -33,6 +33,10 @@ public sealed class GameSaveSystem : MonoBehaviour
     [SerializeField] private ChickenBinding[] chickens;
     [SerializeField] private CowBinding[] cows;
     [SerializeField] private FlowerBedBinding[] flowerBeds;
+    [SerializeField, Tooltip("Optional. Scenes with village build mode save their placed facilities through it.")]
+    private VillageBuildModeController village;
+    [SerializeField, Min(0), Tooltip("New-game wheat seeds. 0 when the first quests grant them instead.")]
+    private int newGameWheatSeeds = 3;
     [SerializeField, Tooltip("Build Settings paths of the scenes a save may return the player to. Never the main menu.")]
     private string[] gameplayScenes = new string[0];
     private bool busy;
@@ -223,10 +227,10 @@ public sealed class GameSaveSystem : MonoBehaviour
                 gold = 0,
                 inventory = items.Select(b => new GameSaveData.ItemState
                 {
-                    id = b.id, quantity = b.id == WheatSeedsId ? 3 : b.id == WateringCanId ? 1 : 0
+                    id = b.id, quantity = b.id == WheatSeedsId ? newGameWheatSeeds : b.id == WateringCanId ? 1 : 0
                 }).ToArray(),
                 mission = new GameSaveData.MissionState { stage = 1 },
-                // Empty = the quest line's initial state (Q01 Active). Q01's seeds are the 3 above.
+                // Empty = the quest line's initial state (Q01 Active).
                 quests = new GameSaveData.QuestSaveState[0],
                 plots = plots.Select(b => new GameSaveData.PlotState { id = b.id }).ToArray(),
                 chickens = chickens.Select(b => new GameSaveData.ChickenState { id = b.id }).ToArray(),
@@ -401,8 +405,11 @@ public sealed class GameSaveSystem : MonoBehaviour
         inventory.RestoreQuantities(restoredInventory);
         wallet.RestoreGold(data.gold);
         quickbar.SelectSlot(data.selectedSlot);
+        if (village != null) village.RestoreState(data.villageFacilities);
         // Region grids that are not loaded yet keep their state until their scene awakes.
         EcoGridManager.RestoreAll(data.hexGrids);
+        // After the Hexes: live trackers re-read the restored grid. Nothing is announced or granted.
+        HabitatRecords.Restore(data.habitats);
     }
 
     private GameSaveData Capture()
@@ -428,7 +435,9 @@ public sealed class GameSaveSystem : MonoBehaviour
             chickens = chickens.Select(b => b.chicken.CaptureState(b.id)).ToArray(),
             cows = cows.Select(b => b.cow.CaptureState(b.id)).ToArray(),
             flowerBeds = flowerBeds.Select(b => b.bed.CaptureState(b.id)).ToArray(),
-            hexGrids = EcoGridManager.CaptureAll()
+            hexGrids = EcoGridManager.CaptureAll(),
+            villageFacilities = village != null ? village.CaptureState() : null,
+            habitats = HabitatRecords.Capture()
         };
     }
 
@@ -472,6 +481,10 @@ public sealed class GameSaveSystem : MonoBehaviour
             MatchIds(data.flowerBeds.Select(s => s.id), flowerBeds.Select(b => b.id));
         }
         ValidateHexGrids(data.hexGrids);
+        // Unknown IDs are kept, not rejected: the definitions live in region scenes that may not be loaded.
+        if (data.habitats != null)
+            Require(data.habitats.All(h => h != null && !string.IsNullOrWhiteSpace(h.id)) &&
+                data.habitats.Select(h => h.id).Distinct().Count() == data.habitats.Length, "생태계 데이터 오류");
         // Optional (older saves have none). Checked before any state changes or scene loads; the position
         // itself is never clamped or moved.
         if (!string.IsNullOrEmpty(data.scene))
@@ -490,15 +503,23 @@ public sealed class GameSaveSystem : MonoBehaviour
         // chickenUnlocked / cowUnlocked are legacy: restore derives the areas from M01 / M03, so a stale value
         // (older builds captured it from an area suspended by region travel) is ignored instead of rejecting the save.
         Require(quests.TryValidateState(data.quests, out string questError), questError);
-        foreach (var p in data.plots)
+        foreach (var p in data.plots) ValidatePlot(p);
+        if (data.villageFacilities != null && data.villageFacilities.Length > 0)
         {
-            Require(Enum.IsDefined(typeof(FarmPlot.CropKind), p.crop) && Enum.IsDefined(typeof(FarmPlot.CropState), p.state), "작물 종류/상태 오류");
-            if (p.state == FarmPlot.CropState.Empty)
-                Require(p.crop == FarmPlot.CropKind.None && p.growthDays == 0 && !p.wateredToday, "빈 밭 데이터 오류");
-            else
-                Require(p.crop != FarmPlot.CropKind.None && p.growthDays == (p.state == FarmPlot.CropState.ReadyToHarvest ? 1 : 0) &&
-                    (p.state != FarmPlot.CropState.ReadyToHarvest || !p.wateredToday), "성장 상태 오류");
+            Require(village != null, "이 Scene은 설치 시설 저장을 지원하지 않습니다.");
+            Require(village.TryValidateState(data.villageFacilities, out string villageError), villageError);
+            foreach (var facility in data.villageFacilities) if (facility.plot != null) ValidatePlot(facility.plot);
         }
+    }
+
+    private static void ValidatePlot(GameSaveData.PlotState p)
+    {
+        Require(Enum.IsDefined(typeof(FarmPlot.CropKind), p.crop) && Enum.IsDefined(typeof(FarmPlot.CropState), p.state), "작물 종류/상태 오류");
+        if (p.state == FarmPlot.CropState.Empty || p.state == FarmPlot.CropState.Prepared)
+            Require(p.crop == FarmPlot.CropKind.None && p.growthDays == 0 && !p.wateredToday, "빈 밭 데이터 오류");
+        else
+            Require(p.crop != FarmPlot.CropKind.None && p.growthDays == (p.state == FarmPlot.CropState.ReadyToHarvest ? 1 : 0) &&
+                (p.state != FarmPlot.CropState.ReadyToHarvest || !p.wateredToday), "성장 상태 오류");
     }
     // Optional (older saves have none). Coordinates are checked against the map when the grid restores.
     private static void ValidateHexGrids(GameSaveData.HexGridState[] grids)

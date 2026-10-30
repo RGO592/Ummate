@@ -31,6 +31,9 @@ public sealed class QuestLog : MonoBehaviour
         public bool IsObjectiveDone(int objective) => Progress[objective] >= GetRequired(objective);
         // A quest without objectives (condition not implemented yet) never completes on its own.
         public bool AllObjectivesDone => Progress.Length > 0 && Enumerable.Range(0, Progress.Length).All(IsObjectiveDone);
+        // A running sequential quest hides objectives whose turn has not come.
+        public bool IsObjectiveVisible(int objective) =>
+            !Definition.SequentialObjectives || Status != QuestStatus.Active || objective <= CurrentObjective;
         // First unfinished objective in data order, or -1.
         public int CurrentObjective
         {
@@ -96,9 +99,25 @@ public sealed class QuestLog : MonoBehaviour
             {
                 string[] objectiveIds = quest.Objectives.Select(o => o != null ? o.id : null).ToArray();
                 if (objectiveIds.Any(string.IsNullOrWhiteSpace) || objectiveIds.Distinct().Count() != objectiveIds.Length) return false;
-                if (quest.Prerequisites.Any(p => p == null || !quests.Contains(p))) return false;
+                // By ID: progress is keyed by ID, and a scene's list may hold another asset of the same quest.
+                if (quest.Prerequisites.Any(p => p == null || !ids.Contains(p.Id))) return false;
             }
             return true;
+        }
+    }
+
+    // The HUD line: the current main quest's title and first unfinished objective.
+    public string HudText
+    {
+        get
+        {
+            Entry main = CurrentMain;
+            if (main == null) return noQuestText;
+            int index = main.CurrentObjective;
+            string line = index >= 0
+                ? $"{main.Definition.Objectives[index].description} {main.GetProgress(index)} / {main.GetRequired(index)}"
+                : "목표 준비 중";
+            return $"<b>{main.Definition.Title}</b>\n<size=85%>{line}</size>";
         }
     }
 
@@ -106,6 +125,36 @@ public sealed class QuestLog : MonoBehaviour
     {
         Entry entry = Find(id);
         return entry != null ? entry.Status : QuestStatus.Locked;
+    }
+
+    public bool IsObjectiveDone(string questId, string objectiveId)
+    {
+        EnsureBuilt();
+        Entry entry = Find(questId);
+        if (entry == null || entry.Status == QuestStatus.Locked) return false;
+        if (entry.Status == QuestStatus.Completed) return true;
+        int index = Array.FindIndex(entry.Definition.Objectives, o => o != null && o.id == objectiveId);
+        return index >= 0 && entry.IsObjectiveDone(index);
+    }
+
+    // The quest is running and this objective of it is not done yet. False if this log's quest has no such objective.
+    public bool IsObjectivePending(string questId, string objectiveId)
+    {
+        EnsureBuilt();
+        Entry entry = Find(questId);
+        if (entry == null || entry.Status != QuestStatus.Active) return false;
+        int index = Array.FindIndex(entry.Definition.Objectives, o => o != null && o.id == objectiveId);
+        return index >= 0 && !entry.IsObjectiveDone(index);
+    }
+
+    // The quest is running and has not reached this objective yet. False if this log's quest has no such objective.
+    public bool IsBeforeObjective(string questId, string objectiveId)
+    {
+        EnsureBuilt();
+        Entry entry = Find(questId);
+        if (entry == null || entry.Status != QuestStatus.Active) return false;
+        int index = Array.FindIndex(entry.Definition.Objectives, o => o != null && o.id == objectiveId);
+        return index >= 0 && entry.CurrentObjective < index;
     }
 
     private void Awake()
@@ -187,9 +236,13 @@ public sealed class QuestLog : MonoBehaviour
         {
             if (entry.Status != QuestStatus.Active) continue;
             QuestDefinition.Objective[] objectives = entry.Definition.Objectives;
+            bool sequential = entry.Definition.SequentialObjectives;
+            int current = entry.CurrentObjective;
             for (int i = 0; i < objectives.Length; i++)
             {
                 QuestDefinition.Objective objective = objectives[i];
+                // A sequential quest only listens for its current objective; anything earlier is not remembered.
+                if (sequential && i != current) continue;
                 if (objective == null || objective.eventType != type || entry.IsObjectiveDone(i)) continue;
                 if (objective.item != null && objective.item != item) continue;
                 if (!string.IsNullOrEmpty(objective.target) && objective.target != target) continue;
@@ -203,6 +256,8 @@ public sealed class QuestLog : MonoBehaviour
                 Complete(entry);
                 completed = true;
             }
+            else if (sequential && entry.CurrentObjective != current)
+                PlayerFeedback.NotifyUntilClick(objectives[entry.CurrentObjective].startMessage);
         }
         // Quests unlocked by this event start only now, so the same event never counts for them.
         if (completed) ActivateEligible(grant: true, announce: true);
@@ -259,18 +314,7 @@ public sealed class QuestLog : MonoBehaviour
 
     private void RefreshHud()
     {
-        if (hudLabel == null) return;
-        Entry main = CurrentMain;
-        if (main == null)
-        {
-            hudLabel.text = noQuestText;
-            return;
-        }
-        int index = main.CurrentObjective;
-        string line = index >= 0
-            ? $"{main.Definition.Objectives[index].description} {main.GetProgress(index)} / {main.GetRequired(index)}"
-            : "목표 준비 중";
-        hudLabel.text = $"<b>{main.Definition.Title}</b>\n<size=85%>{line}</size>";
+        if (hudLabel != null) hudLabel.text = HudText;
     }
 
     // ---- Save / load ----
@@ -307,6 +351,7 @@ public sealed class QuestLog : MonoBehaviour
                 return Fail("퀘스트 목표 ID 누락/중복", out error);
             foreach (GameSaveData.ObjectiveSaveState objective in objectives)
             {
+                if (entry.Definition.RetiredObjectiveIds.Contains(objective.id)) continue;
                 int index = Array.FindIndex(entry.Definition.Objectives, o => o.id == objective.id);
                 if (index < 0) return Fail($"저장 파일의 퀘스트 목표({state.id}/{objective.id})가 현재 데이터에 없습니다.", out error);
                 if (objective.progress < 0 || objective.progress > entry.GetRequired(index)) return Fail("퀘스트 진행도 오류", out error);
@@ -328,6 +373,8 @@ public sealed class QuestLog : MonoBehaviour
     public void RestoreState(GameSaveData.QuestSaveState[] saved)
     {
         EnsureBuilt();
+        // A story line still waiting for its click belongs to the run being replaced.
+        PlayerFeedback.ClearUntilClick();
         if (saved == null || saved.Length == 0)
         {
             ResetToInitial();
@@ -344,8 +391,14 @@ public sealed class QuestLog : MonoBehaviour
         {
             Entry entry = Find(state.id);
             entry.Status = state.state;
+            // An objective added after this quest was completed in the save counts as done.
+            if (state.state == QuestStatus.Completed)
+                for (int i = 0; i < entry.ObjectiveCount; i++) entry.Progress[i] = entry.GetRequired(i);
             foreach (GameSaveData.ObjectiveSaveState objective in state.objectives ?? new GameSaveData.ObjectiveSaveState[0])
-                entry.Progress[Array.FindIndex(entry.Definition.Objectives, o => o.id == objective.id)] = objective.progress;
+            {
+                int index = Array.FindIndex(entry.Definition.Objectives, o => o.id == objective.id);
+                if (index >= 0) entry.Progress[index] = objective.progress;
+            }
         }
         // A quest added to the data after this save was written opens quietly; nothing is granted.
         ActivateEligible(grant: false, announce: false);

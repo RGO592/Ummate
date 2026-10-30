@@ -4,7 +4,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class FarmPlot : Interactable
 {
-    public enum CropState { Empty, Growing, ReadyToHarvest }
+    // Saved as an int: append new values only, never reorder.
+    public enum CropState { Empty, Growing, ReadyToHarvest, Prepared }
     public enum CropKind { None, Wheat, Corn }
 
     [SerializeField] private GameDay gameDay;
@@ -16,6 +17,8 @@ public sealed class FarmPlot : Interactable
     [SerializeField] private Renderer plotRenderer;
     [SerializeField] private TMP_Text statusLabel;
     [SerializeField] private string plotName = "밭";
+    [SerializeField, Tooltip("Empty plots must be prepared with F before planting, again after every harvest (임시 테스트 규칙). Off: planting starts from Empty.")]
+    private bool requiresPreparation;
 
     private CropState state;
     private int wateredDay = -1;
@@ -64,10 +67,19 @@ public sealed class FarmPlot : Interactable
         if (gameDay != null) gameDay.DayChanged -= OnDayChanged;
     }
 
+    // For instances spawned at runtime (village build mode): prefabs cannot reference the scene's GameDay.
+    public void BindGameDay(GameDay day)
+    {
+        if (isActiveAndEnabled && gameDay != null) gameDay.DayChanged -= OnDayChanged;
+        gameDay = day;
+        if (isActiveAndEnabled && gameDay != null) gameDay.DayChanged += OnDayChanged;
+    }
+
     // Prompt only; which seed / tool is required is still decided by Interact.
     public override string GetInteractionPrompt(GameObject interactor) =>
         state == CropState.ReadyToHarvest ? $"{CropName} 수확하기" :
-        state == CropState.Empty ? "씨앗 심기" :
+        state == CropState.Empty && requiresPreparation ? "밭 갈기" :
+        state == CropState.Empty || state == CropState.Prepared ? "씨앗 심기" :
         !WateredToday ? "물 주기" : null;
 
     public override void Interact(GameObject interactor)
@@ -117,9 +129,18 @@ public sealed class FarmPlot : Interactable
                 return;
             }
 
+            if (state == CropState.Empty && requiresPreparation)
+            {
+                state = CropState.Prepared;
+                RefreshAppearance();
+                PlayerFeedback.Notify("밭을 갈았습니다.");
+                QuestEvents.Raise(QuestEventType.FieldPrepared);
+                return;
+            }
+
             PlayerQuickbar quickbar = interactor.GetComponent<PlayerQuickbar>();
             ItemDefinition selected = quickbar != null ? quickbar.SelectedItem : null;
-            if (state == CropState.Empty)
+            if (state == CropState.Empty || state == CropState.Prepared)
             {
                 bool plantingCorn = cornSeeds != null && selected == cornSeeds;
                 if (selected != wheatSeeds && !plantingCorn)
@@ -198,11 +219,13 @@ public sealed class FarmPlot : Interactable
     {
         if (statusLabel != null)
             statusLabel.text = state == CropState.Empty ? $"{plotName}: 빈 밭" :
+                state == CropState.Prepared ? $"{plotName}: 갈아 둔 밭" :
                 state == CropState.ReadyToHarvest ? $"{plotName}: {CropName} 수확 가능" :
                 $"{plotName}: {CropName} {GrowthDays}/{RequiredGrowthDays} · {(WateredToday ? "물 줌" : "물 필요")}";
         if (plotRenderer == null) return;
         // Only tint this plot; never edit the shared material or create crop models.
-        Color tint = state == CropState.Empty ? new Color(0.42f, 0.22f, 0.08f) :
+        Color tint = state == CropState.Empty ? (requiresPreparation ? new Color(0.62f, 0.5f, 0.3f) : new Color(0.42f, 0.22f, 0.08f)) :
+            state == CropState.Prepared ? new Color(0.42f, 0.22f, 0.08f) :
             state == CropState.ReadyToHarvest ? new Color(1f, 0.72f, 0.08f) :
             WateredToday ? new Color(0.05f, 0.55f, 0.85f) : new Color(0.25f, 0.75f, 0.18f);
         if (CurrentCrop == CropKind.Corn)

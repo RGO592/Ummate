@@ -22,7 +22,7 @@ public sealed class SceneTransitionTrigger : MonoBehaviour
             gate.ReportLocked();
             return;
         }
-        SceneTransitionService.Travel(gameObject.scene, localSpawnPoint, targetScene,
+        SceneTransitionService.Travel(gameObject.scene, localSpawnPoint, WorkSceneReturnRoute.Resolve(gameObject.scene, targetScene),
             targetSpawnPointId, useFade ? fadeDuration : 0f);
     }
 }

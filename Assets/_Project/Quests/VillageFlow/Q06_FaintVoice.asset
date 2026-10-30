@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e482e40644fa45e1966ef6af8034cc4e, type: 3}
+  m_Name: Q06_FaintVoice
+  m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
+  id: Q06
+  title: "희미한 목소리"
+  description: "시험장에 도착하니 어디선가 희미한 목소리가 들려. 나에게만 들리는 걸까? (임시 문구)"
+  category: 0
+  prerequisites:
+  - {fileID: 11400000, guid: 27c4dd5718abc79529a6b189746b467d, type: 2}
+  objectives:
+  - id: place_tree
+    description: "시험 과제: 나무 환경을 배치해 보자."
+    eventType: 13
+    item: {fileID: 0}
+    target: Tree
+    requiredAmount: 1
+    tip: "시험 과제: 나무 환경을 배치해 보자.\n(B: 건설 모드)"
+    startMessage: 
+  - id: place_flower
+    description: "꽃 환경을 배치해 보자."
+    eventType: 13
+    item: {fileID: 0}
+    target: Flower
+    requiredAmount: 1
+    tip: "꽃도 한번 배치해볼까...?"
+    startMessage: "꽃도 한번 배치해볼까...?"
+  - id: complete_squirrel_habitat
+    description: "나무 옆에 꽃을 두기"
+    eventType: 15
+    item: {fileID: 0}
+    target: squirrel
+    requiredAmount: 1
+    tip: "꽃을 나무 옆으로 옮겨보자."
+    startMessage: 
+  sequentialObjectives: 1
+  retiredObjectiveIds:
+  - hex_tutorial
+  startItems: []
+  startMessage: "꽃향기가 그리워……"
+  startMessageUntilClick: 1
+  rewardItems: []
+  rewardGold: 0
+  pendingRewards: []
