@@ -28,6 +28,10 @@ public sealed class QuestDefinition : ScriptableObject
         public string tip;
         [TextArea, Tooltip("Sequential quests only. Shown until clicked when this objective becomes the current one.")]
         public string startMessage;
+        [Tooltip("QuestNavigationTarget id the player's arrow points at. Empty = no arrow.")]
+        public string navigationTargetId;
+        [Tooltip("Optional: the scene holding that target. From any other scene the arrow points at the exit leading there.")]
+        public string navigationScene;
     }
 
     [Serializable]

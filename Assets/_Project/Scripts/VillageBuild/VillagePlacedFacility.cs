@@ -14,5 +14,8 @@ public sealed class VillagePlacedFacility : MonoBehaviour
         Definition = definition;
         Cells = cells;
         RotationSteps = rotationSteps;
+        // Quest objectives point at a placed facility by its definition id.
+        if (!TryGetComponent(out QuestNavigationTarget target)) target = gameObject.AddComponent<QuestNavigationTarget>();
+        target.Configure(definition.Id, new Vector2(cells.width, cells.height) * 0.5f);
     }
 }

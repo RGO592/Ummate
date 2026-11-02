@@ -24,6 +24,8 @@ MonoBehaviour:
     eventType: 10
     item: {fileID: 0}
     target: village_flower_bed
+    navigationTargetId: village_build_area
+    navigationScene: 
     requiredAmount: 1
     tip: "B 건설모드에서 꽃 화단을 설치하세요!"
   - id: plant_flower
@@ -31,6 +33,8 @@ MonoBehaviour:
     eventType: 4
     item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
     target: 
+    navigationTargetId: village_flower_bed
+    navigationScene: 
     requiredAmount: 1
     tip: "화단 앞에서 F를 눌러 꽃 씨앗을 심으세요!"
   - id: water_flower
@@ -38,6 +42,8 @@ MonoBehaviour:
     eventType: 5
     item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
     target: 
+    navigationTargetId: village_flower_bed
+    navigationScene: 
     requiredAmount: 1
     tip: "화단 앞에서 F를 눌러 물을 주세요!"
   - id: harvest_flower
@@ -45,6 +51,8 @@ MonoBehaviour:
     eventType: 6
     item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
     target: 
+    navigationTargetId: village_flower_bed
+    navigationScene: 
     requiredAmount: 1
     tip: "하룻밤 자고 나면 꽃이 펴요.\n화단에서 F로 수확하세요!"
   startItems:

@@ -24,6 +24,8 @@ MonoBehaviour:
     eventType: 10
     item: {fileID: 0}
     target: village_tree_plot
+    navigationTargetId: village_build_area
+    navigationScene: 
     requiredAmount: 1
     tip: "B 건설모드에서 나무터를 설치하세요!"
   - id: plant_sapling
@@ -31,6 +33,8 @@ MonoBehaviour:
     eventType: 12
     item: {fileID: 11400000, guid: b5bde02f8f41a972f98475f9d2c020e1, type: 2}
     target: 
+    navigationTargetId: village_tree_plot
+    navigationScene: 
     requiredAmount: 1
     tip: "나무터 앞에서 F를 눌러 묘목을 심으세요!"
   - id: chop_tree
@@ -38,6 +42,8 @@ MonoBehaviour:
     eventType: 7
     item: {fileID: 11400000, guid: fc619eae7f6d564fbbdaad19066eb3ed, type: 2}
     target: 
+    navigationTargetId: village_tree_plot
+    navigationScene: 
     requiredAmount: 1
     tip: "하룻밤 자면 나무가 다 자라요.\n도끼를 가진 채 F로 세 번 베세요!"
   startItems:

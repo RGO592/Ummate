@@ -23,6 +23,8 @@ MonoBehaviour:
     eventType: 10
     item: {fileID: 0}
     target: village_field
+    navigationTargetId: village_build_area
+    navigationScene: 
     requiredAmount: 1
     tip: "B를 눌러 건설모드를 열고\n밭을 골라 빈 땅에 설치하세요!"
   startItems: []

@@ -24,6 +24,8 @@ MonoBehaviour:
     eventType: 13
     item: {fileID: 0}
     target: Tree
+    navigationTargetId: spirit_grid
+    navigationScene: SpiritGridScene
     requiredAmount: 1
     tip: "시험 과제: 나무 환경을 배치해 보자.\n(B: 건설 모드)"
     startMessage: 
@@ -32,6 +34,8 @@ MonoBehaviour:
     eventType: 13
     item: {fileID: 0}
     target: Flower
+    navigationTargetId: spirit_grid
+    navigationScene: SpiritGridScene
     requiredAmount: 1
     tip: "꽃도 한번 배치해볼까...?"
     startMessage: "꽃도 한번 배치해볼까...?"
@@ -40,6 +44,8 @@ MonoBehaviour:
     eventType: 15
     item: {fileID: 0}
     target: squirrel
+    navigationTargetId: spirit_grid
+    navigationScene: SpiritGridScene
     requiredAmount: 1
     tip: "꽃을 나무 옆으로 옮겨보자."
     startMessage: 
