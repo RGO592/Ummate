@@ -1,0 +1,236 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c047f028a76c4bb2a4c9d04cb879237c, type: 3}
+  m_Name: AudioLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::AudioLibrary
+  bgmLevel: 0.45
+  ambienceLevel: 0.3
+  sfxLevel: 1
+  bgmFadeSeconds: 1.5
+  ambienceFadeSeconds: 2
+  scenes:
+  - sceneName: MainMenuScene
+    bgm:
+      clips:
+      - {fileID: 8300000, guid: c812d7988f5a459e83bbd307e4353e57, type: 3}
+      - {fileID: 8300000, guid: c1b5a788c1784dc6851ba84108ac9bac, type: 3}
+      - {fileID: 8300000, guid: eb8bdeb5f4114d7283b1e174550b56b4, type: 3}
+      volume: 1
+      minInterval: 0
+    ambience:
+      clips: []
+      volume: 1
+      minInterval: 0
+  - sceneName: FarmLayout_WorkScene
+    bgm:
+      clips:
+      - {fileID: 8300000, guid: cefb5a98d90d4e35a09266331eaa32fb, type: 3}
+      volume: 1
+      minInterval: 0
+    ambience:
+      clips:
+      - {fileID: 8300000, guid: e944bc85dc3044b8bb50a6a2d142a4ba, type: 3}
+      volume: 1
+      minInterval: 0
+  - sceneName: SpiritGridScene
+    bgm:
+      clips:
+      - {fileID: 8300000, guid: f2856c25555241a08724e447d216e9ca, type: 3}
+      - {fileID: 8300000, guid: d473e2ea04904f449ee2d01653d0f859, type: 3}
+      volume: 1
+      minInterval: 0
+    ambience:
+      clips:
+      - {fileID: 8300000, guid: 91f71953ab3a489f960fdfd4302977dc, type: 3}
+      volume: 1
+      minInterval: 0
+  sfx:
+  - id: 1
+    sound:
+      clips: []
+      volume: 0.5
+      minInterval: 0.05
+  - id: 2
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 681d682283834cf9ba99e115efbfa830, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 3
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 0c0f93d98c2747208615e1b61fe678a3, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 4
+    sound:
+      clips:
+      - {fileID: 8300000, guid: b0168ec4692d4d77aed4cd52e831626d, type: 3}
+      volume: 0.55
+      minInterval: 0.05
+  - id: 5
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 681d682283834cf9ba99e115efbfa830, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 6
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 0c0f93d98c2747208615e1b61fe678a3, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 7
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 545b67485adb40438aeaa1da45eaeae5, type: 3}
+      volume: 0.55
+      minInterval: 0.05
+  - id: 8
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 4c6975e089e44e9c89b92ff244cbf746, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 9
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 9951865380774e4dac67b6d8e212c99b, type: 3}
+      - {fileID: 8300000, guid: ebd2535e63af45d48caadee6928c2687, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 10
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 648d7000406a4d58af05dd86975f9c6f, type: 3}
+      volume: 0.55
+      minInterval: 0.1
+  - id: 11
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 98ce81c56ed04f2f884aee2b7c91aeaf, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 30
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 08a929c04978494ebbd0fc8927eefe28, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 13
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 53d54e4e13054fbd9eb4a7cbde17d19c, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 14
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 0a04b9e5b6894e7f9f3e69100fa3328c, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 15
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 7aa1780a8a294713b2f6b299c5e83b1e, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 16
+    sound:
+      clips:
+      - {fileID: 8300000, guid: ffeeba30f3b44268875d977d7fe73f04, type: 3}
+      volume: 0.5
+      minInterval: 0.05
+  - id: 17
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 58d96d9c983641d48905864eeab3c19c, type: 3}
+      volume: 0.7
+      minInterval: 0.5
+  - id: 18
+    sound:
+      clips:
+      - {fileID: 8300000, guid: c22b7c0318db4c1a8a4701146dc9d754, type: 3}
+      volume: 0.5
+      minInterval: 0.3
+  - id: 19
+    sound:
+      clips:
+      - {fileID: 8300000, guid: e5074fdfb32e47d986487aec7be3e4ac, type: 3}
+      volume: 0.65
+      minInterval: 0.3
+  - id: 20
+    sound:
+      clips:
+      - {fileID: 8300000, guid: ff8f9eaf21b744948fb7f71936e2bfb4, type: 3}
+      volume: 0.45
+      minInterval: 0.05
+  - id: 21
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 0f8690acabca4a66ba6875063485af14, type: 3}
+      volume: 0.45
+      minInterval: 0.05
+  - id: 22
+    sound:
+      clips:
+      - {fileID: 8300000, guid: c0e1b3ff1afc49fea95bce3aee1a2cf5, type: 3}
+      volume: 0.4
+      minInterval: 0.2
+  - id: 23
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 74664ab9447b417495c176655d33aa43, type: 3}
+      volume: 0.3
+      minInterval: 0.03
+  - id: 24
+    sound:
+      clips:
+      - {fileID: 8300000, guid: bd539c83fbd4437bbc652afceb530db1, type: 3}
+      volume: 0.35
+      minInterval: 0.05
+  - id: 25
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 449525038d2c4e50a789357bca63be0a, type: 3}
+      volume: 0.4
+      minInterval: 0.05
+  - id: 26
+    sound:
+      clips:
+      - {fileID: 8300000, guid: ac07ff2a107c4fc4bfbea74ea3d3830b, type: 3}
+      volume: 0.5
+      minInterval: 0.5
+  - id: 27
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 6eefeb1e331140738165974f95d72a49, type: 3}
+      volume: 0.5
+      minInterval: 0.5
+  - id: 28
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 7709a0fc99cb42e1a101d406144eb485, type: 3}
+      volume: 0.22
+      minInterval: 0.05
+  - id: 29
+    sound:
+      clips:
+      - {fileID: 8300000, guid: ab1653148f444c57828b9f4c6cac8514, type: 3}
+      volume: 0.25
+      minInterval: 0.05
+  walkStepInterval: 0.42
+  runStepInterval: 0.28
+  firstStepDelay: 0.08
+  minStepSpeed: 0.5
+  questStartAfterCompleteDelay: 1.2
+  treeFallDelay: 0.25

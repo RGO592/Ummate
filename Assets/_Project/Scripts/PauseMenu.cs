@@ -11,7 +11,7 @@ using Button = UnityEngine.UI.Button;
 // Player pause / settings menu: home → 옵션 · 저장 · 불러오기 screens, plus 메인메뉴로 나가기.
 // One instance per gameplay scene; the existing top-right settings button and Esc open the same menu.
 // 저장 lists the auto slot (read-only) and manual slots 1–3; 불러오기 lists all four.
-// Save / load go through the existing GameSaveSystem, found across scenes because FarmScene stays
+// Save / load go through the existing GameSaveSystem, found across scenes because the village stays
 // loaded (suspended) while regions are visited. Input is locked with the scene's own list, the same
 // way SleepTransition and TradingPostUI do it, and game time is paused with Time.timeScale.
 // Shared ver.2 presentation, built from each scene's existing sprite references.
@@ -55,6 +55,14 @@ public sealed class PauseMenu : MonoBehaviour
 
     private TMP_Text messageText, saveHeaderText, confirmText, confirmOkLabel;
     private TMP_Dropdown resolutionDropdown, modeDropdown;
+    // Sound volume rows on the options page: applied the moment a slider moves (no Apply button).
+    private sealed class VolumeRow
+    {
+        public AudioManager.Channel channel;
+        public Slider slider;
+        public TMP_Text percent;
+    }
+    private readonly List<VolumeRow> volumeRows = new List<VolumeRow>();
     private readonly SlotRow[] saveRows = new SlotRow[GameSaveSystem.SlotCount];
     private readonly SlotRow[] loadRows = new SlotRow[GameSaveSystem.SlotCount];
     private GameObject confirmRoot;
@@ -67,7 +75,7 @@ public sealed class PauseMenu : MonoBehaviour
 
     public bool IsOpen { get; private set; }
 
-    // FarmScene's save system, also reachable while a region scene is active.
+    // The village's save system, also reachable while a region scene is active.
     private GameSaveSystem SaveSystem
     {
         get
@@ -132,6 +140,7 @@ public sealed class PauseMenu : MonoBehaviour
         previousTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
         Time.timeScale = 0f;
         root.SetActive(true);
+        AudioManager.Play(GameSfx.MenuToggle);
         SetMessage("");
         ShowTab(Tab.Home);
     }
@@ -145,6 +154,8 @@ public sealed class PauseMenu : MonoBehaviour
         if (root != null) root.SetActive(false);
         Time.timeScale = previousTimeScale;
         UnlockInput();
+        // Player closes only: suspending or unloading the scene (OnDisable) stays quiet.
+        if (isActiveAndEnabled) AudioManager.Play(GameSfx.MenuToggle);
     }
 
     // ---- Screen navigation (save/load operations remain unchanged) ----
@@ -157,9 +168,10 @@ public sealed class PauseMenu : MonoBehaviour
         bool home = tab == Tab.Home;
         bool slots = tab == Tab.Save || tab == Tab.Load;
         titleText.text = home ? "일시정지" : tab == Tab.Options ? "옵션" : tab == Tab.Save ? "저장" : "불러오기";
+        // Options is taller than before to fit the four volume rows under the display settings.
         menuPanel.sizeDelta = home ? new Vector2(600f, 640f)
-            : slots ? new Vector2(900f, 780f) : new Vector2(840f, 620f);
-        SetSize(pageArea.gameObject, -1f, home ? 360f : slots ? 464f : 256f, flexibleHeight: 1f);
+            : slots ? new Vector2(900f, 780f) : new Vector2(840f, 780f);
+        SetSize(pageArea.gameObject, -1f, home ? 360f : slots ? 464f : 444f, flexibleHeight: 1f);
         detailFooter.SetActive(!home);
         footerDivider.SetActive(!home);
         SetMessage("");
@@ -178,6 +190,18 @@ public sealed class PauseMenu : MonoBehaviour
         resolutionDropdown.RefreshShownValue();
         modeDropdown.SetValueWithoutNotify(DisplaySettings.CurrentModeIndex);
         modeDropdown.RefreshShownValue();
+        foreach (VolumeRow row in volumeRows)
+        {
+            float percent = Mathf.Round(AudioManager.GetVolume(row.channel) * 100f);
+            row.slider.SetValueWithoutNotify(percent);
+            row.percent.text = $"{percent:0}%";
+        }
+    }
+
+    private static void OnVolumeChanged(VolumeRow row, float percent)
+    {
+        AudioManager.SetVolume(row.channel, percent / 100f); // Heard at once on everything already playing.
+        row.percent.text = $"{percent:0}%";
     }
 
     private void ApplyDisplay()
@@ -418,7 +442,45 @@ public sealed class PauseMenu : MonoBehaviour
         AddHorizontal(row.gameObject, 0f, TextAnchor.MiddleCenter);
         SetSize(row.gameObject, -1f, 56f);
         CreateButton("Apply", row, "적용", 200f, ApplyDisplay);
+        // Sound (PlayerPrefs, kept apart from save slots; no Apply needed).
+        AddVolumeRow(page, "전체 음량", AudioManager.Channel.Master);
+        AddVolumeRow(page, "BGM", AudioManager.Channel.Bgm);
+        AddVolumeRow(page, "효과음", AudioManager.Channel.Sfx);
+        AddVolumeRow(page, "환경음", AudioManager.Channel.Ambience);
         return page.gameObject;
+    }
+
+    // Label | 0–100 slider in whole percent | "75%". Function-check styling in the same palette as the dropdowns.
+    private void AddVolumeRow(Transform parent, string label, AudioManager.Channel channel)
+    {
+        RectTransform row = CreateRect($"Row_{label}", parent);
+        AddHorizontal(row.gameObject, 20f, TextAnchor.MiddleCenter);
+        SetSize(row.gameObject, -1f, 40f);
+        TMP_Text caption = CreateText("Label", row, label, 24f, TextAlignmentOptions.MidlineRight);
+        SetSize(caption.gameObject, 160f, 40f);
+
+        GameObject go = DefaultControls.CreateSlider(new DefaultControls.Resources());
+        go.name = "Slider";
+        go.transform.SetParent(row, false);
+        SetSize(go, 316f, 20f);
+        Slider slider = go.GetComponent<Slider>();
+        slider.minValue = 0f;
+        slider.maxValue = 100f;
+        slider.wholeNumbers = true;
+        slider.navigation = new Navigation { mode = Navigation.Mode.None }; // WASD/arrows must not move it.
+        go.transform.Find("Background").GetComponent<Image>().color = new Color(0.87f, 0.82f, 0.73f);
+        slider.fillRect.GetComponent<Image>().color = new Color(0.64f, 0.52f, 0.38f);
+        Image handle = slider.handleRect.GetComponent<Image>();
+        handle.color = TextColor;
+        slider.handleRect.sizeDelta = new Vector2(16f, 0f);
+        StyleSelectable(slider);
+
+        TMP_Text percent = CreateText("Percent", row, "", 22f, TextAlignmentOptions.MidlineLeft);
+        SetSize(percent.gameObject, 64f, 40f);
+
+        VolumeRow volume = new VolumeRow { channel = channel, slider = slider, percent = percent };
+        slider.onValueChanged.AddListener(value => OnVolumeChanged(volume, value));
+        volumeRows.Add(volume);
     }
 
     private GameObject BuildSavePage(Transform parent)

@@ -40,7 +40,7 @@ public sealed class MissionProgress : MonoBehaviour
         m01CompletedAndRewarded = M01Completed, m02CompletedAndRewarded = M02Completed,
         m03CompletedAndRewarded = M03Completed, prologueCompleted = PrologueCompleted,
         // The areas open exactly with the M01 / M03 rewards. Never read area.activeSelf: ChickenArea and
-        // CowArea are FarmScene roots, so region travel turns them off while the farm is suspended.
+        // CowArea are village scene roots, so region travel turns them off while the farm is suspended.
         chickenUnlocked = M01Completed, cowUnlocked = M03Completed
     };
 

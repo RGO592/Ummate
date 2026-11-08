@@ -1,4 +1,4 @@
-Ummate UI Ver.2
+수습중 UI Ver.2
 
 FarmScene에는 연결을 완료했습니다. Unity Editor 조작 / Play Mode / Editor Scene 저장은 하지 않았습니다.
 원본 UI PNG와 .meta는 보존하며 PreparedSprites에는 적용용 복사본만 있습니다.

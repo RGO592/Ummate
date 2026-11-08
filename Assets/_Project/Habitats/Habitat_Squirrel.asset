@@ -13,16 +13,13 @@ MonoBehaviour:
   m_Name: Habitat_Squirrel
   m_EditorClassIdentifier: Assembly-CSharp::HabitatDefinition
   id: squirrel
-  displayName: "다람쥐"
-  requiredTiles:
+  displayName: "\uB2E4\uB78C\uC950"
+  requiredCounts:
   - tile: 5
-    offset:
-      q: 0
-      r: 0
-  - tile: 2
-    offset:
-      q: 1
-      r: 0
-  allowRotation: 1
-  revealQuestId: Q06
-  revealObjectiveId: complete_squirrel_habitat
+    count: 1
+  - tile: 4
+    count: 1
+  - tile: 6
+    count: 1
+  revealQuestId: 
+  revealObjectiveId: 

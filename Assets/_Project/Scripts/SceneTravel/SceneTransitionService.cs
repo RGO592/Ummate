@@ -14,6 +14,7 @@ public sealed class SceneTransitionService : MonoBehaviour
     private static SceneTransitionService instance;
     private readonly Dictionary<int, List<GameObject>> suspendedRoots = new Dictionary<int, List<GameObject>>();
     private CanvasGroup curtain;
+    private TransitionImageSequence imageSequence;
     private bool busy;
 
     public static bool IsTraveling => instance != null && instance.busy;
@@ -22,7 +23,7 @@ public sealed class SceneTransitionService : MonoBehaviour
     public static event Action<Scene> Arrived;
 
     public static void Travel(Scene source, SceneSpawnPoint localPlayer, string destination,
-        string spawnId, float fadeDuration)
+        string spawnId, float fadeDuration, bool fromForestExit = false)
     {
         if (IsTraveling || !source.IsValid() || source != SceneManager.GetActiveScene()) return;
         if (localPlayer == null || !localPlayer.HasPlayer || string.IsNullOrWhiteSpace(spawnId)
@@ -34,7 +35,15 @@ public sealed class SceneTransitionService : MonoBehaviour
         if (destination == source.name || destination == source.path) return;
         EnsureInstance();
         instance.busy = true; // Set before the coroutine; multiple player colliders cannot start duplicate loads.
-        instance.StartCoroutine(instance.Transition(source, localPlayer, destination, spawnId, Mathf.Max(0f, fadeDuration)));
+        string destinationName = System.IO.Path.GetFileNameWithoutExtension(destination);
+        bool toForest = fromForestExit && source.name == "FarmLayout_WorkScene"
+            && destinationName == "SpiritGridScene";
+        // Resolve the return route before this call: destination may be a full scene path.
+        // RestoreLocation uses its own coroutine and never enters this presentation path.
+        bool toVillage = source.name == "SpiritGridScene" && destinationName == "FarmLayout_WorkScene";
+        bool useSequence = toForest || toVillage;
+        instance.StartCoroutine(instance.Transition(source, localPlayer, destination, spawnId,
+            Mathf.Max(0f, fadeDuration), useSequence, flipHorizontal: toVillage));
     }
 
     // Save load, after GameSaveSystem applied the state. The active scene being the saved one only moves
@@ -172,7 +181,7 @@ public sealed class SceneTransitionService : MonoBehaviour
     }
 
     private IEnumerator Transition(Scene source, SceneSpawnPoint localPlayer, string destination,
-        string spawnId, float duration)
+        string spawnId, float duration, bool useSequence, bool flipHorizontal)
     {
         Scene target = default;
         SceneSpawnPoint.InputLock sourceLock = null, targetLock = null;
@@ -182,7 +191,15 @@ public sealed class SceneTransitionService : MonoBehaviour
             EnsureCurtain();
             curtain.blocksRaycasts = true;
             sourceLock = localPlayer.LockInput();
+            // Load the reusable presentation before fading; no scene objects need wiring.
+            if (useSequence) EnsureImageSequence();
             yield return Fade(1f, duration);
+            if (useSequence)
+            {
+                if (imageSequence != null) imageSequence.Play(flipHorizontal);
+                // Present frame zero before starting work that may stall the main thread.
+                yield return null;
+            }
             Suspend(source);
             sourceHidden = true;
             sourceLock.Dispose();
@@ -215,6 +232,15 @@ public sealed class SceneTransitionService : MonoBehaviour
             // A fresh camera may already have had one frame.
             ResetCameras(target);
             yield return null;
+            if (useSequence && imageSequence != null)
+            {
+                while (!imageSequence.IsComplete)
+                {
+                    targetLock.Enforce();
+                    yield return null;
+                }
+                imageSequence.Hide(); // The opaque black curtain remains behind it.
+            }
             yield return Fade(0f, duration);
             completed = true;
             // Listener errors must not undo a completed trip.
@@ -223,6 +249,7 @@ public sealed class SceneTransitionService : MonoBehaviour
         }
         finally
         {
+            if (imageSequence != null) imageSequence.Hide();
             targetLock?.Dispose();
             sourceLock?.Dispose();
             if (!completed && sourceHidden && source.IsValid() && source.isLoaded)
@@ -240,6 +267,19 @@ public sealed class SceneTransitionService : MonoBehaviour
     {
         try { return SceneManager.LoadSceneAsync(destination, LoadSceneMode.Additive); }
         catch (Exception exception) { Debug.LogException(exception); return null; }
+    }
+
+    private void EnsureImageSequence()
+    {
+        if (imageSequence != null) return;
+        TransitionImageSequence prefab = Resources.Load<TransitionImageSequence>("Transitions/ForestToEcosystem");
+        if (prefab == null)
+        {
+            Debug.LogError("ForestToEcosystem transition prefab is missing. Using the existing fade.");
+            return;
+        }
+        imageSequence = Instantiate(prefab, curtain.transform, false);
+        imageSequence.transform.SetAsLastSibling();
     }
 
     private static Scene FindScene(string destination)

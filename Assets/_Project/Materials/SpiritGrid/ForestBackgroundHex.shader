@@ -1,4 +1,4 @@
-Shader "Ummate/SpiritGrid/ForestBackgroundHex"
+Shader "Susupjung/SpiritGrid/ForestBackgroundHex"
 {
     Properties
     {

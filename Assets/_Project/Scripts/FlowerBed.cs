@@ -77,6 +77,8 @@ public sealed class FlowerBed : Interactable
             return;
         }
 
+        // Energy: checked after every other precondition and before anything changes; spent only after success.
+        PlayerEnergy energy = PlayerEnergy.For(interactor);
         // Inventory events must not trigger a second operation during the first one.
         interacting = true;
         try
@@ -84,17 +86,29 @@ public sealed class FlowerBed : Interactable
             switch (state)
             {
                 case BedState.Empty:
+                    if (inventory.GetQuantity(flowerSeeds) < seedsPerPlanting)
+                    {
+                        AudioManager.Play(GameSfx.ActionFail);
+                        Report("꽃 씨앗이 없습니다.");
+                        return;
+                    }
+                    if (!PlayerEnergy.CheckAction(energy, EnergyAction.PlantFlower)) return;
                     if (!inventory.TryConsume(flowerSeeds, seedsPerPlanting))
                     {
                         Report("꽃 씨앗이 없습니다.");
                         return;
                     }
                     SetState(BedState.Planted);
+                    PlayerEnergy.SpendAction(energy, EnergyAction.PlantFlower);
+                    AudioManager.Play(GameSfx.PlantFlower);
                     Report("꽃 씨앗을 심었습니다.");
                     QuestEvents.Raise(QuestEventType.FlowerPlanted, flower);
                     return;
                 case BedState.Planted:
+                    if (!PlayerEnergy.CheckAction(energy, EnergyAction.WaterFlower)) return;
                     SetState(BedState.Watered);
+                    PlayerEnergy.SpendAction(energy, EnergyAction.WaterFlower);
+                    AudioManager.Play(GameSfx.WaterFlower);
                     Report("꽃에 물을 주었습니다.");
                     QuestEvents.Raise(QuestEventType.FlowerWatered, flower);
                     return;
@@ -108,9 +122,12 @@ public sealed class FlowerBed : Interactable
                         Report("꽃을 더 받을 수 없습니다.");
                         return;
                     }
+                    if (!PlayerEnergy.CheckAction(energy, EnergyAction.HarvestFlower)) return;
                     // Commit the bed first so synchronous inventory listeners cannot harvest twice.
                     SetState(BedState.Empty);
                     inventory.AddItem(flower, harvestAmount);
+                    PlayerEnergy.SpendAction(energy, EnergyAction.HarvestFlower);
+                    AudioManager.Play(GameSfx.HarvestFlower);
                     Report($"꽃 {harvestAmount}개를 획득했습니다.");
                     QuestEvents.Raise(QuestEventType.FlowerHarvested, flower);
                     return;

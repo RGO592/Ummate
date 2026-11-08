@@ -13,11 +13,15 @@ public sealed class PlayerMovement : MonoBehaviour
     private float modelFacingOffset = 90f;
 
     private Rigidbody body;
+    // The village player's own PlayerEnergy, or the suspended village one in region scenes (SpiritGridScene).
+    // Energy 0 slows walking and running by PlayerEnergy's exhausted speed multiplier; moving never costs energy.
+    private PlayerEnergy energy;
     private Vector2 moveInput;
     private bool runHeld;
     private Transform movementCamera;
     private Transform visual;
     private Vector3 facingDirection;
+    private readonly FootstepTimer footsteps = new FootstepTimer();
 
     private void Awake()
     {
@@ -30,23 +34,35 @@ public sealed class PlayerMovement : MonoBehaviour
         Keyboard keyboard = Keyboard.current;
         moveInput = Vector2.zero;
         runHeld = false;
-        if (keyboard == null || !Application.isFocused)
+        if (keyboard == null || !Application.isFocused || SceneTransitionService.IsTraveling)
+        {
+            footsteps.Stop();
             return;
+        }
 
         float x = (keyboard.dKey.isPressed ? 1f : 0f) - (keyboard.aKey.isPressed ? 1f : 0f);
         float z = (keyboard.wKey.isPressed ? 1f : 0f) - (keyboard.sKey.isPressed ? 1f : 0f);
         moveInput = Vector2.ClampMagnitude(new Vector2(x, z), 1f);
         runHeld = keyboard.leftShiftKey.isPressed;
+
+        // Footsteps only while input moves the body for real (not standing, pushing a wall, paused or locked).
+        bool moving = moveInput.sqrMagnitude > 0.01f && Time.timeScale > 0f && FootstepTimer.IsMovingFast(body);
+        footsteps.Tick(moving, runHeld, energy != null ? energy.SpeedMultiplier : 1f, Time.deltaTime);
     }
+
+    // A disabled controller (sleep, trading post, travel lock) starts its next walk with a fresh step timer.
+    private void OnDisable() => footsteps.Stop();
 
     private void FixedUpdate()
     {
+        if (SceneTransitionService.IsTraveling) return;
         // Keep gravity and ground collision response on the vertical axis.
         if (movementCamera == null && Camera.main != null)
             movementCamera = Camera.main.transform;
         Vector3 moveDirection = CalculateMoveDirection(moveInput, movementCamera);
         Vector3 velocity = body.linearVelocity;
-        float speed = runHeld ? runSpeed : moveSpeed;
+        if (energy == null) energy = PlayerEnergy.For(gameObject);
+        float speed = (runHeld ? runSpeed : moveSpeed) * (energy != null ? energy.SpeedMultiplier : 1f);
         velocity.x = moveDirection.x * speed;
         velocity.z = moveDirection.z * speed;
         body.linearVelocity = velocity;

@@ -11,7 +11,7 @@ public sealed class EcoPlacementController : MonoBehaviour
     [SerializeField] private EcoGridManager grid;
     [SerializeField] private EcoBuildAreaView buildArea;
     [SerializeField] private Camera viewCamera;
-    [SerializeField] private EnvironmentTileType selectedType = EnvironmentTileType.Wheat;
+    [SerializeField] private EnvironmentTileType selectedType = EnvironmentTileType.Mushroom;
 
     [Header("Highlight")]
     [SerializeField] private Color canPlaceColor = new Color(0.3f, 0.95f, 0.35f);
@@ -47,7 +47,7 @@ public sealed class EcoPlacementController : MonoBehaviour
     public bool RemoveMode { get; private set; }
     public string HoverStatus { get; private set; } = "";
     public string LastMessage { get; private set; } = "";
-    private bool InputBlocked => buildArea != null && buildArea.InputBlocked;
+    private bool InputBlocked => SceneTransitionService.IsTraveling || (buildArea != null && buildArea.InputBlocked);
 
     public bool IsPointerOverUI(Vector2 screen) => PointerOverUI(screen);
 
@@ -87,6 +87,7 @@ public sealed class EcoPlacementController : MonoBehaviour
 
     private void Update()
     {
+        if (SceneTransitionService.IsTraveling) return;
         if (grid == null || viewCamera == null) return;
         Mouse mouse = Mouse.current;
         Keyboard keyboard = Keyboard.current;
@@ -189,6 +190,10 @@ public sealed class EcoPlacementController : MonoBehaviour
         // Moving is always free; only a new placement reports what it charged.
         LastMessage = !committed ? $"{(moving ? "이동" : "배치")} 취소: {reason}"
             : moving ? $"{name} 이동 (비용 없음)" : $"{name} 배치 (사용: {grid.LastChargeText})";
+        // Other refusals are visible on the hover frame; low energy is also told to the player.
+        if (!committed && reason == PlayerEnergy.NotEnoughMessage) PlayerFeedback.Notify(reason);
+        // A refused drop for missing energy / gold / materials (not a drop outside the grid or on an occupied cell).
+        if (!committed && reason != null && reason.Contains("부족")) AudioManager.Play(GameSfx.ActionFail);
         HideHighlights();
     }
 

@@ -24,6 +24,10 @@ public sealed class GameSaveSystem : MonoBehaviour
     [SerializeField] private SleepTransition sleepTransition;
     [SerializeField] private PlayerInventory inventory;
     [SerializeField] private PlayerWallet wallet;
+    [SerializeField, Tooltip("Optional. Empty uses the PlayerEnergy next to the wallet. Scenes without one save no energy.")]
+    private PlayerEnergy energy;
+    [SerializeField, Tooltip("Optional. Empty uses the MarketPriceSystem next to GameDay. Scenes without one save no market.")]
+    private MarketPriceSystem market;
     [SerializeField] private PlayerQuickbar quickbar;
     [SerializeField, Tooltip("Legacy ranch prologue block; still saved so older saves stay valid.")]
     private MissionProgress mission;
@@ -73,7 +77,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         public int Day { get; }
         // Real-world time: the file's last write time.
         public DateTime SavedAt { get; }
-        // Saved scene path; empty for older saves (they continue in FarmScene).
+        // Saved scene path; empty for older saves (they continue in the village scene).
         public string Scene { get; }
         public string LocationName => GetLocationName(Scene);
         public bool IsReadable => Day >= 1;
@@ -82,14 +86,19 @@ public sealed class GameSaveSystem : MonoBehaviour
     [Serializable] private sealed class SlotHeader { public int version; public int day; public string scene; }
 
     // Player-facing region names by scene file name. A new region (desert, snowfield) adds one line here.
-    private const string DefaultLocationScene = "FarmScene";
+    private const string DefaultLocationScene = "FarmLayout_WorkScene";
     private static readonly Dictionary<string, string> LocationNames = new Dictionary<string, string>
     {
-        { "FarmScene", "숲 마을" },
+        { "FarmLayout_WorkScene", "숲 마을" },
         { "SpiritGridScene", "숲&강" },
+        { RetiredVillageScene, "이전 마을 (호환 안 됨)" },
     };
+    // Old-save detection only: the removed village scene (its asset no longer exists). Its saves used the same
+    // quest IDs (Q01–Q07) with different objectives and another layout, so they are refused before anything
+    // changes instead of restoring wrong quest progress or positions.
+    private const string RetiredVillageScene = "FarmScene";
 
-    // Older saves without a scene continue in FarmScene, so they show its name. Unknown scenes show their file name.
+    // Older saves without a scene continue in the save system's own scene. Unknown scenes show their file name.
     public static string GetLocationName(string scenePath)
     {
         string key = string.IsNullOrEmpty(scenePath) ? DefaultLocationScene : Path.GetFileNameWithoutExtension(scenePath);
@@ -99,6 +108,25 @@ public sealed class GameSaveSystem : MonoBehaviour
     // Player-facing result of the last NewGame / save / load, shown by PauseMenu. No dev key names.
     public string LastMessage { get; private set; } = "";
     public int CurrentDay => gameDay != null ? gameDay.CurrentDay : 0;
+    private PlayerEnergy Energy
+    {
+        get
+        {
+            if (energy == null && wallet != null) wallet.TryGetComponent(out energy);
+            return energy;
+        }
+    }
+    private MarketPriceSystem Market
+    {
+        get
+        {
+            if (market == null && gameDay != null) gameDay.TryGetComponent(out market);
+            return market;
+        }
+    }
+    // Market save ids are the item binding ids (the same ids the inventory uses).
+    private string ItemIdOf(ItemDefinition item) => items?.FirstOrDefault(b => b != null && b.item == item)?.id;
+    private ItemDefinition ItemOf(string id) => items?.FirstOrDefault(b => b != null && b.id == id)?.item;
     public bool IsSleeping => sleepTransition != null && sleepTransition.IsSleeping;
 
     public static bool IsValidSlot(int slot) => slot >= 0 && slot < SlotCount;
@@ -178,6 +206,53 @@ public sealed class GameSaveSystem : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetSession() => legacyChecked = false;
 
+    // The game's former productName. Unity keeps saves under LocalLow\<companyName>\<productName> on Windows,
+    // so renaming the product moved persistentDataPath. Used only by the one-time copy below.
+    private const string LegacyProductFolder = "Ummate";
+
+    // Before any scene (main menu Continue reads the slots at once). Copies only the files this system reads,
+    // and only when the current folder has none of them: an existing new save is never overwritten or mixed
+    // with old ones. Originals are never deleted; a failed copy removes its own partial files, so the next
+    // launch simply tries again. File.Copy keeps the write time, so Continue still picks the latest slot.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void MigrateLegacyProductFolder()
+    {
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+        string current = Application.persistentDataPath, legacy = null;
+        var created = new List<string>();
+        try
+        {
+            string parent = Path.GetDirectoryName(current);
+            if (string.IsNullOrEmpty(parent)) return;
+            legacy = Path.Combine(parent, LegacyProductFolder);
+            if (!Directory.Exists(legacy) ||
+                string.Equals(Path.GetFullPath(legacy).TrimEnd('\\'), Path.GetFullPath(current).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
+                return;
+            string[] names = SlotFileNames.Concat(new[] { LegacyFileName }).ToArray();
+            if (names.Any(name => File.Exists(Path.Combine(current, name)))) return;
+            string[] found = names.Where(name => File.Exists(Path.Combine(legacy, name))).ToArray();
+            if (found.Length == 0) return;
+            Directory.CreateDirectory(current);
+            foreach (string name in found)
+            {
+                string target = Path.Combine(current, name), temporary = target + ".migrating";
+                created.Add(temporary);
+                File.Copy(Path.Combine(legacy, name), temporary, true);
+                File.Move(temporary, target);
+                created.Remove(temporary);
+                created.Add(target);
+            }
+            Debug.Log($"이전 저장 폴더의 저장 파일 {found.Length}개를 새 저장 폴더로 복사했습니다. 원본은 그대로 둡니다.\n{legacy} → {current}");
+        }
+        catch (Exception ex)
+        {
+            foreach (string path in created)
+                try { if (File.Exists(path)) File.Delete(path); } catch (Exception) { }
+            Debug.LogWarning($"이전 저장 폴더를 옮기지 못했습니다. 원본은 그대로 두고 다음 실행 때 다시 시도합니다: {ex.Message}\n{legacy} → {current}");
+        }
+#endif
+    }
+
     private void OnEnable()
     {
         if (sleepTransition != null) sleepTransition.SleepCompleted += AutoSave;
@@ -225,6 +300,8 @@ public sealed class GameSaveSystem : MonoBehaviour
             {
                 version = 1, day = 1, selectedSlot = 0,
                 gold = 0,
+                // New game starts with full energy (-1 when this scene has no PlayerEnergy).
+                currentEnergy = Energy != null ? Energy.MaxEnergy : -1,
                 inventory = items.Select(b => new GameSaveData.ItemState
                 {
                     id = b.id, quantity = b.id == WheatSeedsId ? newGameWheatSeeds : b.id == WateringCanId ? 1 : 0
@@ -236,7 +313,9 @@ public sealed class GameSaveSystem : MonoBehaviour
                 chickens = chickens.Select(b => new GameSaveData.ChickenState { id = b.id }).ToArray(),
                 cows = cows.Select(b => new GameSaveData.CowState { id = b.id }).ToArray(),
                 flowerBeds = flowerBeds.Select(b => new GameSaveData.FlowerBedState { id = b.id }).ToArray(),
-                hexGrids = new GameSaveData.HexGridState[0]
+                hexGrids = new GameSaveData.HexGridState[0],
+                // Empty = every market item at the base multiplier (1.00).
+                market = new GameSaveData.MarketItemState[0]
             };
             Validate(data);
             // Commit the reset to the auto slot first. A write failure leaves the old save and live state
@@ -358,7 +437,7 @@ public sealed class GameSaveSystem : MonoBehaviour
     }
 
     // Save load wins over travel spawns: the saved scene and player position. Older saves have no scene
-    // and continue in this scene (FarmScene), where its player already stands.
+    // and continue in this scene (the village), where its player already stands.
     private void RestoreLocation(GameSaveData data)
     {
         bool saved = !string.IsNullOrEmpty(data.scene);
@@ -404,6 +483,10 @@ public sealed class GameSaveSystem : MonoBehaviour
             binding.bed.RestoreState(data.flowerBeds?.SingleOrDefault(s => s.id == binding.id));
         inventory.RestoreQuantities(restoredInventory);
         wallet.RestoreGold(data.gold);
+        // Loading is not sleeping: the saved value is copied, never refilled. Older saves (-1) load as full.
+        if (Energy != null) Energy.RestoreSavedState(data.currentEnergy);
+        // Copies the slot's saved prices; never rolls new ones. Older saves (null) start every item at 1.00.
+        if (Market != null) Market.RestoreState(data.market, ItemOf);
         quickbar.SelectSlot(data.selectedSlot);
         if (village != null) village.RestoreState(data.villageFacilities);
         // Region grids that are not loaded yet keep their state until their scene awakes.
@@ -428,6 +511,7 @@ public sealed class GameSaveSystem : MonoBehaviour
             scene = active.path, playerPosition = player.position,
             version = 1, day = gameDay.CurrentDay, selectedSlot = quickbar.SelectedSlotIndex,
             gold = wallet.Gold,
+            currentEnergy = Energy != null ? Energy.CurrentEnergy : -1,
             inventory = items.Select(b => new GameSaveData.ItemState { id = b.id, quantity = inventory.GetQuantity(b.item) }).ToArray(),
             mission = mission.CaptureState(),
             quests = quests.CaptureState(),
@@ -437,7 +521,8 @@ public sealed class GameSaveSystem : MonoBehaviour
             flowerBeds = flowerBeds.Select(b => b.bed.CaptureState(b.id)).ToArray(),
             hexGrids = EcoGridManager.CaptureAll(),
             villageFacilities = village != null ? village.CaptureState() : null,
-            habitats = HabitatRecords.Capture()
+            habitats = HabitatRecords.Capture(),
+            market = Market != null ? Market.CaptureState(ItemIdOf) : null
         };
     }
 
@@ -467,6 +552,7 @@ public sealed class GameSaveSystem : MonoBehaviour
         Require(data != null && data.version == 1 && data.day >= 1, "지원하지 않거나 손상된 저장 파일입니다.");
         Require(data.selectedSlot >= 0 && data.selectedSlot < PlayerQuickbar.SlotCount, "퀵슬롯 값 오류");
         Require(data.gold >= 0, "골드 값 오류");
+        Require(data.currentEnergy >= -1, "기운 값 오류"); // -1 = older save without energy
         Require(data.inventory != null && data.inventory.All(s => s != null && s.quantity >= 0), "인벤토리 값 오류");
         Require(data.plots != null && data.plots.All(s => s != null), "밭 데이터 누락");
         Require(data.chickens != null && data.chickens.All(s => s != null), "닭 데이터 누락");
@@ -485,10 +571,18 @@ public sealed class GameSaveSystem : MonoBehaviour
         if (data.habitats != null)
             Require(data.habitats.All(h => h != null && !string.IsNullOrWhiteSpace(h.id)) &&
                 data.habitats.Select(h => h.id).Distinct().Count() == data.habitats.Length, "생태계 데이터 오류");
+        // Optional (older saves have none). Unknown item ids are ignored on restore, not rejected.
+        if (data.market != null)
+            Require(data.market.All(m => m != null && !string.IsNullOrWhiteSpace(m.id) &&
+                    IsPositive(m.currentMultiplier) && IsPositive(m.previousMultiplier) &&
+                    (m.history == null || m.history.All(IsPositive))) &&
+                data.market.Select(m => m.id).Distinct().Count() == data.market.Length, "시세 데이터 오류");
         // Optional (older saves have none). Checked before any state changes or scene loads; the position
         // itself is never clamped or moved.
         if (!string.IsNullOrEmpty(data.scene))
         {
+            Require(Path.GetFileNameWithoutExtension(data.scene) != RetiredVillageScene,
+                "이전 마을(FarmScene)의 저장 데이터입니다. 현재 숲 마을과 퀘스트·배치가 달라 불러올 수 없습니다.");
             Require(IsGameplayScene(data.scene) && Application.CanStreamedLevelBeLoaded(data.scene), "저장된 지역 Scene이 없거나 게임 지역이 아닙니다.");
             Vector3 p = data.playerPosition;
             Require(IsFinite(p.x) && IsFinite(p.y) && IsFinite(p.z), "플레이어 위치 값 오류");
@@ -535,6 +629,7 @@ public sealed class GameSaveSystem : MonoBehaviour
     }
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
     private static bool IsFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+    private static bool IsPositive(float value) => IsFinite(value) && value > 0f;
     private static void CheckIds(IEnumerable<string> ids)
     {
         var values = ids.ToArray();

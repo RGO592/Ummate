@@ -1496,7 +1496,7 @@ MonoBehaviour:
   placement: {fileID: 1976902116}
   grid: {fileID: 1976902115}
   slots:
-  - type: 1
+  - type: 6
     button: {fileID: 420961289}
     background: {fileID: 420961290}
     icon: {fileID: 74731368}
@@ -6332,12 +6332,10 @@ MonoBehaviour:
   surfaceMaterial: {fileID: 2100000, guid: f5a845da994c405fa854e28c9d670095, type: 2}
   waterSurfaceMaterial: {fileID: 2100000, guid: 10aa5a7513a440e0b66cdc8e939880fe, type: 2}
   tileSettings:
-  - type: 1
+  - type: 6
     prefab: {fileID: 0}
-    cost: 20
-    itemCosts:
-    - item: {fileID: 11400000, guid: 38a0a5a364aa32440b722f92566d4c39, type: 2}
-      amount: 1
+    cost: 30
+    itemCosts: []
   - type: 2
     prefab: {fileID: 0}
     cost: 30
@@ -6373,7 +6371,7 @@ MonoBehaviour:
   grid: {fileID: 1976902115}
   buildArea: {fileID: 4400000001}
   viewCamera: {fileID: 304036737}
-  selectedType: 1
+  selectedType: 6
   canPlaceColor: {r: 0.3, g: 0.95, b: 0.35, a: 1}
   blockedColor: {r: 0.95, g: 0.25, b: 0.2, a: 1}
   pickedColor: {r: 1, g: 0.85, b: 0.15, a: 1}
@@ -17686,7 +17684,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c0a1b8d90c05b8ea4db7940b9e2a605, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionTrigger
-  targetScene: FarmScene
+  targetScene: FarmLayout_WorkScene
   targetSpawnPointId: ForestNatureToVillage
   localSpawnPoint: {fileID: 6000000008}
   useFade: 1
@@ -18062,7 +18060,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HabitatTracker
   grid: {fileID: 1976902115}
   habitats:
+  - {fileID: 11400000, guid: 58878be67f27456ea77bee320b02515b, type: 2}
+  - {fileID: 11400000, guid: 4c01e9c0cec041f9825738792e354d8a, type: 2}
   - {fileID: 11400000, guid: 0bf9a973313278d03fc5ea3325777087, type: 2}
+  - {fileID: 11400000, guid: 9ff7212f7ff34d11b8130a42f8d9a071, type: 2}
+  - {fileID: 11400000, guid: b188410c66aa4a25b7599555f779567b, type: 2}
 --- !u!1 &9300000001
 GameObject:
   m_ObjectHideFlags: 0
@@ -18253,6 +18255,54 @@ MonoBehaviour:
   targetId: spirit_grid
   leadsToScene: 
   arrivalHalfSize: {x: 10, y: 10}
+--- !u!1 &9700000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9700000002}
+  - component: {fileID: 9700000003}
+  m_Layer: 0
+  m_Name: EnergyHUD
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9700000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9700000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9700000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9700000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89fbb35052474a8db3d1b0d4e904be69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnergyHUD
+  font: {fileID: 11400000, guid: e9189a8d4dd46714da53ecfa7131f7f7, type: 2}
+  panelSprite: {fileID: 0}
+  sortingOrder: 90
+  cornerOffset: {x: 20, y: 192}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -18272,3 +18322,4 @@ SceneRoots:
   - {fileID: 6800000021}
   - {fileID: 9300000002}
   - {fileID: 9300000009}
+  - {fileID: 9700000002}

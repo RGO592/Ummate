@@ -84,12 +84,15 @@ public sealed class EcoDragPreview : IDisposable
                 Add(parent, PrimitiveType.Cube, "Ripple", new Vector3(i * k, 0.17f, i * 2 * k),
                     new Vector3(4 * k, 0.035f, 0.14f * k), new Color(0.65f, 0.88f, 1f));
         }
-        else if (type == EnvironmentTileType.Wheat)
+        else if (type == EnvironmentTileType.Mushroom)
         {
-            for (int x = -1; x <= 1; x++)
-                for (int z = -1; z <= 1; z++)
-                    Add(parent, PrimitiveType.Cube, "Wheat", new Vector3(x * 2.6f * k, 0.8f * k, z * 2.6f * k),
-                        new Vector3(0.3f, 1.5f, 0.3f) * k, new Color(1f, 0.85f, 0.35f));
+            for (int i = -1; i <= 1; i++)
+            {
+                Vector3 stem = new Vector3(i * 2.6f * k, 0.6f * k, (i == 0 ? 1.5f : -1f) * k);
+                Add(parent, PrimitiveType.Cylinder, "Stem", stem, new Vector3(0.5f, 0.6f, 0.5f) * k, new Color(0.93f, 0.9f, 0.82f));
+                Add(parent, PrimitiveType.Sphere, "Cap", stem + new Vector3(0, 0.7f * k, 0),
+                    new Vector3(1.8f, 0.7f, 1.8f) * k, new Color(0.78f, 0.22f, 0.18f));
+            }
         }
         else if (type == EnvironmentTileType.Flower)
         {
@@ -150,8 +153,11 @@ public sealed class EcoDragPreview : IDisposable
         // Type-specific marks make the carried object readable even while above an opaque UI panel.
         if (type == EnvironmentTileType.Water)
             for (int i = -1; i <= 1; i++) Stamp("Ripple", new Vector2(i*4,i*14), new Vector2(38,3), Color.white);
-        else if (type == EnvironmentTileType.Wheat)
-            for (int i = -1; i <= 1; i++) Stamp("Wheat", new Vector2(i*15,0), new Vector2(5,36), new Color(1,0.95f,0.5f));
+        else if (type == EnvironmentTileType.Mushroom)
+        {
+            Stamp("Stem", new Vector2(0,-10), new Vector2(10,22), new Color(0.95f,0.92f,0.85f));
+            Stamp("Cap", new Vector2(0,6), new Vector2(38,16), new Color(0.78f,0.22f,0.18f));
+        }
         else if (type == EnvironmentTileType.Flower)
         {
             for (int i = 0; i < 4; i++)

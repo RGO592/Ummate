@@ -84,15 +84,16 @@ public sealed class SpiritBuildModeController : MonoBehaviour
 
     private void Update()
     {
+        if (SceneTransitionService.IsTraveling) return;
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null && keyboard.bKey.wasPressedThisFrame) ToggleBuildMode();
         if (IsBuildMode && (buildArea == null || !buildArea.InputBlocked)) UpdateBuildCamera(keyboard, Mouse.current);
     }
 
     // UI buttons
-    public void ToggleBuildMode() => Apply(!IsBuildMode);
-    public void EnterBuildMode() => Apply(true);
-    public void ExitBuildMode() => Apply(false);
+    public void ToggleBuildMode() { if (!SceneTransitionService.IsTraveling) Apply(!IsBuildMode); }
+    public void EnterBuildMode() { if (!SceneTransitionService.IsTraveling) Apply(true); }
+    public void ExitBuildMode() { if (!SceneTransitionService.IsTraveling) Apply(false); }
 
     private void Apply(bool build)
     {

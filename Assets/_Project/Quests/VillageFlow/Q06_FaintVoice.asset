@@ -19,39 +19,42 @@ MonoBehaviour:
   prerequisites:
   - {fileID: 11400000, guid: 27c4dd5718abc79529a6b189746b467d, type: 2}
   objectives:
-  - id: place_tree
-    description: "시험 과제: 나무 환경을 배치해 보자."
-    eventType: 13
-    item: {fileID: 0}
-    target: Tree
-    navigationTargetId: spirit_grid
-    navigationScene: SpiritGridScene
-    requiredAmount: 1
-    tip: "시험 과제: 나무 환경을 배치해 보자.\n(B: 건설 모드)"
-    startMessage: 
   - id: place_flower
-    description: "꽃 환경을 배치해 보자."
+    description: "시험 과제: 꽃 환경을 배치해 보자."
     eventType: 13
     item: {fileID: 0}
     target: Flower
     navigationTargetId: spirit_grid
     navigationScene: SpiritGridScene
     requiredAmount: 1
-    tip: "꽃도 한번 배치해볼까...?"
-    startMessage: "꽃도 한번 배치해볼까...?"
-  - id: complete_squirrel_habitat
-    description: "나무 옆에 꽃을 두기"
-    eventType: 15
+    tip: "시험 과제: 꽃 환경을 배치해 보자.\n(B: 건설 모드)"
+    startMessage:
+  - id: place_mushroom
+    description: "버섯 환경을 배치해 보자."
+    eventType: 13
     item: {fileID: 0}
-    target: squirrel
+    target: Mushroom
     navigationTargetId: spirit_grid
     navigationScene: SpiritGridScene
     requiredAmount: 1
-    tip: "꽃을 나무 옆으로 옮겨보자."
-    startMessage: 
+    tip: "버섯도 한번 배치해볼까...?"
+    startMessage: "버섯도 한번 배치해볼까...?"
+  - id: complete_rabbit_habitat
+    description: "꽃 옆에 버섯을 두기"
+    eventType: 15
+    item: {fileID: 0}
+    target: rabbit
+    navigationTargetId: spirit_grid
+    navigationScene: SpiritGridScene
+    requiredAmount: 1
+    tip: "버섯을 꽃 옆으로 옮겨보자."
+    startMessage:
   sequentialObjectives: 1
   retiredObjectiveIds:
   - hex_tutorial
+  - place_tree
+  - place_rock
+  - complete_squirrel_habitat
   startItems: []
   startMessage: "꽃향기가 그리워……"
   startMessageUntilClick: 1

@@ -69,6 +69,7 @@ public sealed class CowFeeding : Interactable, IAnimalFeedStatus
                     return;
                 }
                 MilkReady = false;
+                AudioManager.Play(GameSfx.ItemGet);
                 MissionProgress mission = interactor.GetComponent<MissionProgress>();
                 if (mission != null) mission.RecordMilkCollection(1);
                 Log($"우유 1병 수집 완료. 보유 수량: {inventory.GetQuantity(milk)}");

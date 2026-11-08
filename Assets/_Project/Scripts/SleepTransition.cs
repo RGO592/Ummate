@@ -37,9 +37,11 @@ public sealed class SleepTransition : MonoBehaviour
         {
             morningLabel.text = "";
             overlay.blocksRaycasts = true;
+            AudioManager.Play(GameSfx.Sleep); // Bedtime confirmed: as the fade starts.
             yield return FadeTo(1f, fadeOutDuration);
             gameDay.Sleep();
             morningLabel.text = $"{gameDay.CurrentDay}일차 아침";
+            AudioManager.Play(GameSfx.Morning); // With the morning text.
             yield return new WaitForSecondsRealtime(morningDuration);
             yield return FadeTo(0f, fadeInDuration);
         }

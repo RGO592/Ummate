@@ -26,6 +26,8 @@ public static class HabitatRecords
     }
 
     public static bool IsDiscovered(string id) => discovered.Contains(id);
+    // Every habitat revealed to the player so far (each id once). Read-only view for quest progress.
+    public static IReadOnlyCollection<string> Discovered => discovered;
     // The pattern currently stands on the grid. Discovery stays even if it is later taken apart.
     public static bool IsComplete(string id) => complete.Contains(id);
 

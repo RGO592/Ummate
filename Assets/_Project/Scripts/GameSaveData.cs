@@ -20,7 +20,7 @@ public sealed class GameSaveData
     // Added after v1 shipped. Older saves have no field (null) and load with every flower bed empty.
     public FlowerBedState[] flowerBeds;
     // Added after v1 shipped: where the player was (Build Settings scene path + player root position).
-    // Older saves have no scene (empty) and continue in FarmScene where its player already stands.
+    // Older saves have no scene (empty) and continue in the village where its player already stands.
     public string scene;
     public Vector3 playerPosition;
     // Added after v1 shipped. Older saves have no field (null) and new games write none (empty):
@@ -28,8 +28,21 @@ public sealed class GameSaveData
     public QuestSaveState[] quests;
     // Added after v1 shipped. Older saves and scenes without village build mode have none: nothing is placed.
     public VillageFacilityState[] villageFacilities;
+    // Added after v1 shipped. Older saves have no field and keep this initializer (-1): they load with full energy.
+    public int currentEnergy = -1;
     // Added after v1 shipped. Older saves have no field (null): nothing has been discovered.
     public HabitatState[] habitats;
+    // Added after v1 shipped. Daily market (MarketPriceSystem). Older saves have no field (null) and new games write
+    // none (empty): every market item starts at the base multiplier. Each slot file carries its own market.
+    public MarketItemState[] market;
+
+    // id = GameSaveSystem item binding id. Multipliers, not prices: prices are re-derived from the item's base price.
+    [Serializable] public sealed class MarketItemState
+    {
+        public string id;
+        public float currentMultiplier, previousMultiplier;
+        public float[] history; // Oldest first, today last.
+    }
 
     // completed = the pattern stood on the grid when saved; re-read from the grid after loading.
     [Serializable] public sealed class HabitatState

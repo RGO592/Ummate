@@ -9,15 +9,21 @@ public sealed class PlayerInteractor : MonoBehaviour
 
     private void Update()
     {
+        if (SceneTransitionService.IsTraveling) return;
         Keyboard keyboard = Keyboard.current;
         if (Application.isFocused && keyboard != null && keyboard.fKey.wasPressedThisFrame)
-            TryInteract();
+        {
+            // Nothing to interact with: F also uses a usable selected item (potion). Other items stay silent as before.
+            if (!TryInteract() && TryGetComponent(out PlayerQuickbar quickbar) && quickbar.isActiveAndEnabled)
+                quickbar.TryUseSelected(notifyIfNotUsable: false);
+        }
     }
 
     private Collider[] nearby = new Collider[32];
 
     public bool TryInteract()
     {
+        if (SceneTransitionService.IsTraveling) return false;
         Interactable target = FindTarget();
         if (target == null)
             return false;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 // One player-placeable village facility (밭, 꽃 화단, 나무). Square-grid village building only;
 // the spirit realm's Hex placement (EcoGridManager) is a separate system.
-[CreateAssetMenu(fileName = "VillageFacility", menuName = "Ummate/Village Facility")]
+[CreateAssetMenu(fileName = "VillageFacility", menuName = "Susupjung/Village Facility")]
 public sealed class VillageFacilityDefinition : ScriptableObject
 {
     [SerializeField, Tooltip("Stable id for future saves. Never reuse or change after release.")]

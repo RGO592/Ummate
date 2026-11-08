@@ -8415,6 +8415,7 @@ GameObject:
   - component: {fileID: 511175215}
   - component: {fileID: 511175217}
   - component: {fileID: 511175218}
+  - component: {fileID: 9800000001}
   m_Layer: 0
   m_Name: GameDay
   m_TagString: Untagged
@@ -8490,6 +8491,8 @@ MonoBehaviour:
   sleepTransition: {fileID: 511175217}
   inventory: {fileID: 1739143746}
   wallet: {fileID: 6400000001}
+  energy: {fileID: 9700000010}
+  market: {fileID: 9800000001}
   quickbar: {fileID: 1739143745}
   mission: {fileID: 1739143747}
   quests: {fileID: 6800000001}
@@ -8536,6 +8539,9 @@ MonoBehaviour:
   - id: Axe
     item: {fileID: 11400000, guid: ec5bd5f63bd93e8061604f8c6770cfd9, type: 2}
     optionalInOlderSaves: 1
+  - id: StaminaPotion
+    item: {fileID: 11400000, guid: 140d414445d24f8e9b5c03f6764f1ea5, type: 2}
+    optionalInOlderSaves: 1
   plots:
   - id: plot-01
     plot: {fileID: 651528383}
@@ -8559,11 +8565,36 @@ MonoBehaviour:
   - id: flower-bed-02
     bed: {fileID: 6600000002}
   gameplayScenes:
-  - Assets/_Project/Scenes/FarmScene.unity
   - Assets/_Project/Scenes/SpiritGridScene.unity
   - Assets/_Project/Scenes/FarmLayout_WorkScene.unity
   village: {fileID: 9100000012}
   newGameWheatSeeds: 0
+--- !u!114 &9800000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 511175214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54d362db740945468f2baa9ae7e7b6bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MarketPriceSystem
+  items:
+  - {fileID: 11400000, guid: 38a0a5a364aa32440b722f92566d4c39, type: 2}
+  - {fileID: 11400000, guid: 3eb5070756636484aae8cb58c609a9ba, type: 2}
+  - {fileID: 11400000, guid: 53d28924864b3ff4aaea70d34c4c8007, type: 2}
+  - {fileID: 11400000, guid: 04b7e52770bc94740a80ac6c0d3b37f7, type: 2}
+  - {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
+  - {fileID: 11400000, guid: fc619eae7f6d564fbbdaad19066eb3ed, type: 2}
+  baseMultiplier: 1
+  maxDailyChange: 0.15
+  minMultiplier: 0.7
+  maxMultiplier: 1.4
+  historyLength: 7
+  gameDay: {fileID: 511175215}
+  entries: []
 --- !u!1 &512307968
 GameObject:
   m_ObjectHideFlags: 0
@@ -25956,6 +25987,7 @@ GameObject:
   - component: {fileID: 1739143745}
   - component: {fileID: 1739143747}
   - component: {fileID: 6400000001}
+  - component: {fileID: 9700000010}
   - component: {fileID: 6800000001}
   - component: {fileID: 6800000002}
   m_Layer: 0
@@ -26138,7 +26170,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3eb5070756636484aae8cb58c609a9ba, type: 2}
   - {fileID: 11400000, guid: 6828dd67bdaffe248808311157da149b, type: 2}
   - {fileID: 11400000, guid: 53d28924864b3ff4aaea70d34c4c8007, type: 2}
-  - {fileID: 11400000, guid: 04b7e52770bc94740a80ac6c0d3b37f7, type: 2}
+  - {fileID: 11400000, guid: 140d414445d24f8e9b5c03f6764f1ea5, type: 2}
   - {fileID: 11400000, guid: 58e02bd667bb4e02968c9e8ca9893cc7, type: 2}
   selectedSlotIndex: 0
 --- !u!114 &1739143746
@@ -27221,20 +27253,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1800794865}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &1802873530
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6000000000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7b3b9ff6b8c42a29d9a45cd18bdad23, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WorkSceneReturnRoute
-  destinationScene: SpiritGridScene
-  returnSceneAlias: FarmScene
 --- !u!1 &1812346189
 GameObject:
   m_ObjectHideFlags: 0
@@ -36808,7 +36826,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6000000001}
-  - component: {fileID: 1802873530}
   m_Layer: 0
   m_Name: ForestExit
   m_TagString: Untagged
@@ -37384,6 +37401,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerWallet
   startingGold: 0
   currentGold: 0
+--- !u!114 &9700000010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1739143737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0e7cf4af5f34d5c82ec6719e2df06ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerEnergy
+  maxEnergy: 100
+  currentEnergy: 100
+  exhaustedSpeedMultiplier: 0.65
+  costs:
+    prepareField: 5
+    plantCrop: 2
+    waterCrop: 3
+    harvestCrop: 2
+    plantFlower: 2
+    waterFlower: 3
+    harvestFlower: 2
+    plantSapling: 3
+    chopHit: 4
+    placeFacility: 2
+    moveFacility: 0
+    placeHex: 2
+    moveHex: 0
+  gameDay: {fileID: 511175215}
+  developerSource: {fileID: 1385981131}
 --- !u!1 &6400000010
 GameObject:
   m_ObjectHideFlags: 0
@@ -37823,6 +37871,9 @@ MonoBehaviour:
   sleepTransition: {fileID: 511175217}
   developerSource: {fileID: 1385981131}
   developerGoldAmount: 1000
+  buyCatalog:
+  - {fileID: 11400000, guid: 140d414445d24f8e9b5c03f6764f1ea5, type: 2}
+  maxBuyQuantity: 99
 --- !u!4 &6400000042
 Transform:
   m_ObjectHideFlags: 0
@@ -38040,10 +38091,6 @@ MonoBehaviour:
   blockedMessage: "\uC548 \uB3FC, \uC548 \uB3FC! \uC774\uAC70\uAE4C\uC9C0 \uD314\uBA74
     \uC2DC\uD5D8\uC744 \uD1B5\uACFC\uD560 \uC218 \uC5C6\uC5B4!"
   keptMaterials:
-  - item: {fileID: 11400000, guid: fc619eae7f6d564fbbdaad19066eb3ed, type: 2}
-    keepAtLeast: 1
-    questId: Q06
-    objectiveId: place_tree
   - item: {fileID: 11400000, guid: 9e0885a26fc04f3faf188972b639572e, type: 2}
     keepAtLeast: 1
     questId: Q06
@@ -38475,6 +38522,54 @@ MonoBehaviour:
   targetId: village_build_area
   leadsToScene: 
   arrivalHalfSize: {x: 19, y: 14}
+--- !u!1 &9700000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9700000002}
+  - component: {fileID: 9700000003}
+  m_Layer: 0
+  m_Name: EnergyHUD
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9700000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9700000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9700000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9700000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89fbb35052474a8db3d1b0d4e904be69, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnergyHUD
+  font: {fileID: 11400000, guid: e9189a8d4dd46714da53ecfa7131f7f7, type: 2}
+  panelSprite: {fileID: 0}
+  sortingOrder: 90
+  cornerOffset: {x: 20, y: 20}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -38501,3 +38596,4 @@ SceneRoots:
   - {fileID: 9100000011}
   - {fileID: 9300000002}
   - {fileID: 9300000009}
+  - {fileID: 9700000002}

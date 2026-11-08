@@ -93,6 +93,8 @@ public sealed class FarmPlot : Interactable
             return;
         }
 
+        // Energy: checked after every other precondition and before anything changes; spent only after success.
+        PlayerEnergy energy = PlayerEnergy.For(interactor);
         // Inventory events must not trigger a second operation during the first one.
         interacting = true;
         try
@@ -110,6 +112,7 @@ public sealed class FarmPlot : Interactable
                     Log("인벤토리 수량 한도로 수확할 수 없습니다.");
                     return;
                 }
+                if (!PlayerEnergy.CheckAction(energy, EnergyAction.HarvestCrop)) return;
                 state = CropState.Empty;
                 wateredDay = -1;
                 CurrentCrop = CropKind.None;
@@ -125,14 +128,19 @@ public sealed class FarmPlot : Interactable
                 }
                 RefreshAppearance();
                 Log($"수확 완료: {harvestedName} 3개 + {harvestedName} 씨앗 1개. 빈 밭으로 돌아갑니다.");
+                PlayerEnergy.SpendAction(energy, EnergyAction.HarvestCrop);
+                AudioManager.Play(GameSfx.HarvestCrop);
                 QuestEvents.Raise(QuestEventType.CropHarvested, produce);
                 return;
             }
 
             if (state == CropState.Empty && requiresPreparation)
             {
+                if (!PlayerEnergy.CheckAction(energy, EnergyAction.PrepareField)) return;
                 state = CropState.Prepared;
                 RefreshAppearance();
+                PlayerEnergy.SpendAction(energy, EnergyAction.PrepareField);
+                AudioManager.Play(GameSfx.TillField); // No clip yet: silent until one is assigned in AudioLibrary.
                 PlayerFeedback.Notify("밭을 갈았습니다.");
                 QuestEvents.Raise(QuestEventType.FieldPrepared);
                 return;
@@ -157,6 +165,13 @@ public sealed class FarmPlot : Interactable
                         return;
                     }
                 }
+                // Seeds are checked before energy so a missing seed reports the seed, never costs energy.
+                if (inventory.GetQuantity(selected) < 1)
+                {
+                    Log("선택한 씨앗이 부족합니다.");
+                    return;
+                }
+                if (!PlayerEnergy.CheckAction(energy, EnergyAction.PlantCrop)) return;
                 if (!inventory.TryConsume(selected, 1))
                 {
                     Log("선택한 씨앗이 부족합니다.");
@@ -168,6 +183,8 @@ public sealed class FarmPlot : Interactable
                 wateredDay = -1;
                 RefreshAppearance();
                 Log($"{CropName} 파종 완료: 씨앗 1개 소비. 성장에 물 준 날 {RequiredGrowthDays}일이 필요합니다.");
+                PlayerEnergy.SpendAction(energy, EnergyAction.PlantCrop);
+                AudioManager.Play(GameSfx.PlantSeed);
                 QuestEvents.Raise(QuestEventType.CropPlanted, Produce);
                 return;
             }
@@ -187,9 +204,12 @@ public sealed class FarmPlot : Interactable
                 Log("오늘은 이미 물을 줬습니다.");
                 return;
             }
+            if (!PlayerEnergy.CheckAction(energy, EnergyAction.WaterCrop)) return;
             wateredDay = gameDay.CurrentDay;
             RefreshAppearance();
             Log($"{wateredDay}일차 물 주기 완료. 취침하면 {CropName} 성장량이 1 증가합니다.");
+            PlayerEnergy.SpendAction(energy, EnergyAction.WaterCrop);
+            AudioManager.Play(GameSfx.WaterCrop);
             QuestEvents.Raise(QuestEventType.CropWatered, Produce);
         }
         finally { interacting = false; }

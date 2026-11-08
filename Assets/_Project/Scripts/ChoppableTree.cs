@@ -41,16 +41,22 @@ public sealed class ChoppableTree : Interactable
         }
         if (requiredTool != null && inventory.GetQuantity(requiredTool) < 1)
         {
+            AudioManager.Play(GameSfx.ActionFail);
             PlayerFeedback.Notify($"{requiredTool.DisplayName}가 필요합니다.");
             return;
         }
+        // Energy per hit: checked before the hit changes anything, spent only after the hit counted.
+        PlayerEnergy energy = PlayerEnergy.For(interactor);
         interacting = true;
         try
         {
             int nextHits = Mathf.Min(RequiredHits, completedHits + 1);
             if (nextHits < RequiredHits)
             {
+                if (!PlayerEnergy.CheckAction(energy, EnergyAction.ChopHit)) return;
                 completedHits = nextHits;
+                PlayerEnergy.SpendAction(energy, EnergyAction.ChopHit);
+                AudioManager.Play(GameSfx.AxeHit);
                 Debug.Log($"나무를 베는 중... {RemainingHits}", this);
                 PlayerFeedback.Notify($"나무를 베는 중... {RemainingHits}");
                 onHit?.Invoke();
@@ -63,6 +69,7 @@ public sealed class ChoppableTree : Interactable
                 PlayerFeedback.Notify("목재를 더 받을 수 없습니다.");
                 return;
             }
+            if (!PlayerEnergy.CheckAction(energy, EnergyAction.ChopHit)) return;
             int previousHits = completedHits;
             completedHits = nextHits;
             isChopped = true;
@@ -76,6 +83,10 @@ public sealed class ChoppableTree : Interactable
                 ApplyChoppedVisual();
                 return;
             }
+            PlayerEnergy.SpendAction(energy, EnergyAction.ChopHit);
+            // Last hit: the axe, then the tree going down.
+            AudioManager.Play(GameSfx.AxeHit);
+            AudioManager.Play(GameSfx.TreeFall, AudioManager.Instance != null ? AudioManager.Instance.Library.treeFallDelay : 0f);
             Debug.Log($"목재 {amount}개를 획득했습니다. (보유 목재: {inventory.GetQuantity(woodItem)}개)", this);
             PlayerFeedback.Notify($"목재 {amount}개를 획득했습니다.");
             QuestEvents.Raise(QuestEventType.TreeChopped, woodItem);

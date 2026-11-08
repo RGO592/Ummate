@@ -5,8 +5,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Runtime quest progress for the whole game. Lives on the FarmScene player next to PlayerInventory.
-// FarmScene stays loaded (only suspended) while a region is visited, so this subscribes in Awake, not
+// Runtime quest progress for the whole game. Lives on the village player next to PlayerInventory.
+// The village (FarmLayout_WorkScene) stays loaded (only suspended) while a region is visited, so this subscribes in Awake, not
 // OnEnable, and keeps counting events raised there (arriving in SpiritGridScene completes Q05).
 // Any number of quests can be Active at once; the "current main quest" is just the first Active Main one.
 // Progress only comes from QuestEvents (real gameplay successes) and travel arrivals; loading copies
@@ -161,11 +161,12 @@ public sealed class QuestLog : MonoBehaviour
     {
         EnsureBuilt();
         ResetToInitial();
-        // FarmScene loads fresh for New Game and Load; a story line left from the previous run must not carry over.
+        // The village loads fresh for New Game and Load; a story line left from the previous run must not carry over.
         PlayerFeedback.ClearUntilClick();
         if (!SaveReferencesValid) Debug.LogWarning("QuestLog: 퀘스트 목록(ID·목표 ID·선행 퀘스트)과 인벤토리/지갑 연결을 확인해 주세요.", this);
         QuestEvents.Raised += OnQuestEvent;
         SceneTransitionService.Arrived += OnArrived;
+        HabitatRecords.Restored += OnHabitatRecordsRestored;
         subscribed = true;
     }
 
@@ -176,6 +177,7 @@ public sealed class QuestLog : MonoBehaviour
         if (!subscribed) return;
         QuestEvents.Raised -= OnQuestEvent;
         SceneTransitionService.Arrived -= OnArrived;
+        HabitatRecords.Restored -= OnHabitatRecordsRestored;
     }
 
     private void EnsureBuilt()
@@ -245,7 +247,7 @@ public sealed class QuestLog : MonoBehaviour
                 if (sequential && i != current) continue;
                 if (objective == null || objective.eventType != type || entry.IsObjectiveDone(i)) continue;
                 if (objective.item != null && objective.item != item) continue;
-                if (!string.IsNullOrEmpty(objective.target) && objective.target != target) continue;
+                if (!objective.Accepts(target)) continue; // Target filter and excluded targets.
                 entry.Progress[i] = Mathf.Min(entry.GetRequired(i), entry.Progress[i] + 1);
                 changed = true;
                 if (entry.IsObjectiveDone(i))
@@ -272,26 +274,120 @@ public sealed class QuestLog : MonoBehaviour
         if (quest.RewardGold > 0 && !wallet.AddGold(quest.RewardGold))
             Debug.LogWarning($"{quest.Id} 골드 보상을 지급하지 못했습니다(골드 한도).", this);
         Debug.Log($"퀘스트 완료: {quest.Id} {quest.Title}", this);
+        AudioManager.Play(GameSfx.QuestComplete);
         PlayerFeedback.Notify($"퀘스트 완료: {quest.Title}");
     }
 
     private void ActivateEligible(bool grant, bool announce)
     {
+        List<Entry> started = null;
         foreach (Entry entry in entries)
         {
             if (entry.Status != QuestStatus.Locked) continue;
             if (!entry.Definition.Prerequisites.All(p => p != null && GetStatus(p.Id) == QuestStatus.Completed)) continue;
             entry.Status = QuestStatus.Active;
             Array.Clear(entry.Progress, 0, entry.Progress.Length);
+            if (grant) (started ??= new List<Entry>()).Add(entry);
             if (announce)
             {
                 Debug.Log($"새 퀘스트: {entry.Definition.Id} {entry.Definition.Title}", this);
+                // Waits for a completion jingle played just before (AudioLibrary.questStartAfterCompleteDelay).
+                AudioManager.Play(GameSfx.QuestStart);
                 PlayerFeedback.Notify($"새 퀘스트: {entry.Definition.Title}");
                 if (entry.Definition.StartMessageUntilClick) PlayerFeedback.NotifyUntilClick(entry.Definition.StartMessage);
                 else PlayerFeedback.Notify(entry.Definition.StartMessage);
             }
             if (grant) GrantItems(entry.Definition.StartItems, entry.Definition);
         }
+        // A quest started during play picks up habitats already revealed (records are current here; loads sync
+        // later, in OnHabitatRecordsRestored, once the saved records are back).
+        if (started != null) SyncHabitatObjectives(started);
+        // After play activation, a load or a new game: a transition quest left Active (e.g. Q07), or one whose
+        // objectives are already done, finishes next frame.
+        ScheduleDueQuests();
+    }
+
+    // ---- Habitat objectives (HabitatCompleted with no single target, e.g. Q08 "any two") ----
+
+    // Load / new game: HabitatRecords.Restore runs after RestoreState, so the habitat count is re-read here.
+    // A save stuck before this existed (habitats revealed, Q08 still 0/2) catches up the same way.
+    private void OnHabitatRecordsRestored()
+    {
+        if (SyncHabitatObjectives(entries)) NotifyChanged();
+        ScheduleDueQuests();
+    }
+
+    // Progress = distinct revealed habitats the objective accepts (each id once; excluded ids never).
+    // Only raises progress, never lowers it, and never past the required amount.
+    private static bool SyncHabitatObjectives(IEnumerable<Entry> candidates)
+    {
+        bool changed = false;
+        foreach (Entry entry in candidates)
+        {
+            if (entry.Status != QuestStatus.Active) continue;
+            QuestDefinition.Objective[] objectives = entry.Definition.Objectives;
+            for (int i = 0; i < objectives.Length; i++)
+            {
+                QuestDefinition.Objective objective = objectives[i];
+                if (objective == null || objective.eventType != QuestEventType.HabitatCompleted) continue;
+                if (entry.Definition.SequentialObjectives && i != entry.CurrentObjective) continue;
+                int count = HabitatRecords.Discovered.Count(objective.Accepts);
+                int value = Mathf.Min(entry.GetRequired(i), Mathf.Max(entry.Progress[i], count));
+                if (value == entry.Progress[i]) continue;
+                entry.Progress[i] = value;
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    // ---- Completion outside a gameplay event: transition quests (CompleteOnStart) and synced objectives ----
+
+    private bool dueScheduled;
+
+    private void ScheduleDueQuests()
+    {
+        if (dueScheduled || !entries.Any(IsDue)) return;
+        dueScheduled = true;
+        // Next frame, not this one: the "새 퀘스트" notice and sound of the start come first.
+        // Runs from a scene-independent object, because the village is suspended while the forest is visited.
+        QuestDeferredStep.NextFrame(CompleteDueQuests);
+    }
+
+    private static bool IsDue(Entry entry) =>
+        entry.Status == QuestStatus.Active && (entry.Definition.CompleteOnStart || entry.AllObjectivesDone);
+
+    private void CompleteDueQuests()
+    {
+        if (this == null) return; // The village was unloaded in between (main menu).
+        dueScheduled = false;
+        if (processing)
+        {
+            ScheduleDueQuests();
+            return;
+        }
+        List<Entry> due = entries.Where(IsDue).ToList();
+        if (due.Count == 0) return;
+        processing = true;
+        try
+        {
+            foreach (Entry entry in due)
+            {
+                // Transition placeholders count as done, so a later save holds a consistent Completed quest.
+                for (int i = 0; i < entry.ObjectiveCount; i++) entry.Progress[i] = entry.GetRequired(i);
+                Complete(entry);
+            }
+            // Same as a gameplay completion: the next quest starts with its notice and start items.
+            ActivateEligible(grant: true, announce: true);
+            NotifyChanged();
+            // Events that arrived while this ran are applied now, as OnQuestEvent would.
+            while (pending.Count > 0)
+            {
+                var next = pending.Dequeue();
+                Apply(next.type, next.item, next.target);
+            }
+        }
+        finally { processing = false; }
     }
 
     private void GrantItems(QuestDefinition.ItemGrant[] grants, QuestDefinition quest)

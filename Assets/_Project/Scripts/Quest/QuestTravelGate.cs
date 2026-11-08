@@ -17,7 +17,11 @@ public sealed class QuestTravelGate : MonoBehaviour
         ? quests.GetStatus(requiredQuestId) != QuestStatus.Locked
         : quests.IsObjectiveDone(requiredQuestId, requiredObjectiveId));
 
-    public void ReportLocked() => PlayerFeedback.Notify(lockedMessage);
+    public void ReportLocked()
+    {
+        AudioManager.Play(GameSfx.ActionFail);
+        PlayerFeedback.Notify(lockedMessage);
+    }
 
     private void Awake()
     {

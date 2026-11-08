@@ -22,7 +22,14 @@ public sealed class SceneTransitionTrigger : MonoBehaviour
             gate.ReportLocked();
             return;
         }
-        SceneTransitionService.Travel(gameObject.scene, localSpawnPoint, WorkSceneReturnRoute.Resolve(gameObject.scene, targetScene),
-            targetSpawnPointId, useFade ? fadeDuration : 0f);
+        SceneTransitionService.Travel(gameObject.scene, localSpawnPoint, targetScene,
+            targetSpawnPointId, useFade ? fadeDuration : 0f, IsForestExit());
+    }
+
+    private bool IsForestExit()
+    {
+        for (Transform node = transform; node != null; node = node.parent)
+            if (node.name == "ForestExit") return true;
+        return false;
     }
 }

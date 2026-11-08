@@ -1,4 +1,4 @@
-Shader "Ummate/SpiritGrid/GridLines"
+Shader "Susupjung/SpiritGrid/GridLines"
 {
     Properties
     {

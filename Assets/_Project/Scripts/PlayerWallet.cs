@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-// Lives on the FarmScene player next to PlayerInventory. FarmScene stays loaded (only suspended)
+// Lives on the village player next to PlayerInventory. The village stays loaded (only suspended)
 // during regional travel, so the balance survives scene round trips without DontDestroyOnLoad.
 [DisallowMultipleComponent]
 public sealed class PlayerWallet : MonoBehaviour

@@ -1,4 +1,4 @@
-Shader "Ummate/SpiritGrid/WaterSurface"
+Shader "Susupjung/SpiritGrid/WaterSurface"
 {
     Properties
     {

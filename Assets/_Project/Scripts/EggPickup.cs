@@ -49,6 +49,7 @@ public sealed class EggPickup : Interactable
                 return;
             }
             available = false;
+            AudioManager.Play(GameSfx.ItemGet);
             MissionProgress mission = interactor.GetComponent<MissionProgress>();
             if (mission != null) mission.RecordEggCollection(1);
             Debug.Log($"{name}: 달걀 1개 수집 완료. 보유 수량: {inventory.GetQuantity(eggItem)}", this);

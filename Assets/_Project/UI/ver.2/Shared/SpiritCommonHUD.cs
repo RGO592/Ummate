@@ -11,10 +11,10 @@ public sealed class SpiritCommonHUD : MonoBehaviour
     [SerializeField] private GameDay gameDay;
     [SerializeField] private TMP_Text dayText;
     [SerializeField, Min(1)] private int dateFontSize = 22;
-    [SerializeField, Min(1), Tooltip("Preview date when this scene is opened without FarmScene.")]
+    [SerializeField, Min(1), Tooltip("Preview date when this scene is opened without the village.")]
     private int standaloneDay = 1;
 
-    [Header("Gold (FarmScene player's PlayerWallet)")]
+    [Header("Gold (village player's PlayerWallet)")]
     [SerializeField] private TMP_Text goldText;
 
     [Header("Spirit guidance")]
@@ -94,7 +94,7 @@ public sealed class SpiritCommonHUD : MonoBehaviour
             ? observedQuests.CurrentTip : null;
     }
 
-    // Rebound on every enable, so returning from FarmScene shows the latest balance immediately.
+    // Rebound on every enable, so returning from the village shows the latest balance immediately.
     private void BindWallet()
     {
         UnbindWallet();
@@ -122,7 +122,7 @@ public sealed class SpiritCommonHUD : MonoBehaviour
     {
         UnbindDay();
         observedDay = gameDay;
-        // Whichever village scene the player came from (FarmScene or a work scene); this scene has no clock of its own.
+        // Whichever village scene the player came from (FarmLayout_WorkScene); this scene has no clock of its own.
         if (observedDay == null)
             foreach (GameDay day in FindObjectsByType<GameDay>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
@@ -192,7 +192,7 @@ public sealed class SpiritCommonHUD : MonoBehaviour
         if (subTextArea != null) subTextArea.SetActive(enabled);
         if (subText != null)
         {
-            subText.text = "개발용: 환경물 무료·즉시 배치";
+            subText.text = "개발용: 환경물 무료·즉시 배치 · 기운 소비 없음";
             subText.gameObject.SetActive(enabled);
         }
     }

@@ -209,10 +209,18 @@ public sealed class VillageBuildModeController : MonoBehaviour
         if (overUI || !mouse.leftButton.wasPressedThisFrame) return;
         if (blocker != null)
         {
+            AudioManager.Play(GameSfx.ActionFail);
             PlayerFeedback.Notify(blocker);
             return;
         }
-        if (moving != null) FinishMove(cells);
+        if (moving != null)
+        {
+            // Relocation cost is 0 for now (임시); a refused move keeps carrying the facility.
+            PlayerEnergy energy = PlayerEnergy.For(playerBody != null ? playerBody.gameObject : null);
+            if (!PlayerEnergy.CheckAction(energy, EnergyAction.MoveFacility)) return;
+            FinishMove(cells);
+            PlayerEnergy.SpendAction(energy, EnergyAction.MoveFacility);
+        }
         else Place(selected, cells);
     }
 
@@ -230,7 +238,13 @@ public sealed class VillageBuildModeController : MonoBehaviour
             Debug.LogWarning($"{facility.name}: 시설 Prefab 연결을 확인해 주세요.", this);
             return;
         }
+        // Energy: checked before spawning, spent only after the facility exists (never on a refused click).
+        PlayerEnergy energy = PlayerEnergy.For(playerBody != null ? playerBody.gameObject : null);
+        if (!PlayerEnergy.CheckAction(energy, EnergyAction.PlaceFacility)) return;
         Spawn(facility, cells, carriedRotation);
+        PlayerEnergy.SpendAction(energy, EnergyAction.PlaceFacility);
+        // New placements only; moving a facility stays silent (no relocation sound yet).
+        AudioManager.Play(GameSfx.PlaceFacility);
         // Only a real placement counts: selecting, a refused click or moving a facility raise nothing.
         QuestEvents.Raise(QuestEventType.FacilityPlaced, null, facility.Id);
         // The selection stays so several can be placed in a row.

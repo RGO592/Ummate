@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 22400000}
+  - component: {fileID: 11400000}
+  m_Layer: 5
+  m_Name: ForestToEcosystem
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!224 &22400000
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b4c5294a044bbb94918a8e8c4210d0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  frames:
+  - {fileID: 21300000, guid: b24cb2e3587147c98209f5ad0a05a953, type: 3}
+  - {fileID: 21300000, guid: e55df72198584997a55152b1f1fdda62, type: 3}
+  - {fileID: 21300000, guid: be1a15ede5c54c8d9b5c76f0fba5f243, type: 3}
+  - {fileID: 21300000, guid: fddf37cd33e04aba9c2978df13671538, type: 3}
+  - {fileID: 21300000, guid: cb634d9e4648401285ad13acd151c1ba, type: 3}
+  - {fileID: 21300000, guid: 2f601e5f10cb4b6690ac6a5fcca61f97, type: 3}
+  - {fileID: 21300000, guid: 47140ee9e74b4420801f8dc0cccc9156, type: 3}
+  - {fileID: 21300000, guid: 000f2002d3264c06ba3a289e4dcdfa55, type: 3}
+  - {fileID: 21300000, guid: b20dd339f31543259250545b9fce1cb4, type: 3}
+  - {fileID: 21300000, guid: 60a1248c4eee4603bbb2023f3ec2acdd, type: 3}
+  frameDuration: 0.12

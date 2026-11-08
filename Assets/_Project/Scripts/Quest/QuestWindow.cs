@@ -10,7 +10,7 @@ using Button = UnityEngine.UI.Button;
 
 // J quest book, using shared ver.2 page sprites and scrollable pages.
 // One per gameplay scene. It reads the single QuestLog on the
-// FarmScene player, found across scenes because FarmScene stays loaded (suspended) during region visits.
+// village player, found across scenes because the village stays loaded (suspended) during region visits.
 // Left: active and completed quests. Right: the selected quest's status, description, objectives, rewards.
 // Esc closes it before PauseMenu sees the press (PauseMenu runs last and only opens for an unconsumed Esc).
 // While open, the scene's gameplay input list is disabled, the same way TradingPostUI and PauseMenu do it.
@@ -103,6 +103,7 @@ public sealed class QuestWindow : MonoBehaviour
         if (selectedId == null || Quests.GetStatus(selectedId) == QuestStatus.Locked)
             selectedId = main != null ? main.Definition.Id : null;
         root.SetActive(true);
+        AudioManager.Play(GameSfx.MenuToggle);
         Refresh();
     }
 
@@ -113,6 +114,8 @@ public sealed class QuestWindow : MonoBehaviour
         if (quests != null) quests.Changed -= Refresh;
         if (root != null) root.SetActive(false);
         UnlockInput();
+        // Player closes only: suspending or unloading the scene (OnDisable) stays quiet.
+        if (isActiveAndEnabled) AudioManager.Play(GameSfx.MenuToggle);
     }
 
     private void Select(string id)

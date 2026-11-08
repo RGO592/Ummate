@@ -5,15 +5,16 @@ using UnityEngine;
 // The aspect ratio is simply that of the chosen resolution.
 public static class DisplaySettings
 {
-    private const string WidthKey = "Ummate.Display.Width";
-    private const string HeightKey = "Ummate.Display.Height";
-    private const string ModeKey = "Ummate.Display.Mode";
+    private const string WidthKey = SettingsKeys.Prefix + "Display.Width";
+    private const string HeightKey = SettingsKeys.Prefix + "Display.Height";
+    private const string ModeKey = SettingsKeys.Prefix + "Display.Mode";
 
     // "전체 화면" is Unity's borderless full-screen window; exclusive mode is not offered.
     public static readonly FullScreenMode[] Modes = { FullScreenMode.FullScreenWindow, FullScreenMode.Windowed };
     public static readonly string[] ModeNames = { "전체 화면", "창 모드" };
 
-    public static bool HasSaved => PlayerPrefs.HasKey(WidthKey) && PlayerPrefs.HasKey(HeightKey) && PlayerPrefs.HasKey(ModeKey);
+    // Every read goes through here, so older option values are copied to the current keys first.
+    public static bool HasSaved => MigrateThenTrue() && PlayerPrefs.HasKey(WidthKey) && PlayerPrefs.HasKey(HeightKey) && PlayerPrefs.HasKey(ModeKey);
 
     // Supported sizes of the current monitor, one entry per width × height (refresh rates merged), largest first.
     public static List<Vector2Int> AvailableResolutions()
@@ -45,6 +46,12 @@ public static class DisplaySettings
     }
 
     public static string Describe(Vector2Int size) => $"{size.x} × {size.y}";
+
+    private static bool MigrateThenTrue()
+    {
+        SettingsKeys.MigrateLegacy();
+        return true;
+    }
 
     public static void Apply(Vector2Int size, int modeIndex)
     {

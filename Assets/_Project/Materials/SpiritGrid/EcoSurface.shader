@@ -1,4 +1,4 @@
-Shader "Ummate/SpiritGrid/SurfaceOverlay"
+Shader "Susupjung/SpiritGrid/SurfaceOverlay"
 {
     Properties
     {

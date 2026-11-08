@@ -6,7 +6,8 @@ using UnityEngine.SceneManagement;
 
 public sealed class MainMenuController : MonoBehaviour
 {
-    private const string FarmScenePath = "Assets/_Project/Scenes/FarmScene.unity";
+    // The official village. New Game and Continue both enter here.
+    private const string VillageScenePath = "Assets/_Project/Scenes/FarmLayout_WorkScene.unity";
     [SerializeField] private UnityEngine.UI.Button newGameButton;
     [SerializeField] private UnityEngine.UI.Button continueButton;
     [SerializeField] private UnityEngine.UI.Button settingsButton;
@@ -77,7 +78,7 @@ public sealed class MainMenuController : MonoBehaviour
         RefreshButtons();
         SetStatus(newGame ? "새 게임을 준비하고 있습니다." : "저장된 게임을 불러오고 있습니다.");
         AsyncOperation loading = null;
-        try { loading = SceneManager.LoadSceneAsync(FarmScenePath, LoadSceneMode.Additive); }
+        try { loading = SceneManager.LoadSceneAsync(VillageScenePath, LoadSceneMode.Additive); }
         catch (System.Exception ex) { Debug.LogWarning($"농장 Scene 준비 실패: {ex.Message}", this); }
         if (loading == null)
         {
@@ -85,7 +86,7 @@ public sealed class MainMenuController : MonoBehaviour
             yield break;
         }
         yield return loading;
-        var farm = SceneManager.GetSceneByPath(FarmScenePath);
+        var farm = SceneManager.GetSceneByPath(VillageScenePath);
         // Awake/Start initialize scene defaults before the existing save system replaces them.
         yield return null;
         var save = farm.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<GameSaveSystem>(true)).SingleOrDefault();

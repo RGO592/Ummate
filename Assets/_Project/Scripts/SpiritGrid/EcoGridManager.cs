@@ -42,7 +42,7 @@ public sealed class EcoGridManager : MonoBehaviour
     [Header("Surface Presentation")]
     [SerializeField, Min(0f), Tooltip("Inset on exposed edges only; same-type neighbours always meet at the cell boundary.")]
     private float surfaceInset = 0.12f;
-    [SerializeField, Tooltip("Solid type-coloured surface for Wheat, Flower, Rock and Tree. Render after ground tint (queue 2002).") ]
+    [SerializeField, Tooltip("Solid type-coloured surface for Mushroom, Flower, Rock and Tree. Render after ground tint (queue 2002).") ]
     private Material surfaceMaterial;
     [SerializeField, Tooltip("Water surface only. Defaults to Resources/SG_WaterSurface.")]
     private Material waterSurfaceMaterial;
@@ -51,7 +51,7 @@ public sealed class EcoGridManager : MonoBehaviour
     [SerializeField] private TileSettings[] tileSettings =
     {
         // Temporary test gold only; item costs are assigned in the scene Inspector.
-        new TileSettings { type = EnvironmentTileType.Wheat, cost = 20 },
+        new TileSettings { type = EnvironmentTileType.Mushroom, cost = 30 },
         new TileSettings { type = EnvironmentTileType.Flower, cost = 30 },
         new TileSettings { type = EnvironmentTileType.Water, cost = 30 },
         new TileSettings { type = EnvironmentTileType.Rock, cost = 30 },
@@ -61,8 +61,10 @@ public sealed class EcoGridManager : MonoBehaviour
     [Header("Tutorial removal protection")]
     [SerializeField, Tooltip("While this objective is pending, the last Hex of each type below cannot be removed. Removal refunds nothing, so losing it could strand the quest.")]
     private string protectQuestId = "Q06";
-    [SerializeField] private string protectObjectiveId = "complete_squirrel_habitat";
-    [SerializeField] private EnvironmentTileType[] protectedLastTiles = { EnvironmentTileType.Tree, EnvironmentTileType.Flower };
+    [SerializeField] private string protectObjectiveId = "complete_rabbit_habitat";
+    // The rabbit habitat's tiles (Q06 tutorial: Flower → Mushroom). Only the last Hex of each type is kept;
+    // extra Flowers / Mushrooms and every other Hex stay removable.
+    [SerializeField] private EnvironmentTileType[] protectedLastTiles = { EnvironmentTileType.Flower, EnvironmentTileType.Mushroom };
     [SerializeField, TextArea] private string removalBlockedMessage = "시험에 필요한 환경은 남겨 두자!";
 
     private Dictionary<HexCoord, EcoGridCell> cells;
@@ -78,7 +80,7 @@ public sealed class EcoGridManager : MonoBehaviour
     // Raised once after a save restore replaced the whole grid (no per-cell CellChanged during restore).
     public event Action GridRestored;
 
-    // Save bridge. GameSaveSystem lives in FarmScene; this scene may not be loaded yet when F9 is pressed.
+    // Save bridge. GameSaveSystem lives in the village (FarmLayout_WorkScene); this scene may not be loaded yet when F9 is pressed.
     // Live grids register for their lifetime (they stay registered while the scene is suspended);
     // states for grids that are not loaded wait here and are applied when that grid awakes.
     private static readonly List<EcoGridManager> liveGrids = new List<EcoGridManager>();
@@ -212,29 +214,67 @@ public sealed class EcoGridManager : MonoBehaviour
         EcoGridCell cell = GetCell(coord);
         if (cell == null) { reason = "그리드 범위 밖입니다."; return false; }
         if (!cell.IsEmpty) { reason = "이미 환경물이 있습니다."; return false; }
-        // All forest Hex cells use the same placement rules.
-        return HasPlacementCost(type, out reason);
+        // All forest Hex cells use the same placement rules. Energy last: a blocked cell or missing gold reports that first.
+        return HasPlacementCost(type, out reason) && HasEnergy(EnergyAction.PlaceHex, out reason);
     }
 
-    // One transaction: validate cell + cost, charge, place. A failed placement refunds the charge.
+    // One transaction: validate cell + cost + energy, charge, place. A failed placement refunds everything.
+    // Energy is taken together with the gold/materials right before the tile commits (PlaceTile raises the quest event).
     public bool TryPlace(EnvironmentTileType type, HexCoord coord, out string reason)
     {
         if (!CanPlace(type, coord, out reason)) return false;
         bool free = EcoDevMode.FreePlacement;
         if (!free && !TryChargePlacement(type, out reason)) return false;
+        PlayerEnergy energy = PlayerEnergy.Active;
+        int energyCost = energy != null ? energy.GetCost(EnergyAction.PlaceHex) : 0;
+        bool energyTaken = false;
+        if (energy != null && !energy.IgnoresCost && energyCost > 0)
+        {
+            energyTaken = energy.TrySpend(energyCost);
+            if (!energyTaken)
+            {
+                if (!free) RefundPlacement(type);
+                reason = PlayerEnergy.NotEnoughMessage;
+                return false;
+            }
+        }
         try { PlaceTile(type, coord); }
         catch (Exception exception)
         {
             Debug.LogException(exception, this);
             // A listener may throw after the tile was committed; then the charge stands.
             EcoGridCell cell = GetCell(coord);
-            if (cell != null && !cell.IsEmpty && cell.TileType == type) { LastChargeText = free ? "DEV 무료" : DescribeCost(type); return true; }
+            if (cell != null && !cell.IsEmpty && cell.TileType == type)
+            {
+                LastChargeText = DescribeCharge(type, free, energyTaken ? energyCost : 0);
+                AudioManager.PlayHex(type);
+                return true;
+            }
             if (!free) RefundPlacement(type);
+            if (energyTaken) energy.Restore(energyCost);
             reason = "설치 중 오류가 발생해 비용을 돌려받았습니다.";
             return false;
         }
-        LastChargeText = free ? "DEV 무료" : DescribeCost(type);
+        LastChargeText = DescribeCharge(type, free, energyTaken ? energyCost : 0);
+        // One sound per Hex kind, new placements only (moves stay silent); no shared placement sound on top.
+        AudioManager.PlayHex(type);
         return true;
+    }
+
+    private string DescribeCharge(EnvironmentTileType type, bool free, int energySpent)
+    {
+        string charge = free ? "DEV 무료" : DescribeCost(type);
+        return energySpent > 0 ? $"{charge} · 기운 {energySpent}" : charge;
+    }
+
+    // The village player's energy (found like the payer). None (scene opened alone) blocks nothing.
+    private static bool HasEnergy(EnergyAction action, out string reason)
+    {
+        reason = null;
+        PlayerEnergy energy = PlayerEnergy.Active;
+        if (energy == null || energy.CanSpend(energy.GetCost(action))) return true;
+        reason = PlayerEnergy.NotEnoughMessage;
+        return false;
     }
 
     // Executes an already validated placement. Tiles are complete immediately (no construction days).
@@ -276,7 +316,7 @@ public sealed class EcoGridManager : MonoBehaviour
         return totals;
     }
 
-    // The farm player's wallet and inventory. FarmScene stays loaded (inactive) while this scene is visited,
+    // The farm player's wallet and inventory. The village stays loaded (inactive) while this scene is visited,
     // the same way SpiritCommonHUD reads its GameDay. Opening this scene alone finds no payer.
     private bool ResolvePayer()
     {
@@ -376,12 +416,15 @@ public sealed class EcoGridManager : MonoBehaviour
         if (target == null) { reason = "그리드 범위 밖입니다."; return false; }
         if (from == to) { reason = "같은 칸입니다."; return false; }
         if (!target.IsEmpty) { reason = "이미 환경물이 있습니다."; return false; }
-        return true;
+        // Moving costs 0 energy for now (임시); the check only matters if that value is raised later.
+        return HasEnergy(EnergyAction.MoveHex, out reason);
     }
 
     public bool TryMove(HexCoord from, HexCoord to, out string reason)
     {
         if (!CanMove(from, to, out reason)) return false;
+        // Nothing below can refuse the move, so the (normally 0) energy is spent before the quest event.
+        PlayerEnergy.SpendAction(PlayerEnergy.Active, EnergyAction.MoveHex);
         EcoGridCell source = cells[from];
         EcoGridCell target = cells[to];
         target.TakeFrom(source);

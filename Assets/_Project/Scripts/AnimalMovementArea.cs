@@ -7,7 +7,7 @@ public sealed class AnimalMovementArea : MonoBehaviour
     [SerializeField] private Vector2 size = new Vector2(5f, 5f);
     public Vector2 Size => size;
 
-    // World-axis bounds for the axis-aligned pens in FarmScene.
+    // World-axis bounds for the axis-aligned pens in the village.
     // For a rotated pen, use Transform.TransformPoint with the local Size rectangle instead.
     public Bounds WorldBounds
     {

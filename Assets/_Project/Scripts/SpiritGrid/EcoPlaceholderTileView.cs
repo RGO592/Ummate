@@ -107,19 +107,20 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         float top = SurfaceHeight;
         switch (type)
         {
-            case EnvironmentTileType.Wheat:
+            case EnvironmentTileType.Mushroom:
             {
-                int rows = Mathf.Max(3, Mathf.RoundToInt(3f * Mathf.Sqrt(k)));
-                float step = spread * 2f / (rows - 1);
-                Vector3 size = new Vector3(0.14f, 0.7f, 0.14f) * s;
-                for (int x = 0; x < rows; x++)
-                    for (int z = 0; z < rows; z++)
-                    {
-                        Vector3 spot = new Vector3(-spread + x * step + Range(-0.1f, 0.1f) * s,
-                            top + size.y * 0.5f, -spread + z * step + Range(-0.1f, 0.1f) * s);
-                        if (HexMetrics.Contains(spot, cellSize, groundInset + size.x))
-                            EcoVisualUtil.Primitive(PrimitiveType.Cube, props, "Stalk", spot, size, new Color(0.88f, 0.7f, 0.22f));
-                    }
+                // Placeholder: a few stems with flattened caps.
+                Color[] caps = { new Color(0.78f, 0.22f, 0.18f), new Color(0.62f, 0.42f, 0.28f), new Color(0.9f, 0.82f, 0.68f) };
+                int count = Mathf.Max(2, Mathf.RoundToInt(3f * k));
+                for (int i = 0; i < count; i++)
+                {
+                    float scale = Range(0.7f, 1.2f) * s;
+                    Vector3 stem = RandomSpot(top + 0.2f * scale);
+                    EcoVisualUtil.Primitive(PrimitiveType.Cylinder, props, "Stem", stem,
+                        new Vector3(0.16f, 0.2f, 0.16f) * scale, new Color(0.93f, 0.9f, 0.82f));
+                    EcoVisualUtil.Primitive(PrimitiveType.Sphere, props, "Cap", stem + new Vector3(0f, 0.22f * scale, 0f),
+                        new Vector3(0.55f, 0.22f, 0.55f) * scale, caps[random.Next(caps.Length)]);
+                }
                 break;
             }
             case EnvironmentTileType.Flower:

@@ -77,6 +77,15 @@ public sealed class TreePlot : Interactable
                 return;
             }
             if (stage != PlotStage.Empty) return;
+            if (inventory.GetQuantity(sapling) < 1)
+            {
+                AudioManager.Play(GameSfx.ActionFail);
+                PlayerFeedback.Notify("묘목이 없습니다.");
+                return;
+            }
+            // Energy: checked before anything changes; spent only after the sapling is planted.
+            PlayerEnergy energy = PlayerEnergy.For(interactor);
+            if (!PlayerEnergy.CheckAction(energy, EnergyAction.PlantSapling)) return;
             if (!inventory.TryConsume(sapling, 1))
             {
                 PlayerFeedback.Notify("묘목이 없습니다.");
@@ -84,6 +93,8 @@ public sealed class TreePlot : Interactable
             }
             growthDays = 0;
             SetStage(PlotStage.Sapling);
+            PlayerEnergy.SpendAction(energy, EnergyAction.PlantSapling);
+            AudioManager.Play(GameSfx.PlantSapling);
             PlayerFeedback.Notify("묘목을 심었습니다.");
             QuestEvents.Raise(QuestEventType.SaplingPlanted, sapling);
         }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 // Until the trial quest is done, the trading post refuses to sell the last seeds the trial still needs.
 // Only that one case is blocked: other items, extra seeds, or seeds once a crop of that kind is already
-// in a plot all sell normally. Lives on the FarmScene player and registers in Awake (scene suspension
+// in a plot all sell normally. Lives on the village player and registers in Awake (scene suspension
 // must not drop it), so it reads inventory and plots only when a sale is attempted.
 // Kept materials work the same way: the last units a later objective needs stay unsold until it is done.
 [DisallowMultipleComponent]

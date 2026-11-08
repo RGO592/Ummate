@@ -30,6 +30,7 @@ MonoBehaviour:
   sequentialObjectives: 0
   retiredObjectiveIds:
   - restore_squirrel
+  completeOnStart: 1
   startItems: []
   startMessage: 
   startMessageUntilClick: 0

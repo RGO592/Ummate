@@ -28,6 +28,7 @@ MonoBehaviour:
     target: 
     requiredAmount: 3
     tip: "\uC2B9\uAC15\uC7A5\uC73C\uB85C \uAC00\uBCF4\uC790!"
+  completeOnStart: 1
   startItems: []
   startMessage: 
   rewardItems: []

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 // UI-only presentation data. ItemDefinition and inventory quantities stay unchanged.
-[CreateAssetMenu(menuName = "Ummate/UI/Quickbar Icon Set", fileName = "QuickbarIcons")]
+[CreateAssetMenu(menuName = "Susupjung/UI/Quickbar Icon Set", fileName = "QuickbarIcons")]
 public sealed class QuickbarIconSet : ScriptableObject
 {
     [Serializable]

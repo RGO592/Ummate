@@ -19,13 +19,15 @@ MonoBehaviour:
     \uC900\uBE44 \uC911)"
   category: 0
   prerequisites:
-  - {fileID: 11400000, guid: d46de41d5b754d9b80e99c750d4259ff, type: 2}
+  - {fileID: 11400000, guid: e2621bf984b06e973252fa6559c97d34, type: 2}
   objectives:
   - id: restore_two
     description: "\uC0DD\uD0DC\uACC4 2\uC885 \uBCF5\uC6D0"
-    eventType: 0
+    eventType: 14
     item: {fileID: 0}
     target: 
+    excludedTargets:
+    - rabbit
     requiredAmount: 2
     tip: "\uC11C\uB85C \uB2E4\uB978 \uC0DD\uD0DC\uACC4 2\uC885\uC744 \n\uB9CC\uB4E4\uC5B4\uBCF4\uC138\uC694!"
   startItems: []

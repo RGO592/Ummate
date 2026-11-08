@@ -153,7 +153,7 @@ public sealed class GuideTooltip : MonoBehaviour
         if (subTextArea != null) subTextArea.gameObject.SetActive(DeveloperMode);
         if (subText != null)
         {
-            subText.text = "개발용: T/Y로 선택 아이템 수량 조절";
+            subText.text = "개발용: T/Y로 선택 아이템 수량 조절 · 기운 소비 없음";
             subText.gameObject.SetActive(DeveloperMode);
         }
         if (developerLabel != null) developerLabel.text = DeveloperMode ? "DEV\nON" : "DEV";

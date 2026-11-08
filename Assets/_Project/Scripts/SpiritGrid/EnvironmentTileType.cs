@@ -1,28 +1,30 @@
 using UnityEngine;
 
-// Environment tile kinds placed on the eco grid. None marks an empty cell.
+// Environment tile kinds placed on the eco grid (숲&강: Water, Tree, Flower, Mushroom, Rock). None marks an empty cell.
+// Saved as an int in scenes and save files: never reuse a value. 1 was the retired Wheat Hex (the farm's wheat
+// item and crop are unrelated and remain); a save still holding it is rejected rather than read as another kind.
 public enum EnvironmentTileType
 {
     None = 0,
-    Wheat = 1,
     Flower = 2,
     Water = 3,
     Rock = 4,
-    Tree = 5
+    Tree = 5,
+    Mushroom = 6
 }
 
 public static class EnvironmentTileTypes
 {
-    // Selection order used by the 1~5 number keys and the build bar.
+    // Selection order used by the 1~5 number keys. Mushroom took the former Wheat slot.
     public static readonly EnvironmentTileType[] All =
     {
-        EnvironmentTileType.Wheat, EnvironmentTileType.Flower, EnvironmentTileType.Water,
+        EnvironmentTileType.Mushroom, EnvironmentTileType.Flower, EnvironmentTileType.Water,
         EnvironmentTileType.Rock, EnvironmentTileType.Tree
     };
 
     public static string DisplayName(EnvironmentTileType type) => type switch
     {
-        EnvironmentTileType.Wheat => "밀",
+        EnvironmentTileType.Mushroom => "버섯",
         EnvironmentTileType.Flower => "꽃",
         EnvironmentTileType.Water => "물",
         EnvironmentTileType.Rock => "돌",
@@ -33,7 +35,7 @@ public static class EnvironmentTileTypes
     // Placeholder colours until real prefabs are assigned.
     public static Color DefaultColor(EnvironmentTileType type) => type switch
     {
-        EnvironmentTileType.Wheat => new Color(0.95f, 0.8f, 0.3f),
+        EnvironmentTileType.Mushroom => new Color(0.72f, 0.5f, 0.36f),
         EnvironmentTileType.Flower => new Color(0.96f, 0.55f, 0.78f),
         EnvironmentTileType.Water => new Color(0.22f, 0.5f, 0.9f),
         EnvironmentTileType.Rock => new Color(0.6f, 0.6f, 0.62f),

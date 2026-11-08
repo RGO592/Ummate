@@ -1,4 +1,4 @@
-Shader "Ummate/SpiritGrid/TreeCircleFade"
+Shader "Susupjung/SpiritGrid/TreeCircleFade"
 {
     Properties
     {

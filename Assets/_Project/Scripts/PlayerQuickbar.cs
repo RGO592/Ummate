@@ -28,7 +28,7 @@ public sealed class PlayerQuickbar : MonoBehaviour
 
     private void Update()
     {
-        if (!Application.isFocused) return;
+        if (!Application.isFocused || SceneTransitionService.IsTraveling) return;
         Keyboard keyboard = Keyboard.current;
         int numberSlot = -1;
         if (keyboard != null)
@@ -47,6 +47,21 @@ public sealed class PlayerQuickbar : MonoBehaviour
         // Number keys take priority if both inputs arrive in the same frame.
         if (numberSlot >= 0) SelectSlot(numberSlot);
         else if (Mouse.current != null) HandleScroll(Mouse.current.scroll.ReadValue().y);
+        // E uses the selected item (recovery potion). This component is in the modal / build-mode input lock lists,
+        // so E does nothing while the trading post, build mode or sleep has input paused.
+        if (keyboard != null && keyboard.eKey.wasPressedThisFrame) TryUseSelected(notifyIfNotUsable: true);
+    }
+
+    // Uses the selected item through ItemUseService. Non-usable items (seeds, tools) do nothing.
+    public ItemUseService.UseResult TryUseSelected(bool notifyIfNotUsable)
+    {
+        ItemDefinition item = SelectedItem;
+        if (item == null || !item.IsUsable)
+        {
+            if (notifyIfNotUsable) PlayerFeedback.Notify("사용할 수 있는 아이템이 아니야.");
+            return ItemUseService.UseResult.NotUsable;
+        }
+        return ItemUseService.TryUse(Inventory, PlayerEnergy.For(gameObject), item);
     }
     private void HandleScroll(float scrollY)
     {
