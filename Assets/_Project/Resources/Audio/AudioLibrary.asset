@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c047f028a76c4bb2a4c9d04cb879237c, type: 3}
   m_Name: AudioLibrary
   m_EditorClassIdentifier: Assembly-CSharp::AudioLibrary
-  bgmLevel: 0.45
-  ambienceLevel: 0.3
+  bgmLevel: 0.32
+  ambienceLevel: 0.24
   sfxLevel: 1
   bgmFadeSeconds: 1.5
   ambienceFadeSeconds: 2
@@ -118,7 +118,7 @@ MonoBehaviour:
     sound:
       clips:
       - {fileID: 8300000, guid: 98ce81c56ed04f2f884aee2b7c91aeaf, type: 3}
-      volume: 0.5
+      volume: 0.75
       minInterval: 0.05
   - id: 30
     sound:

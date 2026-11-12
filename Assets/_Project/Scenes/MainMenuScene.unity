@@ -490,9 +490,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 52
+  m_MinHeight: 116
   m_PreferredWidth: -1
-  m_PreferredHeight: 52
+  m_PreferredHeight: 116
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -515,7 +515,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 2
   m_Colors:
     m_NormalColor: {r: 0.96, g: 0.93, b: 0.87, a: 1}
     m_HighlightedColor: {r: 1, g: 1, b: 1, a: 1}
@@ -525,10 +525,10 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
+    m_HighlightedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_PressedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_SelectedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_DisabledSprite: {fileID: 21300000, guid: 1a668e2754094ab286b9fc89b5bd317c, type: 3}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -560,8 +560,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 53ad6e9fe1224a36893566447829746f, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 1a668e2754094ab286b9fc89b5bd317c, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1687,8 +1687,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1794,9 +1794,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 52
+  m_MinHeight: 116
   m_PreferredWidth: -1
-  m_PreferredHeight: 52
+  m_PreferredHeight: 116
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -1819,7 +1819,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 2
   m_Colors:
     m_NormalColor: {r: 0.96, g: 0.93, b: 0.87, a: 1}
     m_HighlightedColor: {r: 1, g: 1, b: 1, a: 1}
@@ -1829,10 +1829,10 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
+    m_HighlightedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_PressedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_SelectedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_DisabledSprite: {fileID: 21300000, guid: 1a668e2754094ab286b9fc89b5bd317c, type: 3}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -1864,8 +1864,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 53ad6e9fe1224a36893566447829746f, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 1a668e2754094ab286b9fc89b5bd317c, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -2098,8 +2098,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2188,10 +2188,10 @@ RectTransform:
   - {fileID: 157951422}
   m_Father: {fileID: 1884399554}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.84, y: 0.145}
-  m_AnchorMax: {x: 0.84, y: 0.145}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 330, y: 244}
+  m_AnchorMin: {x: 0.82, y: 0.34}
+  m_AnchorMax: {x: 0.82, y: 0.34}
+  m_AnchoredPosition: {x: 0, y: -65.4}
+  m_SizeDelta: {x: 500, y: 518}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1178933744
 MonoBehaviour:
@@ -2211,7 +2211,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 12
+  m_Spacing: 18
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
@@ -2338,8 +2338,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2473,9 +2473,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 52
+  m_MinHeight: 116
   m_PreferredWidth: -1
-  m_PreferredHeight: 52
+  m_PreferredHeight: 116
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -2498,7 +2498,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 2
   m_Colors:
     m_NormalColor: {r: 0.96, g: 0.93, b: 0.87, a: 1}
     m_HighlightedColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2508,10 +2508,10 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
+    m_HighlightedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_PressedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_SelectedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_DisabledSprite: {fileID: 21300000, guid: 1a668e2754094ab286b9fc89b5bd317c, type: 3}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -2543,8 +2543,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 53ad6e9fe1224a36893566447829746f, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 1a668e2754094ab286b9fc89b5bd317c, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -2595,9 +2595,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 52
+  m_MinHeight: 116
   m_PreferredWidth: -1
-  m_PreferredHeight: 52
+  m_PreferredHeight: 116
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
@@ -2620,7 +2620,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 2
   m_Colors:
     m_NormalColor: {r: 0.96, g: 0.93, b: 0.87, a: 1}
     m_HighlightedColor: {r: 1, g: 1, b: 1, a: 1}
@@ -2630,10 +2630,10 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
+    m_HighlightedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_PressedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_SelectedSprite: {fileID: 21300000, guid: 6e9746df06fe4a0dbec67b65abc73a5c, type: 3}
+    m_DisabledSprite: {fileID: 21300000, guid: 1a668e2754094ab286b9fc89b5bd317c, type: 3}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -2665,8 +2665,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 53ad6e9fe1224a36893566447829746f, type: 3}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 1a668e2754094ab286b9fc89b5bd317c, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -2914,8 +2914,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
