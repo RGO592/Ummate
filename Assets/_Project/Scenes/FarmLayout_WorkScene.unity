@@ -8472,6 +8472,7 @@ MonoBehaviour:
   - {fileID: 1739143744}
   - {fileID: 1739143745}
   - {fileID: 2141775270}
+  - {fileID: 9700000003}
   fadeOutDuration: 0.3
   morningDuration: 0.45
   fadeInDuration: 0.35

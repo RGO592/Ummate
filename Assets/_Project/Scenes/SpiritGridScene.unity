@@ -6304,6 +6304,8 @@ GameObject:
   - component: {fileID: 1976902116}
   - component: {fileID: 4400000001}
   - component: {fileID: 6900000001}
+  - component: {fileID: 6900000002}
+  - component: {fileID: 6900000003}
   m_Layer: 0
   m_Name: EcoGridManager
   m_TagString: Untagged
@@ -18065,6 +18067,38 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0bf9a973313278d03fc5ea3325777087, type: 2}
   - {fileID: 11400000, guid: 9ff7212f7ff34d11b8130a42f8d9a071, type: 2}
   - {fileID: 11400000, guid: b188410c66aa4a25b7599555f779567b, type: 2}
+--- !u!114 &6900000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1976902114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1af6d7ec9a1141e7b5043527d03be2c4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::HabitatAnimalView
+  habitat: {fileID: 11400000, guid: 0bf9a973313278d03fc5ea3325777087, type: 2}
+  modelResource: HabitatAnimals/Squirrel
+  groundPosition: {x: -106, y: 0.02, z: -93.566}
+  modelSize: 2
+--- !u!114 &6900000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1976902114}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1af6d7ec9a1141e7b5043527d03be2c4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::HabitatAnimalView
+  habitat: {fileID: 11400000, guid: 9ff7212f7ff34d11b8130a42f8d9a071, type: 2}
+  modelResource: HabitatAnimals/Otter
+  groundPosition: {x: -106, y: 0.02, z: -76.246}
+  modelSize: 2.2
 --- !u!1 &9300000001
 GameObject:
   m_ObjectHideFlags: 0

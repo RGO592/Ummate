@@ -18,6 +18,10 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
     private HexCoord coord;
     private Transform layers;
     private Transform props;
+    private Renderer typeSurface;
+    private bool overview;
+    private static readonly int OverviewMarkId = Shader.PropertyToID("_OverviewMark");
+    private MaterialPropertyBlock surfaceProperties;
     private HexDirectionMask mask = (HexDirectionMask)(-1);
 
     public void Build(EnvironmentTileType tileType, HexCoord cellCoord, float size, float edgeInset, Material material, Material tileSurfaceMaterial = null)
@@ -41,6 +45,9 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         props.SetParent(transform, false);
         BuildProps();
         SetNeighbors(HexDirectionMask.None);
+        // Only these placeholders scatter dozens of small pieces across the cell.
+        enabled = type == EnvironmentTileType.Flower || type == EnvironmentTileType.Mushroom;
+        if (enabled) LateUpdate();
     }
 
     // Called by the manager when the cell moves; props are re-seeded for the new cell.
@@ -53,6 +60,7 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         props = new GameObject("Props").transform;
         props.SetParent(transform, false);
         BuildProps();
+        props.gameObject.SetActive(!overview);
     }
 
     public void SetNeighbors(HexDirectionMask newMask)
@@ -74,9 +82,39 @@ public sealed class EcoPlaceholderTileView : MonoBehaviour, IEcoTileView
         // SG_TileSurface renders after HexGroundTint (2002), before grid lines (3010).
         // The ground fill uses depth bias, so drawing it after this face caused a
         // camera-dependent horizontal cutoff even with different surface heights.
-        HexMeshUtil.Create(layers, "ConnectedTypeSurface",
+        typeSurface = HexMeshUtil.Create(layers, "ConnectedTypeSurface",
             HexMeshUtil.InsetSurface(cellSize, groundInset, mask), SurfaceHeight,
-            color, surfaceMaterial);
+            color, surfaceMaterial).GetComponent<Renderer>();
+        if (overview) ApplyOverview();
+    }
+
+    private void LateUpdate()
+    {
+        Camera camera = Camera.main;
+        if (camera == null || typeSurface == null) return;
+        float depth = Vector3.Dot(transform.position - camera.transform.position, camera.transform.forward);
+        if (depth <= camera.nearClipPlane) return;
+        // Use rendered pixels on small screens; at high DPI keep the same map-level detail
+        // as 1080p. Different thresholds avoid alternating at the zoom boundary.
+        float height = Mathf.Min(camera.scaledPixelHeight, 1080);
+        float width = cellSize * transform.lossyScale.x * height * camera.projectionMatrix.m11 * 0.5f;
+        if (!camera.orthographic) width /= depth;
+        bool wantOverview = width < (overview ? 152f : 128f);
+        if (wantOverview == overview || !typeSurface.sharedMaterial.HasProperty(OverviewMarkId)) return;
+        overview = wantOverview;
+        props.gameObject.SetActive(!overview);
+        ApplyOverview();
+    }
+
+    private void ApplyOverview()
+    {
+        // Share the opaque tile face and its depth. A separate coplanar marker would
+        // flicker at long range and could cover the outline or spill into another cell.
+        surfaceProperties ??= new MaterialPropertyBlock();
+        typeSurface.GetPropertyBlock(surfaceProperties);
+        float symbol = type == EnvironmentTileType.Flower ? 1f : 2f;
+        surfaceProperties.SetVector(OverviewMarkId, new Vector4(overview ? symbol : 0f, 1f / cellSize, 0f, 0f));
+        typeSurface.SetPropertyBlock(surfaceProperties);
     }
 
     // Only exposed water edges retain an inset. Joined faces have no rim or gap.

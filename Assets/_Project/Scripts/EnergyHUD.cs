@@ -18,7 +18,7 @@ public sealed class EnergyHUD : MonoBehaviour
     private int sortingOrder = 90;
     [SerializeField, Tooltip("Canvas units (1280×720) from the bottom-right corner. The village quickbar ends at x 986, y 100.")]
     private Vector2 cornerOffset = new Vector2(20f, 20f);
-    [SerializeField] private Vector2 size = new Vector2(250f, 46f);
+    [SerializeField] private Vector2 size = new Vector2(92f, 150f);
     [SerializeField] private string title = "기운";
     [SerializeField] private Color panelColor = new Color(0.98f, 0.95f, 0.88f, 0.92f);
     [SerializeField] private Color textColor = new Color(0.27f, 0.19f, 0.12f);
@@ -96,7 +96,7 @@ public sealed class EnergyHUD : MonoBehaviour
         if (!show) return;
         int current = observed.CurrentEnergy, max = observed.MaxEnergy;
         float ratio = Mathf.Clamp01(current / (float)max);
-        fill.anchorMax = new Vector2(ratio, 1f);
+        fill.anchorMax = new Vector2(1f, ratio);
         fillImage.color = ratio <= lowRatio ? lowFillColor : fillColor;
         valueText.text = $"{current} / {max}";
         valueText.color = current <= 0 ? emptyTextColor : textColor;
@@ -126,20 +126,19 @@ public sealed class EnergyHUD : MonoBehaviour
         panelImage.color = panelSprite != null ? Color.white : panelColor;
         if (panelSprite != null && panelSprite.border != Vector4.zero) panelImage.type = Image.Type.Sliced;
 
-        TMP_Text titleText = CreateText("Title", panel, title, 18f, TextAlignmentOptions.MidlineLeft);
+        TMP_Text titleText = CreateText("Title", panel, title, 18f, TextAlignmentOptions.Center);
         RectTransform titleRect = (RectTransform)titleText.transform;
-        titleRect.anchorMin = new Vector2(0f, 0f);
-        titleRect.anchorMax = new Vector2(0f, 1f);
-        titleRect.pivot = new Vector2(0f, 0.5f);
-        titleRect.anchoredPosition = new Vector2(12f, 0f);
-        titleRect.sizeDelta = new Vector2(48f, 0f);
+        titleRect.anchorMin = Vector2.up;
+        titleRect.anchorMax = Vector2.one;
+        titleRect.offsetMin = new Vector2(4f, -31f);
+        titleRect.offsetMax = new Vector2(-4f, -4f);
         titleText.fontStyle = FontStyles.Bold;
 
         RectTransform bar = CreateRect("Bar", panel);
-        bar.anchorMin = new Vector2(0f, 0.5f);
-        bar.anchorMax = new Vector2(1f, 0.5f);
-        bar.offsetMin = new Vector2(64f, -11f);
-        bar.offsetMax = new Vector2(-12f, 11f);
+        bar.anchorMin = new Vector2(0.5f, 0f);
+        bar.anchorMax = new Vector2(0.5f, 1f);
+        bar.offsetMin = new Vector2(-12f, 32f);
+        bar.offsetMax = new Vector2(12f, -34f);
         Image barImage = bar.gameObject.AddComponent<Image>();
         barImage.color = barBackColor;
         barImage.raycastTarget = false;
@@ -153,11 +152,12 @@ public sealed class EnergyHUD : MonoBehaviour
         fillImage.color = fillColor;
         fillImage.raycastTarget = false;
 
-        valueText = CreateText("Value", bar, "", 17f, TextAlignmentOptions.Center);
+        valueText = CreateText("Value", panel, "", 16f, TextAlignmentOptions.Center);
         RectTransform valueRect = (RectTransform)valueText.transform;
         valueRect.anchorMin = Vector2.zero;
-        valueRect.anchorMax = Vector2.one;
-        valueRect.offsetMin = valueRect.offsetMax = Vector2.zero;
+        valueRect.anchorMax = Vector2.right;
+        valueRect.offsetMin = new Vector2(3f, 4f);
+        valueRect.offsetMax = new Vector2(-3f, 29f);
         valueText.fontStyle = FontStyles.Bold;
 
         root.SetActive(false);

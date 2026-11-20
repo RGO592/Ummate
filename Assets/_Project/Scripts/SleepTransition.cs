@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -13,14 +14,11 @@ public sealed class SleepTransition : MonoBehaviour
     [SerializeField, Min(0f)] private float fadeOutDuration = 0.3f;
     [SerializeField, Min(0f)] private float morningDuration = 0.45f;
     [SerializeField, Min(0f)] private float fadeInDuration = 0.35f;
-    [Header("Temporary sleep illustration")]
-    [SerializeField, Tooltip("Optional override; otherwise uses Resources/Transitions/Sleep.")]
-    private Sprite sleepIllustration;
-    [SerializeField, Min(0f)] private float sleepImageDuration = 0.8f;
-
     private bool[] previouslyEnabled;
-    private UnityEngine.UI.Image sleepImage;
+    private TransitionImageSequence sleepSequence;
     private CanvasGroup morningPopup;
+    private readonly List<HudMask> hudMasks = new List<HudMask>();
+    private readonly List<GameObject> visibleArrows = new List<GameObject>();
     public bool IsSleeping { get; private set; }
     public event System.Action SleepCompleted;
 
@@ -31,7 +29,6 @@ public sealed class SleepTransition : MonoBehaviour
         if (IsSleeping || !isActiveAndEnabled || gameDay == null || overlay == null || morningLabel == null)
             return false;
         IsSleeping = true;
-        LockInput();
         StartCoroutine(Sequence());
         return true;
     }
@@ -41,23 +38,20 @@ public sealed class SleepTransition : MonoBehaviour
     {
         try
         {
+            HideHud();
+            LockInput();
             morningLabel.text = "";
             overlay.blocksRaycasts = true;
-            EnsureSleepImage(); // Load before fading, while input is already locked.
+            EnsureSleepSequence();
             AudioManager.Play(GameSfx.Sleep); // Bedtime confirmed: as the fade starts.
             yield return FadeTo(1f, fadeOutDuration);
-            if (sleepImage != null)
+            if (sleepSequence != null)
             {
-                sleepImage.enabled = true;
-                // Present the illustration before daily processing can take up a frame.
-                yield return null;
+                sleepSequence.Play();
+                while (!sleepSequence.IsComplete) yield return null;
             }
             gameDay.Sleep();
-            if (sleepImage != null)
-            {
-                yield return new WaitForSecondsRealtime(sleepImageDuration);
-                sleepImage.enabled = false;
-            }
+            if (sleepSequence != null) sleepSequence.Hide();
             EnsureMorningPopup();
             morningPopup.alpha = 1f;
             morningLabel.text = $"{gameDay.CurrentDay}일차 아침";
@@ -127,23 +121,70 @@ public sealed class SleepTransition : MonoBehaviour
         morningPopup.alpha = 0f;
     }
 
-    private void EnsureSleepImage()
+    private void EnsureSleepSequence()
     {
-        if (sleepImage != null) return;
-        if (sleepIllustration == null) sleepIllustration = Resources.Load<Sprite>("Transitions/Sleep");
-        if (sleepIllustration == null) return; // Keep the existing sleep flow if the optional art is unavailable.
-        var imageObject = new GameObject("SleepIllustration", typeof(RectTransform), typeof(UnityEngine.UI.Image));
-        imageObject.transform.SetParent(overlay.transform, false);
-        var rect = (RectTransform)imageObject.transform;
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = rect.offsetMax = Vector2.zero;
-        sleepImage = imageObject.GetComponent<UnityEngine.UI.Image>();
-        sleepImage.sprite = sleepIllustration;
-        sleepImage.preserveAspect = true;
-        sleepImage.raycastTarget = true;
-        sleepImage.enabled = false;
-        // The existing opaque overlay fills letterbox bars and transparent pixels.
+        if (sleepSequence != null) return;
+        var prefab = Resources.Load<GameObject>("Transitions/SleepSequence");
+        if (prefab != null && prefab.TryGetComponent(out TransitionImageSequence sequence))
+            sleepSequence = Instantiate(sequence, overlay.transform, false);
+        else
+            Debug.LogError("Missing sleep animation: Resources/Transitions/SleepSequence.", this);
+    }
+
+    // Keep each view's activeSelf and event subscriptions intact while the day changes.
+    // This also masks canvases that a day-change listener may activate during sleep.
+    private readonly struct HudMask
+    {
+        private readonly CanvasGroup group;
+        private readonly float alpha;
+        private readonly bool activeSelf, enabled, interactable, blocksRaycasts;
+
+        public HudMask(GameObject view)
+        {
+            activeSelf = view.activeSelf;
+            if (!view.TryGetComponent(out CanvasGroup existing)) existing = view.AddComponent<CanvasGroup>();
+            group = existing;
+            alpha = group.alpha;
+            enabled = group.enabled;
+            interactable = group.interactable;
+            blocksRaycasts = group.blocksRaycasts;
+            group.alpha = 0f;
+            group.interactable = group.blocksRaycasts = false;
+            group.enabled = true;
+        }
+
+        public void Restore()
+        {
+            if (group == null) return;
+            if (group.gameObject.activeSelf != activeSelf) group.gameObject.SetActive(activeSelf);
+            group.alpha = alpha;
+            group.interactable = interactable;
+            group.blocksRaycasts = blocksRaycasts;
+            group.enabled = enabled;
+        }
+    }
+
+    private void HideHud()
+    {
+        // SleepOverlay shares InventoryTestCanvas with the quickbar, settings and Tip buttons.
+        Transform sharedHud = overlay.transform.parent;
+        foreach (Transform child in sharedHud)
+            if (child != overlay.transform && (morningPopup == null || child != morningPopup.transform))
+                hudMasks.Add(new HudMask(child.gameObject));
+
+        foreach (Canvas canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (canvas.gameObject.scene != gameObject.scene || sharedHud.IsChildOf(canvas.transform) ||
+                canvas.transform.IsChildOf(sharedHud)) continue;
+            hudMasks.Add(new HudMask(canvas.gameObject));
+        }
+        // The navigation arrow is a world mesh, outside all UI canvases.
+        foreach (var arrow in FindObjectsByType<QuestNavigationArrow>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+        {
+            if (arrow.gameObject.scene != gameObject.scene) continue;
+            visibleArrows.Add(arrow.gameObject);
+            arrow.gameObject.SetActive(false);
+        }
     }
 
     private void LockInput()
@@ -174,13 +215,19 @@ public sealed class SleepTransition : MonoBehaviour
                     inputComponents[i].enabled = previouslyEnabled[i];
             previouslyEnabled = null;
         }
+        // Enabling an input component can refresh its view in OnEnable.
+        // Restore each view after those callbacks, before another frame is rendered.
+        foreach (HudMask mask in hudMasks) mask.Restore();
+        hudMasks.Clear();
+        foreach (GameObject arrow in visibleArrows) if (arrow != null) arrow.SetActive(true);
+        visibleArrows.Clear();
         IsSleeping = false;
     }
 
     private void ClearOverlay()
     {
         if (morningPopup != null) morningPopup.alpha = 0f;
-        if (sleepImage != null) sleepImage.enabled = false;
+        if (sleepSequence != null) sleepSequence.Hide();
         if (overlay != null) { overlay.alpha = 0f; overlay.blocksRaycasts = false; }
         if (morningLabel != null) morningLabel.text = "";
     }
