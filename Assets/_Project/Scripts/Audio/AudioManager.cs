@@ -43,11 +43,10 @@ public sealed class AudioManager : MonoBehaviour
 
     private AudioSource sfxSource;
     private LoopTrack bgm, ambience;
-    private AudioListener fallbackListener;
+    private AudioListener listener;
     private readonly Dictionary<GameSfx, float> lastPlayed = new Dictionary<GameSfx, float>();
     private readonly List<(float time, GameSfx id)> delayed = new List<(float, GameSfx)>();
     private readonly List<RaycastResult> raycastResults = new List<RaycastResult>();
-    private Camera[] cameraBuffer = new Camera[8];
     private GameObject pressedClickable;
     private bool clickPending;
     private int gameSoundFrame = -1;
@@ -80,6 +79,8 @@ public sealed class AudioManager : MonoBehaviour
         DontDestroyOnLoad(runner);
         AudioManager manager = runner.AddComponent<AudioManager>();
         manager.library = loaded;
+        // The first scene loaded before this manager existed (and before its first audio update).
+        for (int i = 0; i < SceneManager.sceneCount; i++) manager.SilenceSceneListeners(SceneManager.GetSceneAt(i));
         manager.ApplyScene(SceneManager.GetActiveScene());
     }
 
@@ -146,10 +147,13 @@ public sealed class AudioManager : MonoBehaviour
         sfxSource = CreateSource("SFX", loop: false);
         bgm = new LoopTrack(CreateSource("BGM A", true), CreateSource("BGM B", true));
         ambience = new LoopTrack(CreateSource("Ambience A", true), CreateSource("Ambience B", true));
-        // The main menu has no AudioListener; the scene camera's own listener wins whenever one is active.
-        fallbackListener = gameObject.AddComponent<AudioListener>();
-        fallbackListener.enabled = false;
+        // The game's one AudioListener. Scenes are loaded additively (main menu → village, village ↔ regions), so their
+        // camera listeners would overlap this one, or each other, for a frame at every load; they are switched off as
+        // each scene loads (sceneLoaded runs before that scene's first audio update). Every sound here is 2D, so the
+        // listener's position does not matter.
+        listener = gameObject.AddComponent<AudioListener>();
         SceneManager.activeSceneChanged += OnActiveSceneChanged;
+        SceneManager.sceneLoaded += OnSceneLoaded;
         HabitatRecords.FirstDiscovered += OnHabitatDiscovered;
     }
 
@@ -157,8 +161,20 @@ public sealed class AudioManager : MonoBehaviour
     {
         if (instance != this) return;
         SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         HabitatRecords.FirstDiscovered -= OnHabitatDiscovered;
         instance = null;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) => SilenceSceneListeners(scene);
+
+    // Runtime only: the scene assets keep their camera listeners (a scene opened without AudioManager still hears).
+    private void SilenceSceneListeners(Scene scene)
+    {
+        if (!scene.IsValid() || !scene.isLoaded) return;
+        foreach (GameObject root in scene.GetRootGameObjects())
+            foreach (AudioListener other in root.GetComponentsInChildren<AudioListener>(true))
+                if (other != listener && other.enabled) other.enabled = false;
     }
 
     private AudioSource CreateSource(string sourceName, bool loop)
@@ -241,7 +257,6 @@ public sealed class AudioManager : MonoBehaviour
             if (gameSoundFrame != Time.frameCount) PlayNow(GameSfx.UiClick);
         }
         if (volumesDirty && (Mouse.current == null || !Mouse.current.leftButton.isPressed)) FlushVolumes();
-        UpdateFallbackListener();
     }
 
     private void ApplyVolumes()
@@ -275,19 +290,6 @@ public sealed class AudioManager : MonoBehaviour
         GameObject handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(raycastResults[0].gameObject);
         return handler != null && handler.TryGetComponent(out Selectable selectable) && selectable.IsInteractable()
             ? handler : null;
-    }
-
-    // Only while no camera carries an enabled AudioListener (main menu, or the moment between two regions).
-    private void UpdateFallbackListener()
-    {
-        int count = Camera.allCamerasCount;
-        if (cameraBuffer.Length < count) cameraBuffer = new Camera[count * 2];
-        Camera.GetAllCameras(cameraBuffer);
-        bool sceneListener = false;
-        for (int i = 0; i < count && !sceneListener; i++)
-            sceneListener = cameraBuffer[i] != null && cameraBuffer[i].TryGetComponent(out AudioListener listener)
-                && listener.enabled && listener != fallbackListener;
-        if (fallbackListener.enabled == sceneListener) fallbackListener.enabled = !sceneListener;
     }
 
     // Two sources per loop so the old sound fades out while the new one fades in.
