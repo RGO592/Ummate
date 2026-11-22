@@ -1157,6 +1157,10 @@ MonoBehaviour:
   viewAngles: {x: 50, y: 45, z: 0}
   distance: 13
   smoothTime: 0.15
+  minDistance: 3.85
+  closeFieldOfView: 30
+  closeFocusOffset: -0.06
+  minPitch: 3
 --- !u!81 &304036739
 AudioListener:
   m_ObjectHideFlags: 0
