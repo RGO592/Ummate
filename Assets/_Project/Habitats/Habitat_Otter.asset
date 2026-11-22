@@ -14,10 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HabitatDefinition
   id: otter
   displayName: "\uC218\uB2EC"
-  requiredCounts:
+  pattern:
   - tile: 3
-    count: 2
+    offset:
+      q: 0
+      r: 0
+  - tile: 3
+    offset:
+      q: 1
+      r: 0
   - tile: 4
-    count: 1
+    offset:
+      q: 2
+      r: 0
+  allowRotation: 1
+  priority: 2
   revealQuestId: 
   revealObjectiveId: 

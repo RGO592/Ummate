@@ -185,6 +185,7 @@ public sealed class FarmPlot : Interactable
                 Log($"{CropName} 파종 완료: 씨앗 1개 소비. 성장에 물 준 날 {RequiredGrowthDays}일이 필요합니다.");
                 PlayerEnergy.SpendAction(energy, EnergyAction.PlantCrop);
                 AudioManager.Play(GameSfx.PlantSeed);
+                if (interactor.TryGetComponent(out PlayerMovement player)) player.PlayPlantSeed();
                 QuestEvents.Raise(QuestEventType.CropPlanted, Produce);
                 return;
             }

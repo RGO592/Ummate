@@ -51,7 +51,8 @@ public sealed class TransitionImageSequence : MonoBehaviour
             loadingOverlay = new GameObject("LoadingOverlay", typeof(RectTransform));
             loadingOverlay.transform.SetParent(transform, false);
             Stretch((RectTransform)loadingOverlay.transform);
-            tipLabel = CreateLabel("Tip", new Vector2(0.12f, 0.5f), new Vector2(0.88f, 0.5f),
+            // Low on the screen, under the walking character's face (the screen centre covered it).
+            tipLabel = CreateLabel("Tip", new Vector2(0.12f, 0.14f), new Vector2(0.88f, 0.14f),
                 new Vector2(0f, 70f), Vector2.zero, 28f);
             loadingLabel = CreateLabel("LoadingIndicator", Vector2.right, Vector2.right,
                 new Vector2(100f, 42f), new Vector2(-72f, 42f), 21f);

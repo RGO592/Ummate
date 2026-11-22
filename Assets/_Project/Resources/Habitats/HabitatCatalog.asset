@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa77affa8a5d451d8d74d3ee7f022bfb, type: 3}
+  m_Name: HabitatCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::HabitatCatalog
+  habitats:
+  - {fileID: 11400000, guid: 58878be67f27456ea77bee320b02515b, type: 2}
+  - {fileID: 11400000, guid: 4c01e9c0cec041f9825738792e354d8a, type: 2}
+  - {fileID: 11400000, guid: 0bf9a973313278d03fc5ea3325777087, type: 2}
+  - {fileID: 11400000, guid: 9ff7212f7ff34d11b8130a42f8d9a071, type: 2}
+  - {fileID: 11400000, guid: b188410c66aa4a25b7599555f779567b, type: 2}

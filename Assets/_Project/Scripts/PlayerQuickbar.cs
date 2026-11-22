@@ -10,7 +10,6 @@ public sealed class PlayerQuickbar : MonoBehaviour
     [SerializeField] private ItemDefinition[] slots = new ItemDefinition[SlotCount];
     [SerializeField, Range(0, SlotCount - 1)] private int selectedSlotIndex;
     private PlayerInventory inventory;
-    private float nextScrollTime;
     public event Action Changed;
 
     // Code uses zero-based indices; key 0 selects the tenth slot.
@@ -44,9 +43,9 @@ public sealed class PlayerQuickbar : MonoBehaviour
             else if (keyboard.digit9Key.wasPressedThisFrame) numberSlot = 8;
             else if (keyboard.digit0Key.wasPressedThisFrame) numberSlot = 9;
         }
-        // Number keys take priority if both inputs arrive in the same frame.
+        // Slots: number keys here, or a left click on the quickbar slot (InventoryTestUI). The mouse wheel zooms the
+        // camera instead (CameraFollow; the build modes zoom their own cameras).
         if (numberSlot >= 0) SelectSlot(numberSlot);
-        else if (Mouse.current != null) HandleScroll(Mouse.current.scroll.ReadValue().y);
         // E uses the selected item (recovery potion). This component is in the modal / build-mode input lock lists,
         // so E does nothing while the trading post, build mode or sleep has input paused.
         if (keyboard != null && keyboard.eKey.wasPressedThisFrame) TryUseSelected(notifyIfNotUsable: true);
@@ -62,15 +61,6 @@ public sealed class PlayerQuickbar : MonoBehaviour
             return ItemUseService.UseResult.NotUsable;
         }
         return ItemUseService.TryUse(Inventory, PlayerEnergy.For(gameObject), item);
-    }
-    private void HandleScroll(float scrollY)
-    {
-        if (Mathf.Abs(scrollY) < 0.01f || Time.unscaledTime < nextScrollTime) return;
-        // Wheel deltas vary by device (often 120). Use only the direction,
-        // with a short burst guard: one accepted input always advances one slot.
-        nextScrollTime = Time.unscaledTime + 0.10f;
-        int step = scrollY < 0 ? 1 : -1;
-        SelectSlot((selectedSlotIndex + step + SlotCount) % SlotCount);
     }
 
     public ItemDefinition GetSlotItem(int index)

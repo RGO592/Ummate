@@ -84,13 +84,24 @@ public sealed class QuestWindow : MonoBehaviour
         if (TogglePressed) Open();
     }
 
+    // The K habitat journal lives next to this window in every gameplay scene and shares its look and input lock.
+    private HabitatJournalUI journal;
+
+    private void Awake()
+    {
+        journal = GetComponent<HabitatJournalUI>();
+        if (journal == null) journal = gameObject.AddComponent<HabitatJournalUI>();
+        journal.Configure(font, panelSprite, buttonSprite, closeSprite, sortingOrder + 5, inputComponents, playerBody,
+            pauseMenu, tradingPost, sleepTransition, this);
+    }
+
     // Suspending or unloading the scene must never leave the player locked.
     private void OnDisable() => Close();
 
     private bool CanOpen() =>
         isActiveAndEnabled && Quests != null && !SceneTransitionService.IsTraveling &&
         (pauseMenu == null || !pauseMenu.IsOpen) && (tradingPost == null || !tradingPost.IsOpen) &&
-        (sleepTransition == null || !sleepTransition.IsSleeping);
+        (sleepTransition == null || !sleepTransition.IsSleeping) && (journal == null || !journal.IsOpen);
 
     public void Open()
     {

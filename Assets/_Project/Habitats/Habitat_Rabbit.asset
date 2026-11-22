@@ -14,10 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HabitatDefinition
   id: rabbit
   displayName: "\uD1A0\uB07C"
-  requiredCounts:
+  pattern:
   - tile: 2
-    count: 1
+    offset:
+      q: 0
+      r: 0
   - tile: 6
-    count: 1
+    offset:
+      q: 1
+      r: 0
+  allowRotation: 1
+  priority: 1
   revealQuestId: Q06
   revealObjectiveId: complete_rabbit_habitat

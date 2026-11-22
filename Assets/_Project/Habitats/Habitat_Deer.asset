@@ -14,14 +14,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HabitatDefinition
   id: deer
   displayName: "\uC0AC\uC2B4"
-  requiredCounts:
+  pattern:
   - tile: 5
-    count: 1
+    offset:
+      q: 0
+      r: 0
   - tile: 4
-    count: 1
-  - tile: 2
-    count: 1
+    offset:
+      q: 1
+      r: 0
   - tile: 6
-    count: 1
+    offset:
+      q: 1
+      r: 1
+  - tile: 2
+    offset:
+      q: 2
+      r: 1
+  allowRotation: 1
+  priority: 3
   revealQuestId: 
   revealObjectiveId: 

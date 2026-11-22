@@ -14,10 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HabitatDefinition
   id: bee
   displayName: "\uAFC0\uBC8C"
-  requiredCounts:
+  pattern:
   - tile: 2
-    count: 1
+    offset:
+      q: 0
+      r: 0
   - tile: 5
-    count: 1
+    offset:
+      q: 1
+      r: 0
+  allowRotation: 1
+  priority: 1
   revealQuestId: 
   revealObjectiveId: 

@@ -14,12 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HabitatDefinition
   id: squirrel
   displayName: "\uB2E4\uB78C\uC950"
-  requiredCounts:
+  pattern:
   - tile: 5
-    count: 1
+    offset:
+      q: 0
+      r: 0
   - tile: 4
-    count: 1
+    offset:
+      q: 1
+      r: 0
   - tile: 6
-    count: 1
+    offset:
+      q: 0
+      r: 1
+  allowRotation: 1
+  priority: 2
   revealQuestId: 
   revealObjectiveId: 

@@ -157,6 +157,27 @@ public sealed class QuestLog : MonoBehaviour
         return index >= 0 && entry.CurrentObjective < index;
     }
 
+    // A running quest is waiting for this habitat right now (its current habitat objective accepts the id:
+    // Q06 → rabbit, Q08 → any of its four). Used to pick the one discovery when an action completes several.
+    public bool WantsHabitat(string habitatId)
+    {
+        EnsureBuilt();
+        foreach (Entry entry in entries)
+        {
+            if (entry.Status != QuestStatus.Active) continue;
+            QuestDefinition.Objective[] objectives = entry.Definition.Objectives;
+            for (int i = 0; i < objectives.Length; i++)
+            {
+                QuestDefinition.Objective objective = objectives[i];
+                if (objective == null || entry.IsObjectiveDone(i)) continue;
+                if (entry.Definition.SequentialObjectives && i != entry.CurrentObjective) continue;
+                if ((objective.eventType == QuestEventType.HabitatCompleted || objective.eventType == QuestEventType.HabitatPatternStanding)
+                    && objective.Accepts(habitatId)) return true;
+            }
+        }
+        return false;
+    }
+
     private void Awake()
     {
         EnsureBuilt();

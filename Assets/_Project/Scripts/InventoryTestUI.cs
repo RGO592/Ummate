@@ -43,8 +43,35 @@ public sealed class InventoryTestUI : MonoBehaviour
     private float elapsed;
     private string lastAction = "준비";
 
+    private bool clickWired;
+
+    // Left-clicking a slot selects it (the mouse wheel no longer cycles slots; it zooms the camera).
+    private void WireSlotClicks()
+    {
+        if (clickWired || slotViews == null) return;
+        clickWired = true;
+        for (int i = 0; i < Mathf.Min(slotViews.Length, PlayerQuickbar.SlotCount); i++)
+        {
+            SlotView view = slotViews[i];
+            Graphic target = view?.background != null ? view.background : view?.visual != null ? view.visual.GetComponentInChildren<Graphic>() : null;
+            if (target == null) continue;
+            target.raycastTarget = true;
+            Button button = target.GetComponent<Button>();
+            if (button == null) button = target.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None; // The quickbar draws its own selected state.
+            button.navigation = new Navigation { mode = Navigation.Mode.None };
+            int slot = i;
+            button.onClick.AddListener(() =>
+            {
+                // A locked quickbar (trading post, sleep, journal, build mode) ignores clicks like it ignores keys.
+                if (quickbar != null && quickbar.isActiveAndEnabled) quickbar.SelectSlot(slot);
+            });
+        }
+    }
+
     private void OnEnable()
     {
+        WireSlotClicks();
         displayedSelection = -1;
         if (inventory != null) inventory.Changed += Refresh;
         if (quickbar != null) quickbar.Changed += Refresh;
@@ -137,7 +164,7 @@ public sealed class InventoryTestUI : MonoBehaviour
         }
         if (selectionChanged) elapsed = first ? animationDuration : 0;
         if (statusLabel != null)
-            statusLabel.text = $"선택됨: {quickbar.SelectedSlotNumber} | {lastAction}\n1~9, 0: 선택    T: 1개 차감    Y: 1개 추가    (테스트용 조작)";
+            statusLabel.text = $"선택됨: {quickbar.SelectedSlotNumber} | {lastAction}\n1~9, 0 / 슬롯 클릭: 선택    T: 1개 차감    Y: 1개 추가    (테스트용 조작)";
     }
 }
 

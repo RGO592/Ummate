@@ -62,5 +62,5 @@ MonoBehaviour:
   loadingFont: {fileID: 11400000, guid: e9189a8d4dd46714da53ecfa7131f7f7, type: 2}
   tips:
   - 같은 환경 Hex는 여러 서식지에 함께 사용될 수 있습니다.
-  - 서식지를 이루는 Hex는 서로 연결되어야 합니다.
+  - 서식지는 도감(K)에 그려진 모양대로 Hex를 놓아야 완성됩니다.
   - 잠을 자면 기운이 최대로 회복됩니다.
